@@ -6987,15 +6987,6 @@ function drawGigPeoplePills(){
   el.innerHTML = GIG_FORM_PEOPLE.map((x,i)=>
     `<span class="chip">${esc(x)}<button aria-label="Remove ${esc(x)}" onclick="App.gigDelPerson(${i})">${fa('xmark')}</button></span>`).join('');
 }
-App.gigAddPerson = () => {
-  const inp = $('#gig-person');
-  const name = (inp.value||'').trim();
-  if(!name) return markErr('#gig-person','Enter a name');
-  if(GIG_FORM_PEOPLE.includes(name)) return markErr('#gig-person','Already added');
-  GIG_FORM_PEOPLE.push(name);
-  inp.value=''; inp.focus(); drawGigPeoplePills();
-};
-App.gigDelPerson = i => { GIG_FORM_PEOPLE.splice(i,1); drawGigPeoplePills(); };
 /* each keystroke would hammer Spotify (via the proxy) on every letter, so this waits for a
    pause in typing before firing, same as Board Games' search */
 function gigArtistInputImpl(){
@@ -10368,6 +10359,15 @@ App.gigArtistInput = gigArtistInputImpl;
 App.gigArtistPick = gigArtistPickImpl;
 App.saveGig = saveGigImpl;
 App.delGig = delGigImpl;
+App.gigAddPerson = () => {
+  const inp = $('#gig-person');
+  const name = (inp.value||'').trim();
+  if(!name) return markErr('#gig-person','Enter a name');
+  if(GIG_FORM_PEOPLE.includes(name)) return markErr('#gig-person','Already added');
+  GIG_FORM_PEOPLE.push(name);
+  inp.value=''; inp.focus(); drawGigPeoplePills();
+};
+App.gigDelPerson = i => { GIG_FORM_PEOPLE.splice(i,1); drawGigPeoplePills(); };
 App.goFilms = () => { location.hash = '#/films'; };
 App.goFilmsDiary = () => { CUR_FILMS_TAB = 'diary'; CUR_FILMS_GENRE = ''; location.hash = '#/films'; };
 App.goFilmsWatchlist = () => { CUR_FILMS_TAB = 'watchlist'; location.hash = '#/films'; };

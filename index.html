@@ -171,7 +171,7 @@ a{color:var(--brand-dark);}
 
 
 /* ---------- trip list ---------- */
-.trip-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin-top:2px;}
+.trip-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin-top:20px;}
 .trip-card{
   border:1px solid var(--line); border-radius:var(--radius); background:var(--paper);
   box-shadow:var(--shadow); padding:18px; cursor:pointer; position:relative;
@@ -901,6 +901,7 @@ a{color:var(--brand-dark);}
 .ai-summary-refresh:hover{color:var(--brand-dark);}
 /* ---------- gigs (live music) ---------- */
 .gig-list{display:flex; flex-direction:column; gap:10px;}
+.gig-people-filter{margin-bottom:14px; max-width:340px;}
 .gig-card{padding:14px; margin-bottom:0;}
 .gig-top{display:flex; gap:12px; align-items:center;}
 .gig-cover{width:56px; height:56px; flex-shrink:0; border-radius:50%; object-fit:cover;
@@ -916,6 +917,19 @@ a{color:var(--brand-dark);}
 .gig-name{font-family:var(--font-head); font-weight:700; font-size:.95rem; color:var(--ink); overflow-wrap:anywhere;}
 .gig-facts{margin-top:2px;}
 .gig-actions{display:flex; gap:2px; flex-shrink:0;}
+.gig-card.gig-clickable{cursor:pointer;}
+/* Theatre's 0.5-10 rating shown as five stars (halves supported) - a muted base star with a
+   brand-coloured copy clipped to its fill fraction on top */
+.theatre-stars{display:inline-flex; gap:3px; margin-top:4px; font-size:.85rem; line-height:1;}
+.star5{position:relative; display:inline-block; color:var(--line-strong);}
+.star5-fill{position:absolute; top:0; left:0; overflow:hidden; color:var(--brand); white-space:nowrap;}
+/* the tap-a-star rating input: the visual row sits under an even strip of 10 invisible half-star
+   hit targets (two per star, left half = the ½) */
+.star5-input{display:flex; align-items:center; gap:14px; margin-top:6px;}
+.star5-row{position:relative; display:inline-block;}
+.star5-visual{display:flex; gap:4px; font-size:1.7rem; line-height:1; pointer-events:none;}
+.star5-hits{position:absolute; inset:0; display:flex;}
+.star5-hit{flex:1; background:none; border:0; padding:0; margin:0; cursor:pointer;}
 /* the artist search dropdown floats over whatever's below it in the form rather than pushing
    the rest of the fields down as results come and go */
 .gig-search-wrap{position:relative;}
@@ -1030,7 +1044,7 @@ input[type=text],input[type=date],input[type=time],input[type=number],input[type
 }
 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2314282F'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px;}
 textarea{min-height:90px; resize:vertical;}
-input:focus,select:focus,textarea:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(14,133,119,.16);}
+input:focus,select:focus,textarea:focus{outline:none; border-color:var(--line-strong); box-shadow:0 0 0 3px rgba(58,40,31,.08);}
 .field{margin-bottom:14px;}
 /* a small search-as-you-type picker, built rather than relying on <datalist> - iOS Safari
    doesn't render datalist suggestions at all, so on a phone the old airline field was a plain
@@ -1134,10 +1148,18 @@ input[list]::-webkit-calendar-picker-indicator, input[list]::-webkit-list-button
    colours just for this one screen. */
 .been-map-wrap{display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:14px;}
 .been-map-label{font-size:.85rem; font-weight:700; color:var(--ink); min-height:1.2em; text-align:center;}
+.been-map-viewport{position:relative; width:100%;}
 .been-map{width:100%; height:auto; display:block; border:1px solid var(--line); border-radius:var(--radius);
-  background:var(--bg); box-shadow:var(--shadow);}
+  background:var(--bg); box-shadow:var(--shadow); touch-action:none; cursor:grab;}
+.been-map.is-panning{cursor:grabbing;}
+.been-map-zoom{position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:6px;}
+.been-map-zoom .btn{width:34px; height:34px; min-width:0; padding:0; display:flex; align-items:center;
+  justify-content:center; font-size:1.1rem; line-height:1; background:var(--paper);}
 .wm-country{stroke:var(--bg); stroke-width:0.6; cursor:pointer; transition:opacity .12s;}
-.wm-country:hover,.wm-country:focus-visible{opacity:.75; outline:none;}
+/* focus (a tap/click, not just keyboard) must not leave the browser's default blue outline
+   boxed around a country - the label above the map already says which one is selected */
+.wm-country:hover,.wm-country:focus,.wm-country:focus-visible{opacity:.75; outline:none;}
+.been-map:focus,.been-map:focus-visible,.been-map path:focus{outline:none;}
 .wm-country.wm-none{fill:var(--line-strong);}
 .wm-country.wm-want{fill:var(--brand-tint);}
 .wm-country.wm-going{fill:var(--brand);}
@@ -1356,6 +1378,12 @@ details .d-body{padding:14px 16px;}
 .section-head h2{margin-bottom:0;}
 .section-head h3{display:inline-flex; align-items:center; gap:8px;}
 .section-head h3 .icon{font-size:1.3rem; color:var(--brand); flex-shrink:0;}
+/* an itinerary stop's title reads at the same size as the "Midday"/"Evening" time beside it,
+   with its place folded onto the same line ("Beach Day · Corfu Beach") */
+.section-head h3.plan-stop-title{font-size:.85rem;}
+/* the map shortcut keeps a square hover/focus background rather than the wider pill the default
+   .iconbtn padding gives it */
+.plan-map-icon{padding:6px;}
 /* most emoji glyphs carry extra padding low in their own box, so flex-centred against a
    title they read as sitting a touch low - nudged up to actually look aligned */
 .sec-emoji{font-size:1.15rem; line-height:1; flex-shrink:0; transform:translateY(-1px);
@@ -1728,7 +1756,7 @@ body.kb-open .tabbar.on{display:none;}
      no width check of its own) would otherwise sit fixed over the page redundantly */
   .tabbar.on{display:none!important;}
   .wrap{max-width:1160px; margin:0; padding:calc(14px + env(safe-area-inset-top)) 40px 96px 32px; flex:1; min-width:0;}
-  .dash-grid{grid-template-columns:repeat(3,1fr);}
+  .dash-grid{grid-template-columns:repeat(4,1fr);}
   /* every trip tab reads as a stack of phone-width cards, not a dashboard - the wide 3-column
      layout only suits the trip's own Overview (its stat tiles genuinely want the extra
      columns); every other tab is single-column content top to bottom same as it is on mobile,
@@ -1747,6 +1775,19 @@ body.kb-open .tabbar.on{display:none;}
   /* Next Trip's map preview gets more room to actually read as a map once the desktop grid
      isn't squeezing it down to a sliver of phone-width space */
   .dash-trip-map{height:220px;}
+  /* wider desktop gets multi-column list layouts instead of one tall single column.
+     .gig-list is shared by the Gigs, Theatre and Songs lists; .gig-list-artists (Artists /
+     Not Seen) comes after so its 6-up wins over the 2-up above. */
+  .gig-list{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; align-items:start;}
+  .gig-list-artists{grid-template-columns:repeat(6,1fr);}
+  .plants-list{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .places-grid.dense{grid-template-columns:repeat(4,1fr);}
+  /* Home's top stat row sits on one line (six single tiles + the double-width Watering tile) */
+  .dash-stat-grid{grid-template-columns:repeat(8,1fr);}
+  /* a plant's own page: actions + growing conditions pinned on the left, only the timeline/log
+     on the right scrolls with the page */
+  .plant-detail-cols{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); gap:28px; align-items:start;}
+  .plant-detail-left{position:sticky; top:18px; align-self:start;}
 }
 @media(min-width:768px) and (max-width:1279px){
   .sidebar{width:216px;}
@@ -4834,7 +4875,6 @@ function dashGigWidgetHTML(){
       ${g.image ? `<img class="dash-item-img-lg round" src="${esc(g.image)}" alt="" loading="lazy">`
                  : `<div class="dash-item-flags" aria-hidden="true">🎤</div>`}
       <div class="dash-item-title">${esc(g.artist||'Untitled')}</div>
-      <div class="dash-item-sub">Next Gig</div>
       ${gigPeopleLineHTML(g)}
       ${miniCountdownHTML(g.date)}
     </div>`;
@@ -5554,13 +5594,78 @@ function beenMapHTML(trips){
   }).join('');
   return `<div class="been-map-wrap">
     <div class="been-map-label" id="been-map-label">Tap a country to see it here</div>
-    <svg class="been-map" viewBox="${WORLD_MAP_VIEWBOX}" role="img" aria-label="World map showing countries you've been to and want to go to">${shapes}</svg>
+    <div class="been-map-viewport">
+      <svg class="been-map" id="been-map-svg" viewBox="${WORLD_MAP_VIEWBOX}" role="img" aria-label="World map showing countries you've been to and want to go to">${shapes}</svg>
+      <div class="been-map-zoom">
+        <button type="button" class="btn" aria-label="Zoom in" onclick="App.beenMapZoom(0.7)">+</button>
+        <button type="button" class="btn" aria-label="Zoom out" onclick="App.beenMapZoom(1.4286)">${'−'}</button>
+        <button type="button" class="btn" aria-label="Reset zoom" onclick="App.beenMapZoomReset()">${fa('arrows-rotate')}</button>
+      </div>
+    </div>
     <div class="been-map-legend">
       <span class="been-map-legend-item"><span class="been-map-swatch wm-been" aria-hidden="true"></span>Been</span>
       <span class="been-map-legend-item"><span class="been-map-swatch wm-going" aria-hidden="true"></span>Going</span>
       <span class="been-map-legend-item"><span class="been-map-swatch wm-want" aria-hidden="true"></span>Want to Go</span>
     </div>
   </div>`;
+}
+/* pan/zoom for the world map: the SVG's own viewBox is shrunk (zoom in) or grown (zoom out) and
+   slid around (pan), clamped so it never zooms out past the whole world or off its edges. Wheel
+   zooms toward the cursor, drag pans, and the +/-/reset buttons work on touch too. State lives in
+   BEEN_MAP_VB ([minX,minY,w,h]); it's re-initialised each time the map is (re)rendered. */
+let BEEN_MAP_VB = null;
+function beenMapBaseVB(){ return (WORLD_MAP_VIEWBOX||'0 0 1000 500').split(/\s+/).map(Number); }
+function applyBeenMapVB(){
+  const svg = document.getElementById('been-map-svg');
+  if(svg && BEEN_MAP_VB) svg.setAttribute('viewBox', BEEN_MAP_VB.join(' '));
+}
+function beenMapZoomAt(factor, clientX, clientY){
+  const svg = document.getElementById('been-map-svg'); if(!svg) return;
+  if(!BEEN_MAP_VB) BEEN_MAP_VB = beenMapBaseVB();
+  const base = beenMapBaseVB();
+  const [x,y,w,h] = BEEN_MAP_VB;
+  let nw = w*factor, nh = h*factor;
+  if(nw > base[2]){ nw = base[2]; nh = base[3]; }          // never smaller than the whole world
+  const minW = base[2]*0.08, minH = base[3]*0.08;          // don't zoom in past ~12x
+  if(nw < minW){ nw = minW; nh = minH; }
+  const rect = svg.getBoundingClientRect();
+  const px = (clientX==null || !rect.width) ? 0.5 : (clientX-rect.left)/rect.width;
+  const py = (clientY==null || !rect.height) ? 0.5 : (clientY-rect.top)/rect.height;
+  let nx = x + (w-nw)*px, ny = y + (h-nh)*py;
+  nx = Math.max(base[0], Math.min(nx, base[0]+base[2]-nw)); // keep inside the world's own box
+  ny = Math.max(base[1], Math.min(ny, base[1]+base[3]-nh));
+  BEEN_MAP_VB = [nx,ny,nw,nh];
+  applyBeenMapVB();
+}
+function initBeenMapZoom(){
+  const svg = document.getElementById('been-map-svg'); if(!svg) return;
+  BEEN_MAP_VB = beenMapBaseVB();
+  applyBeenMapVB();
+  let dragging = false, moved = false, lastX = 0, lastY = 0;
+  svg.addEventListener('pointerdown', e => {
+    dragging = true; moved = false; lastX = e.clientX; lastY = e.clientY;
+    try{ svg.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  svg.addEventListener('pointermove', e => {
+    if(!dragging || !BEEN_MAP_VB) return;
+    const rect = svg.getBoundingClientRect(); if(!rect.width) return;
+    const [x,y,w,h] = BEEN_MAP_VB;
+    if(Math.abs(e.clientX-lastX) + Math.abs(e.clientY-lastY) > 2){ moved = true; svg.classList.add('is-panning'); }
+    const dx = (e.clientX-lastX)/rect.width * w;
+    const dy = (e.clientY-lastY)/rect.height * h;
+    const base = beenMapBaseVB();
+    const nx = Math.max(base[0], Math.min(x-dx, base[0]+base[2]-w));
+    const ny = Math.max(base[1], Math.min(y-dy, base[1]+base[3]-h));
+    BEEN_MAP_VB = [nx,ny,w,h];
+    lastX = e.clientX; lastY = e.clientY;
+    applyBeenMapVB();
+  });
+  const end = () => { dragging = false; svg.classList.remove('is-panning'); };
+  svg.addEventListener('pointerup', end);
+  svg.addEventListener('pointercancel', end);
+  // a drag shouldn't also register as a country tap
+  svg.addEventListener('click', e => { if(moved){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  svg.addEventListener('wheel', e => { e.preventDefault(); beenMapZoomAt(e.deltaY<0 ? 0.85 : 1.176, e.clientX, e.clientY); }, {passive:false});
 }
 
 /* four glanceable numbers above the Been list, a plain-tile grid - purely informational, no
@@ -5704,7 +5809,7 @@ function drawPlacesGrid(){
     let list = beenOrderedCountries(trips);
     let upcoming = beenUpcomingCountries(trips);
     const statsRoot = $('#been-stats'); if(statsRoot) statsRoot.innerHTML = beenStatsHTML(list);
-    if(CUR_BEEN_VIEW==='map'){ el.innerHTML = beenMapHTML(trips); return; }
+    if(CUR_BEEN_VIEW==='map'){ el.innerHTML = beenMapHTML(trips); initBeenMapZoom(); return; }
     if(q){
       list = list.filter(co=>co.name.toLowerCase().includes(q));
       upcoming = upcoming.filter(co=>co.name.toLowerCase().includes(q));
@@ -6641,7 +6746,8 @@ function wlCardHTML(g){
 let GIG_SEARCH_TIMER = null;
 let GIG_SEARCH_RESULTS = [];   // last search response, held so a click on a result doesn't refetch
 let GIG_PICKED = null;         // {id,name,image} once a search result's been chosen for the open form
-let GIG_FORM_PEOPLE = [];      // names typed onto the open form's People field, saved as gig.people
+let GIG_FORM_PEOPLE = [];      // everyone shown as a chip on the open form (manual + auto from a trip)
+let GIG_FORM_TRIP_PEOPLE = []; // snapshot of the matching trip's travellers (owner aside) when the form opened, to split manual vs auto on save
 
 /* ---------- Spotify user login (the Artists checklist) ----------
    Who you follow and how much you actually listen to them is personal library data - Spotify
@@ -6861,12 +6967,12 @@ function gigArtistRowHTML(a){
   // every row on Not Seen is unseen by definition - the pill would just say the same thing on
   // every single one, so it's dropped there rather than repeated for no reason
   const seenCount = (DB.gigs||[]).filter(g=>g.artistId===a.id).length;
+  // seen more than once reads inside the pill itself ("Seen Twice", "Seen ×3") rather than as
+  // a "#2" tacked onto the artist's name
+  const seenLabel = seenCount>=2 ? (seenCount===2 ? 'Seen Twice' : `Seen ×${seenCount}`) : 'Seen';
   const status = CUR_GIGS_TAB==='notseen' ? '' : seenCount
-    ? `<span class="gig-seen-pill">✓ Seen</span>`
+    ? `<span class="gig-seen-pill">✓ ${seenLabel}</span>`
     : `<span class="gig-seen-pill off">Not seen yet</span>`;
-  // "The Weeknd #2" once you've seen them more than once - the count reads as part of their
-  // name here, so the pill above just says Seen rather than repeating it as "Seen ×2"
-  const nameSuffix = seenCount>1 ? ` <span class="gig-seen-count">#${seenCount}</span>` : '';
   return `
     <div class="card gig-card gig-artist-row" role="button" tabindex="0" onclick="App.gigFormForArtist('${esc(a.id)}')"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.gigFormForArtist('${esc(a.id)}')}">
@@ -6874,18 +6980,39 @@ function gigArtistRowHTML(a){
         ${a.image ? `<img class="gig-cover" src="${esc(a.image)}" alt="" loading="lazy">`
                    : `<span class="gig-cover gig-cover-fallback" aria-hidden="true">${fa('microphone')}</span>`}
         <div class="gig-info">
-          <div class="gig-name">${esc(a.name)}${nameSuffix}</div>
+          <div class="gig-name">${esc(a.name)}</div>
         </div>
         ${status}
       </div>
     </div>`;
 }
+let CUR_GIG_PERSON = '';   // Gigs log: filter to gigs a given person came to ('' = everyone)
+/* every distinct person across all logged gigs (yourself aside), for the "Who with" filter */
+function gigAllPeople(){
+  const set = new Set();
+  (DB.gigs||[]).forEach(g => withoutOwner(gigPeople(g)).forEach(p => set.add(p)));
+  return [...set].sort((a,b)=>a.localeCompare(b));
+}
 function drawGigsList(){
   const body = $('#gigs-body'); if(!body) return;
   const gigs = DB.gigs||[];
   if(!gigs.length){ body.innerHTML = `<div class="empty">No gigs logged yet.<br>Tap + Add Gig to log the first one.</div>`; return; }
-  const ordered = gigs.map((g,i)=>({g,i})).sort((a,b)=>(b.g.date||'').localeCompare(a.g.date||''));
-  body.innerHTML = `<div class="gig-list">${ordered.map(o=>gigCardHTML(o.g,o.i)).join('')}</div>`;
+  const people = gigAllPeople();
+  if(CUR_GIG_PERSON && !people.includes(CUR_GIG_PERSON)) CUR_GIG_PERSON = '';   // person no longer on any gig
+  const filterHTML = people.length ? `
+    <div class="field gig-people-filter">
+      <label class="label" for="gig-person-filter">Who with</label>
+      <select id="gig-person-filter" onchange="App.gigFilterPerson(this.value)">
+        <option value=""${CUR_GIG_PERSON?'':' selected'}>Everyone</option>
+        ${people.map(p=>`<option value="${esc(p)}"${CUR_GIG_PERSON===p?' selected':''}>${esc(p)}</option>`).join('')}
+      </select>
+    </div>` : '';
+  let ordered = gigs.map((g,i)=>({g,i})).sort((a,b)=>(b.g.date||'').localeCompare(a.g.date||''));
+  if(CUR_GIG_PERSON) ordered = ordered.filter(o => withoutOwner(gigPeople(o.g)).includes(CUR_GIG_PERSON));
+  const listHTML = ordered.length
+    ? `<div class="gig-list">${ordered.map(o=>gigCardHTML(o.g,o.i)).join('')}</div>`
+    : `<div class="empty">No gigs with ${esc(CUR_GIG_PERSON)} logged yet.</div>`;
+  body.innerHTML = filterHTML + listHTML;
 }
 /* the trip a gig's date falls inside, if any - the same date-range match planDayGroups already
    uses to fold a gig into that trip's own Itinerary day, reused here so a gig doesn't need its
@@ -6908,7 +7035,11 @@ const OWNER_NAME = 'Chris';
 const withoutOwner = list => (list||[]).filter(p => (p||'').trim().toLowerCase() !== OWNER_NAME.toLowerCase());
 function gigPeople(g){
   const trip = tripForGig(g);
-  return [...new Set([...(g.people||[]), ...(trip ? trip.participants||[] : [])])];
+  const auto = trip ? (trip.participants||[]) : [];
+  // trip travellers are auto-included, minus anyone explicitly taken off THIS gig (on the trip
+  // but not going to this one) - see gig.excludedPeople, set from the form's removable chips
+  const excluded = g.excludedPeople || [];
+  return [...new Set([...(g.people||[]), ...auto])].filter(p => !excluded.includes(p));
 }
 function gigPeopleLineHTML(g){
   const people = withoutOwner(gigPeople(g));
@@ -6969,12 +7100,18 @@ function gigFormImpl(i, prefillArtist){
     || (prefillArtist ? {artist:prefillArtist.name, artistId:prefillArtist.id, image:prefillArtist.image} : {});
   GIG_PICKED = g.artistId ? {id:g.artistId, name:g.artist, image:g.image} : null;
   GIG_SEARCH_RESULTS = [];
-  GIG_FORM_PEOPLE = [...(g.people||[])];
+  // seed the chips with everyone going (manual names + the matching trip's travellers, minus
+  // yourself), all removable; the trip snapshot lets saveGig tell which removals are trip people
+  // to exclude from this gig vs plain manual names
+  const _formTrip = tripForGig(g);
+  GIG_FORM_TRIP_PEOPLE = withoutOwner(_formTrip ? (_formTrip.participants||[]) : []);
+  GIG_FORM_PEOPLE = withoutOwner(gigPeople(g));
   openModal(`
     <h2>${i>=0?'Edit Gig':'Log a Gig'}</h2>
     ${gigArtistFieldHTML(g)}
     <div class="field"><label class="label" for="gig-city">Location</label><input id="gig-city" type="text" value="${esc(g.city||'')}"></div>
     <div class="field"><label class="label" for="gig-date">Date</label><input id="gig-date" type="date" value="${esc(g.date||'')}"></div>
+    <div class="field"><label class="label" for="gig-time">Time <span class="muted">(optional)</span></label><input id="gig-time" type="time" value="${esc(g.time||'')}"></div>
     <div class="field"><label class="label">People</label>
       <div style="display:flex;gap:8px">
         <input type="text" id="gig-person" placeholder="Who's going"
@@ -6982,7 +7119,6 @@ function gigFormImpl(i, prefillArtist){
         <button class="btn" type="button" onclick="App.gigAddPerson()">+ Add</button>
       </div>
       <div class="chips" id="gig-people-pills" style="margin-top:10px"></div>
-      ${gigAutoPeopleHintHTML(g)}
     </div>
     <button class="btn primary" style="width:100%" onclick="App.saveGig(${i>=0?i:-1})">${i>=0?'Save':'Add Gig'}</button>`);
   const picked = $('#gig-picked'); if(picked) picked.innerHTML = gigPickedHTML();
@@ -7040,13 +7176,21 @@ function gigArtistPickImpl(n){
 function saveGigImpl(i){
   const artist = ($('#gig-artist').value||'').trim();
   if(!artist) return markErr('#gig-artist','Enter an artist name');
+  // split the chips back into manual names vs trip travellers: a trip person left on stays auto
+  // (not copied onto the gig), one removed goes to excludedPeople so they're dropped from just
+  // this gig without touching the trip. Names that aren't trip travellers are plain manual people.
+  const going = [...GIG_FORM_PEOPLE];
+  const manual = going.filter(p => !GIG_FORM_TRIP_PEOPLE.includes(p));
+  const excluded = GIG_FORM_TRIP_PEOPLE.filter(p => !going.includes(p));
   const gig = {
     artist,
     artistId: (GIG_PICKED && GIG_PICKED.name===artist) ? GIG_PICKED.id : '',
     image: (GIG_PICKED && GIG_PICKED.name===artist) ? GIG_PICKED.image : '',
     city: $('#gig-city').value.trim(),
     date: $('#gig-date').value,
-    people: [...GIG_FORM_PEOPLE]
+    time: $('#gig-time').value,
+    people: manual,
+    excludedPeople: excluded
   };
   DB.gigs = DB.gigs||[];
   if(i>=0 && DB.gigs[i]) DB.gigs[i] = gig; else DB.gigs.push(gig);
@@ -7248,6 +7392,22 @@ async function backfillPosters(list, saveFn){
 function filmStarsHTML(rating){
   if(rating==null) return '';
   return `<span class="film-stars">${filmScoreLabel(rating)}/10</span>`;
+}
+/* a five-star visual (halves supported) from a 0.5-10 rating - each star is a muted base glyph
+   with a brand-coloured copy clipped to its own fill fraction on top, so 9/10 reads as 4½ stars.
+   Used for Theatre's card display and its rating input. */
+function fiveStarHTML(rating){
+  const stars = (rating==null ? 0 : Number(rating)) / 2;
+  let out = '';
+  for(let n=1; n<=5; n++){
+    const pct = Math.max(0, Math.min(1, stars-(n-1))) * 100;
+    out += `<span class="star5">${pct>0?`<span class="star5-fill" style="width:${pct}%">${fa('star')}</span>`:''}${fa('star')}</span>`;
+  }
+  return out;
+}
+function theatreStarsHTML(rating){
+  if(rating==null) return '';
+  return `<span class="theatre-stars" title="${filmScoreLabel(rating)}/10" aria-label="${filmScoreLabel(rating)} out of 10">${fiveStarHTML(rating)}</span>`;
 }
 function filmsSorted(){
   return (DB.films||[]).map((f,i)=>({f,i}))
@@ -8876,29 +9036,39 @@ function drawTheatreList(){
 function theatreCardHTML(t, i){
   const facts = [t.venue, t.date?fmtShortDate(t.date):''].filter(Boolean).join(' · ');
   return `
-    <div class="card gig-card">
+    <div class="card gig-card gig-clickable" role="button" tabindex="0" onclick="App.theatreForm(${i})"
+      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.theatreForm(${i})}">
       <div class="gig-top">
         ${t.image ? `<img class="theatre-cover" src="${esc(t.image)}" alt="" loading="lazy">`
                    : `<span class="theatre-cover gig-cover-fallback" aria-hidden="true">🎭</span>`}
         <div class="gig-info">
           <div class="gig-name">${esc(t.title||'Untitled')}</div>
           ${facts?`<div class="gig-facts muted small">${esc(facts)}</div>`:''}
-          ${filmStarsHTML(t.rating)}
+          ${theatreStarsHTML(t.rating)}
         </div>
         <div class="gig-actions">
-          <button class="iconbtn edit" aria-label="Edit show" title="Edit" onclick="App.theatreForm(${i})">${ICONS.edit}</button>
-          <button class="iconbtn del" aria-label="Remove show" title="Remove" onclick="App.delTheatre(${i})">${ICONS.trash}</button>
+          <button class="iconbtn edit" aria-label="Edit show" title="Edit" onclick="event.stopPropagation();App.theatreForm(${i})">${ICONS.edit}</button>
+          <button class="iconbtn del" aria-label="Remove show" title="Remove" onclick="event.stopPropagation();App.delTheatre(${i})">${ICONS.trash}</button>
         </div>
       </div>
       ${t.notes?`<div class="small muted" style="margin-top:8px">${esc(t.notes)}</div>`:''}
     </div>`;
 }
+/* a tap-a-star rating, five stars with half-steps (tap a star's left half for the ½). The value
+   is still stored on the same 0.5-10 scale Films/Games use (kept in a hidden #theatre-rating input
+   the save reads), so 4½ stars saves as 9. Tapping the current rating again clears it. */
 function theatreRatingFieldHTML(value){
-  return `<div class="field"><label class="label" for="theatre-rating">Rating</label>
-    <select id="theatre-rating">
-      <option value=""${value==null?' selected':''}>No rating</option>
-      ${FILM_SCORE_VALUES.map(v=>`<option value="${v}"${value===v?' selected':''}>${filmScoreLabel(v)}/10</option>`).join('')}
-    </select>
+  const hits = Array.from({length:10}, (_,k)=>
+    `<button type="button" class="star5-hit" aria-label="${(k+1)/2} out of 5 stars" onclick="App.theatreRate(${k+1})"></button>`).join('');
+  return `<div class="field"><label class="label">Rating</label>
+    <input type="hidden" id="theatre-rating" value="${value==null?'':value}">
+    <div class="star5-input">
+      <div class="star5-row" id="theatre-star-row">
+        <div class="star5-visual">${fiveStarHTML(value==null?null:value)}</div>
+        <div class="star5-hits">${hits}</div>
+      </div>
+      <button type="button" class="btn sm ghost star5-clear" onclick="App.theatreRate('')">Clear</button>
+    </div>
   </div>`;
 }
 /* a manual upload (Plants' own "no icon fits, upload one" fallback - downscaleToDataURLPng, same
@@ -9959,10 +10129,19 @@ function plantDetailInfoHTML(p){
 }
 let CUR_PLANT_DETAIL_ID = null;
 function plantDetailContentHTML(p){
+  // desktop splits into two columns (see .plant-detail-cols): the actions + growing conditions
+  // stay pinned on the left while only the timeline/log on the right scrolls with the page. The
+  // ids are kept exactly where drawPlantDetail looks them up, just wrapped in the columns.
   return `
-    <div id="plant-detail-actions">${plantDetailActionsHTML(p)}</div>
-    <div id="plant-detail-info">${plantDetailInfoHTML(p)}</div>
-    <div id="plant-detail-timeline">${plantCombinedTimelineHTML(p)}</div>`;
+    <div class="plant-detail-cols">
+      <div class="plant-detail-left">
+        <div id="plant-detail-actions">${plantDetailActionsHTML(p)}</div>
+        <div id="plant-detail-info">${plantDetailInfoHTML(p)}</div>
+      </div>
+      <div class="plant-detail-right">
+        <div id="plant-detail-timeline">${plantCombinedTimelineHTML(p)}</div>
+      </div>
+    </div>`;
 }
 /* the header row (Figma 5:2323) - back, icon+name, Edit, all in one line rather than the name
    living down in a sticky header of its own further down the page. Edit is now the same filled
@@ -10355,6 +10534,7 @@ App.goGigs = () => { location.hash = '#/gigs'; };
 App.goGigsSeen = () => { CUR_GIGS_TAB = 'log'; location.hash = '#/gigs'; };
 App.goSongs = () => { CUR_GIGS_TAB = 'songs'; location.hash = '#/gigs'; };
 App.gigsTab = k => { CUR_GIGS_TAB = k; renderGigs(); window.scrollTo(0,0); };
+App.gigFilterPerson = v => { CUR_GIG_PERSON = v; drawGigsList(); };
 App.gigForm = gigFormImpl;
 App.gigFormForArtist = id => {
   const a = (SPOTIFY_ARTISTS||[]).find(x=>x.id===id);
@@ -10365,9 +10545,15 @@ App.gigArtistInput = gigArtistInputImpl;
 App.gigArtistPick = gigArtistPickImpl;
 App.saveGig = saveGigImpl;
 App.delGig = delGigImpl;
+/* People names get their first letter capitalised as they're added, so "cal" reads the same
+   as "Cal". Only the first letter of each word is touched (words split on spaces and hyphens),
+   leaving the rest of each word as typed so intentional casing like "McCartney" survives. */
+function titleCaseName(s){
+  return (s||'').replace(/[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ']*/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+}
 App.gigAddPerson = () => {
   const inp = $('#gig-person');
-  const name = (inp.value||'').trim();
+  const name = titleCaseName((inp.value||'').trim());
   if(!name) return markErr('#gig-person','Enter a name');
   if(GIG_FORM_PEOPLE.includes(name)) return markErr('#gig-person','Already added');
   GIG_FORM_PEOPLE.push(name);
@@ -10547,6 +10733,14 @@ App.theatreForm = theatreFormImpl;
 App.theatreTitleInput = theatreTitleInputImpl;
 App.theatreTitlePick = theatreTitlePickImpl;
 App.saveTheatre = saveTheatreImpl;
+App.theatreRate = v => {
+  const inp = document.getElementById('theatre-rating'); if(!inp) return;
+  // tapping the current rating (or Clear) resets to no rating
+  const next = (v==='' || String(inp.value)===String(v)) ? '' : String(v);
+  inp.value = next;
+  const vis = document.querySelector('#theatre-star-row .star5-visual');
+  if(vis) vis.innerHTML = fiveStarHTML(next===''?null:Number(next));
+};
 App.delTheatre = delTheatreImpl;
 App.theatreWatchlistForm = theatreWatchlistFormImpl;
 App.saveTheatreWatchlist = saveTheatreWatchlistImpl;
@@ -10710,6 +10904,8 @@ App.setPlaceStatus = (code, status) => {
   drawPlacesGrid();
 };
 App.beenView = k => { CUR_BEEN_VIEW = k; drawBeenSubtabs(); drawPlacesGrid(); };
+App.beenMapZoom = factor => beenMapZoomAt(factor, null, null);
+App.beenMapZoomReset = () => { BEEN_MAP_VB = beenMapBaseVB(); applyBeenMapVB(); };
 App.worldMapTap = code => {
   const el = $('#been-map-label'); if(!el) return;
   el.textContent = worldMapTapLabel(code, placesTripMap());
@@ -10742,7 +10938,7 @@ function tripCardHTML(t){
       <h3>${esc(t.name)}</h3>
       ${t.destination?`<div class="muted">${esc(t.destination)}</div>`:''}
       <div class="small" style="margin-top:8px">${esc(tripWhenLine(t))}</div>
-      ${people?`<div class="small muted trip-people">${fa('user')}<span class="trip-people-names">${esc(people)}</span></div>`:''}
+      ${people?`<div class="small muted trip-people"><span class="trip-people-names">${esc(people)}</span></div>`:''}
       <div style="margin-top:12px">${statusPill(t)}</div>
     </div>`;
 }
@@ -11251,7 +11447,7 @@ App.etDelCountry = i => {
 App.etAddPerson = () => {
   const t = getTrip(CUR_TRIP_ID); if(!t) return;
   const inp = $('#et-person');
-  const name = (inp.value||'').trim();
+  const name = titleCaseName((inp.value||'').trim());
   if(!name) return markErr('#et-person','Enter a name');
   if(t.participants.includes(name)) return markErr('#et-person','Already on the trip');
   t.participants.push(name);
@@ -12574,7 +12770,7 @@ function planDayGroups(t){
   if(!rough && t.startDate && t.endDate){
     (DB.gigs||[]).forEach((g,gi)=>{
       if(g.date && g.date>=t.startDate && g.date<=t.endDate){
-        (groups[g.date]=groups[g.date]||[]).push({_autoGig:1, time:'', g, gi});
+        (groups[g.date]=groups[g.date]||[]).push({_autoGig:1, time:g.time||'', timeKey:itineraryTimeKey({time:g.time||''}), g, gi});
       }
     });
   }
@@ -12712,7 +12908,7 @@ function planDaysHTML(t, ro, filterKeys){
                        : `<span class="gig-cover gig-cover-fallback" aria-hidden="true">${fa('microphone')}</span>`}
           <div class="gig-info">
             <div class="gig-name">${esc(s.g.artist||'Untitled')}</div>
-            ${s.g.city?`<div class="gig-facts muted small">${esc(s.g.city)}</div>`:''}
+            ${(s.g.time||s.g.city)?`<div class="gig-facts muted small">${[s.g.time?esc(s.g.time):'', s.g.city?esc(s.g.city):''].filter(Boolean).join(' · ')}</div>`:''}
             ${gigPeopleLineHTML(s.g)}
           </div>
         </div>
@@ -12848,7 +13044,7 @@ function planDaysHTML(t, ro, filterKeys){
     // a plain icon, not a bordered/backgrounded button - it sits inline on the title's own row
     // (see head, below), right-aligned there by .section-head's own space-between, rather than
     // getting a full button's worth of visual weight for what's just a shortcut off the title
-    const mapIconLink = mapHref ? `<a class="iconbtn" href="${esc(mapHref)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Open Map" title="Open Map">${mapIcon(mapHref)}</a>` : '';
+    const mapIconLink = mapHref ? `<a class="iconbtn plan-map-icon" href="${esc(mapHref)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Open Map" title="Open Map">${mapIcon(mapHref)}</a>` : '';
     // a title-only card (nothing following it at all) has nothing to space away from, so the
     // head keeps no margin below it - otherwise the bottom padding stacks on top of that
     // margin and reads as lopsided against the plain top padding above the title
@@ -12856,25 +13052,22 @@ function planDaysHTML(t, ro, filterKeys){
     // with nothing below the head at all (no notes, image, or location line) the card's own
     // plain bottom padding is the only space under the title, and .card's usual 18px reads as
     // too much with just one line above it - trimmed back for this solo-title case only
-    const solo = !hasBelow && !(time && s.location);
+    const solo = !hasBelow;
     // a timed stop leads with when it happens - "Evening - 🏰 Castle Walk & Sunset" - the same
     // "time - name" shape every other timed line on this page already uses (the Check Out pill,
     // the flight/ferry auto-tags), in the same plain, non-bold weight as the accommodation
     // card's own leading time (.itin-time) rather than getting swept up into the bold heading
-    // next to it. Its place is its own line underneath rather than folded into the title, since
-    // a title already carrying a time has no room left to also read naturally with a place
-    // tacked on the end of it. An untimed stop has no such crowding, so it keeps the place folded
-    // into the title instead ("Beach Day - Corfu Beach"), same as the day heading above it
-    // already reads.
+    // next to it. The place folds onto the title line after the name ("Beach Day · Corfu Beach"),
+    // same as the day heading above it reads - but is dropped when it just repeats the name (a
+    // stop called "Jet Ski" at a place called "Jet Ski" shouldn't say it twice).
     const head = `
-      <div class="section-head" style="margin-bottom:${hasBelow||(time&&s.location)?'4px':'0'}">
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;min-width:0">
+      <div class="section-head" style="margin-bottom:${hasBelow?'4px':'0'}">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0">
           ${time?`<span class="itin-time">${esc(time)}</span>`:''}
-          <h3>${time?'- ':''}${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}${!time&&s.location?' - '+esc(s.location):''}</h3>
+          <h3 class="plan-stop-title">${time?'- ':''}${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}${s.location && s.location.trim().toLowerCase()!==(s.name||'').trim().toLowerCase() ? ' · '+esc(s.location) : ''}</h3>
         </div>
         ${!hasImage ? mapIconLink : ''}
-      </div>
-      ${time&&s.location?`<p class="small muted plan-location" style="margin:0 0 ${hasBelow?'8px':'0'}">${esc(s.location)}</p>`:''}`;
+      </div>`;
     return `
     <div class="card plan-card${hasImage?' plan-card-photo':''}${solo?' plan-card-solo':''}${!ro?' plan-click':''}" ${clickAttrs(`App.planForm(${s._i})`)}>
       ${head}
@@ -13088,18 +13281,16 @@ function dayNarrative(t, k, dayItems, rough){
     : t.startDate ? Math.max(0, Math.round((new Date(k+'T00:00:00') - new Date(t.startDate+'T00:00:00'))/86400000) + 1)
     : 0;
   const {place, flag, arriving, travelMode} = dayPlaceInfo(t, k, dayItems, rough);
-  // a day built around a single planned stop ("Beach Day", "Castle Walk & Sunset") reads better
-  // naming that activity than just the place it happens to fall in - only picked when there's
-  // exactly one stop that day, since guessing which of several is the "main" one would be a
-  // coin flip. Same routing dayItems already gets sorted into elsewhere (see `card` just below)
+  // the day's planned stops name it alongside the place it falls in ("Palaiokastritsa - Hike &
+  // Snorkel/Beach") - every stop that day, each with its own emoji, joined with "&", rather than
+  // just the one. Same routing dayItems already gets sorted into elsewhere (see `card` just below)
   // for what counts as a plain stop rather than an auto-generated travel/stay/task card.
   const stops = dayItems.filter(s => !s._autoFlight && !s._autoFerry && !s._autoCar && !s._autoStay && !s._autoGig && s.kind!=='travel' && s.kind!=='task');
-  // a gig that day (see planDayGroups) names the day too, same slot a single stop would - and
-  // takes priority over one, since a gig you're actually going to reads as the main event of
-  // the day even alongside other plans
+  // a gig that day (see planDayGroups) names the day too, same slot the stops would - and takes
+  // priority over them, since a gig you're actually going to reads as the main event of the day
   const gigItems = dayItems.filter(s=>s._autoGig);
   const activityText = gigItems.length ? esc(gigItems.map(g=>g.g.artist||'Gig').join(' & '))
-    : stops.length===1 ? `${secEmoji(stops[0].emoji || ideaEmojiFor(stops[0].name))} ${esc(stops[0].name)}` : '';
+    : stops.length ? stops.map(s=>`${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}`).join(' & ') : '';
   const travelEmoji = arriving && travelMode && TRAVEL_MODES[travelMode] ? TRAVEL_MODES[travelMode].emoji+' ' : '';
   // a non-arrival day (you're already there) drops the broader half of a "Palaiokastritsa,
   // Corfu"-style place - the arrival day's own arrival heading already said which country/

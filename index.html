@@ -5823,8 +5823,11 @@ function drawPlacesGrid(){
     }
     /* one continuous numbered run rather than two sections: countries on a booked trip lead it
        (they're the next ones to happen) and carry their number like the rest, they're just
-       faded until the trip's dates pass */
-    const cards = upcoming.map(co => ({co, upcoming:true})).concat(list.map(co => ({co, upcoming:false})));
+       faded until the trip's dates pass. beenUpcomingCountries is soonest-first; the top-down
+       numbering below counts down from the top, so reverse it here (furthest-out trip first) so
+       the soonest trip lands on the number right above the last Been country - the next one you
+       do (Greece here) reads as #17, not the highest number of the run. */
+    const cards = [...upcoming].reverse().map(co => ({co, upcoming:true})).concat(list.map(co => ({co, upcoming:false})));
     /* numbered from the bottom up: #1 is the first place you went, at the foot of the list,
        counting up to the most recent at the top. Worked out once, over the whole run, so a
        country keeps its number in either view - grouping by continent reorders the cards, it

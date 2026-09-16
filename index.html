@@ -13057,16 +13057,14 @@ function planDaysHTML(t, ro, filterKeys){
     // "time - name" shape every other timed line on this page already uses (the Check Out pill,
     // the flight/ferry auto-tags), in the same plain, non-bold weight as the accommodation
     // card's own leading time (.itin-time) rather than getting swept up into the bold heading
-    // next to it. Its place is its own line underneath rather than folded into the title, since
-    // a title already carrying a time has no room left to also read naturally with a place
-    // tacked on the end of it. An untimed stop has no such crowding, so it keeps the place folded
-    // into the title instead ("Beach Day - Corfu Beach"), same as the day heading above it
-    // already reads.
+    // next to it. The place folds onto the title line after the name ("Beach Day · Corfu Beach"),
+    // same as the day heading above it reads - but is dropped when it just repeats the name (a
+    // stop called "Jet Ski" at a place called "Jet Ski" shouldn't say it twice).
     const head = `
       <div class="section-head" style="margin-bottom:${hasBelow?'4px':'0'}">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0">
           ${time?`<span class="itin-time">${esc(time)}</span>`:''}
-          <h3 class="plan-stop-title">${time?'- ':''}${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}${s.location?' · '+esc(s.location):''}</h3>
+          <h3 class="plan-stop-title">${time?'- ':''}${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}${s.location && s.location.trim().toLowerCase()!==(s.name||'').trim().toLowerCase() ? ' · '+esc(s.location) : ''}</h3>
         </div>
         ${!hasImage ? mapIconLink : ''}
       </div>`;

@@ -13283,18 +13283,16 @@ function dayNarrative(t, k, dayItems, rough){
     : t.startDate ? Math.max(0, Math.round((new Date(k+'T00:00:00') - new Date(t.startDate+'T00:00:00'))/86400000) + 1)
     : 0;
   const {place, flag, arriving, travelMode} = dayPlaceInfo(t, k, dayItems, rough);
-  // a day built around a single planned stop ("Beach Day", "Castle Walk & Sunset") reads better
-  // naming that activity than just the place it happens to fall in - only picked when there's
-  // exactly one stop that day, since guessing which of several is the "main" one would be a
-  // coin flip. Same routing dayItems already gets sorted into elsewhere (see `card` just below)
+  // the day's planned stops name it alongside the place it falls in ("Palaiokastritsa - Hike &
+  // Snorkel/Beach") - every stop that day, each with its own emoji, joined with "&", rather than
+  // just the one. Same routing dayItems already gets sorted into elsewhere (see `card` just below)
   // for what counts as a plain stop rather than an auto-generated travel/stay/task card.
   const stops = dayItems.filter(s => !s._autoFlight && !s._autoFerry && !s._autoCar && !s._autoStay && !s._autoGig && s.kind!=='travel' && s.kind!=='task');
-  // a gig that day (see planDayGroups) names the day too, same slot a single stop would - and
-  // takes priority over one, since a gig you're actually going to reads as the main event of
-  // the day even alongside other plans
+  // a gig that day (see planDayGroups) names the day too, same slot the stops would - and takes
+  // priority over them, since a gig you're actually going to reads as the main event of the day
   const gigItems = dayItems.filter(s=>s._autoGig);
   const activityText = gigItems.length ? esc(gigItems.map(g=>g.g.artist||'Gig').join(' & '))
-    : stops.length===1 ? `${secEmoji(stops[0].emoji || ideaEmojiFor(stops[0].name))} ${esc(stops[0].name)}` : '';
+    : stops.length ? stops.map(s=>`${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}`).join(' & ') : '';
   const travelEmoji = arriving && travelMode && TRAVEL_MODES[travelMode] ? TRAVEL_MODES[travelMode].emoji+' ' : '';
   // a non-arrival day (you're already there) drops the broader half of a "Palaiokastritsa,
   // Corfu"-style place - the arrival day's own arrival heading already said which country/

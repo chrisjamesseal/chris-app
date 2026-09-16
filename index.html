@@ -9034,7 +9034,7 @@ function drawTheatreList(){
     : `<div class="empty">No shows logged yet.<br>Tap + Log Show to log the first one.</div>`;
 }
 function theatreCardHTML(t, i){
-  const facts = [t.venue, t.date?fmtShortDate(t.date):''].filter(Boolean).join(' · ');
+  const facts = [t.venue, t.date?fmtShortDate(t.date):'', t.time||''].filter(Boolean).join(' · ');
   return `
     <div class="card gig-card gig-clickable" role="button" tabindex="0" onclick="App.theatreForm(${i})"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.theatreForm(${i})}">
@@ -9172,6 +9172,7 @@ function theatreFormImpl(i, prefill){
     ${theatreTitleFieldHTML('theatre', t.title)}
     <div class="field"><label class="label" for="theatre-venue">Venue</label><input id="theatre-venue" type="text" value="${esc(t.venue||'')}"></div>
     <div class="field"><label class="label" for="theatre-date">Date</label><input id="theatre-date" type="date" value="${esc(t.date||'')}"></div>
+    <div class="field"><label class="label" for="theatre-time">Time <span class="muted">(optional)</span></label><input id="theatre-time" type="time" value="${esc(t.time||'')}"></div>
     ${theatreRatingFieldHTML(t.rating!=null?t.rating:null)}
     <div class="field"><label class="label">Photo</label><div id="theatre-poster-status">${theatrePosterStatusHTML()}</div></div>
     <div class="field"><label class="label" for="theatre-notes">Notes</label><textarea id="theatre-notes" rows="3">${esc(t.notes||'')}</textarea></div>
@@ -9187,6 +9188,7 @@ function saveTheatreImpl(i){
     title,
     venue: $('#theatre-venue').value.trim(),
     date: $('#theatre-date').value,
+    time: $('#theatre-time').value,
     rating: ratingRaw===''?null:parseFloat(ratingRaw),
     // a rating picked from this form is always already on the current 0.5-10 scale, same
     // reasoning saveFilmImpl's own scoreMigrated flag already carries

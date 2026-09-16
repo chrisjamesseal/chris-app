@@ -6900,12 +6900,18 @@ function tripForGig(g){
    already sharing with people doesn't mean retyping their names a second time. Worked out fresh
    on every render rather than copied onto the gig once, since a trip's own participant list can
    change after the gig's already logged. */
+/* The app's owner is always at their own gigs and on their own trips, so their own name is
+   just noise in the People / travellers lists shown on cards. withoutOwner strips it from
+   those DISPLAY lists only - stored data, expense splitting and the trip's participant editor
+   keep the full list, so nothing downstream changes. */
+const OWNER_NAME = 'Chris';
+const withoutOwner = list => (list||[]).filter(p => (p||'').trim().toLowerCase() !== OWNER_NAME.toLowerCase());
 function gigPeople(g){
   const trip = tripForGig(g);
   return [...new Set([...(g.people||[]), ...(trip ? trip.participants||[] : [])])];
 }
 function gigPeopleLineHTML(g){
-  const people = gigPeople(g);
+  const people = withoutOwner(gigPeople(g));
   return people.length ? `<div class="gig-facts muted small">${fa('users')} ${esc(people.join(', '))}</div>` : '';
 }
 function gigCardHTML(g, i){
@@ -6954,7 +6960,7 @@ function gigPickedHTML(){
    new trip match same as everywhere else on a gig that reads it. */
 function gigAutoPeopleHintHTML(g){
   const trip = tripForGig(g);
-  const extra = trip ? (trip.participants||[]).filter(p=>!(g.people||[]).includes(p)) : [];
+  const extra = trip ? withoutOwner((trip.participants||[]).filter(p=>!(g.people||[]).includes(p))) : [];
   if(!extra.length) return '';
   return `<p class="muted small" style="margin-top:8px">Already going, from <strong>${esc(trip.name)}</strong>: ${esc(extra.join(', '))} - added automatically, no need to add them here too.</p>`;
 }
@@ -10721,7 +10727,7 @@ App.clearPlacesRegion = () => { CUR_PLACES_REGION = null; drawPlacesGrid(); };
    higher one, since it has the room to actually list a bigger group. */
 function peopleSummary(t, empty, limit){
   limit = limit || 3;
-  const people = t.participants||[];
+  const people = withoutOwner(t.participants||[]);
   if(!people.length) return empty || '';
   if(people.length <= limit) return people.join(', ');
   return `${people.slice(0,limit-1).join(', ')} +${people.length-(limit-1)} more`;

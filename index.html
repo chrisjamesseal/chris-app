@@ -753,6 +753,9 @@ a{color:var(--brand-dark);}
    branch), which was always unboxed and stays that way; nothing extra needed here to exempt
    it. */
 .route-days .card.plan-card{background:#fff; padding-top:9px;}
+/* tighter internal padding on the plain stop/travel/task cards (half the card's usual 18px);
+   photo cards keep their full-bleed image edges, so they're excluded */
+.route-days .card.plan-card:not(.plan-card-photo){padding:9px;}
 /* a not-yet-booked flight/ferry/car/stay/travel leg inside a day's own detail keeps its box
    (same reasoning as .gap-card just above - it's a prompt to go fill something in, not a card
    already saying what it is), but reads with the page's own muted/paper tones instead of red:
@@ -1655,7 +1658,7 @@ body.kb-open .tabbar.on{display:none;}
 .plan-leg.card-undecided{border-radius:var(--radius-sm); padding:12px 14px;}
 .plan-leg-icon{flex-shrink:0; line-height:1.4;}
 .plan-leg-text{min-width:0; overflow-wrap:anywhere;}
-.plan-card{margin-bottom:20px;}
+.plan-card{margin-bottom:10px;}
 .plan-card.plan-card-solo{padding-bottom:10px;}
 
 /* ---------- packing list ---------- */
@@ -13292,7 +13295,8 @@ function dayNarrative(t, k, dayItems, rough){
   // priority over them, since a gig you're actually going to reads as the main event of the day
   const gigItems = dayItems.filter(s=>s._autoGig);
   const activityText = gigItems.length ? esc(gigItems.map(g=>g.g.artist||'Gig').join(' & '))
-    : stops.length ? stops.map(s=>`${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}`).join(' & ') : '';
+    : stops.length ? [...stops].sort((a,b)=>itineraryTimeKey(a).localeCompare(itineraryTimeKey(b)))
+        .map(s=>`${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}`).join(' & ') : '';
   const travelEmoji = arriving && travelMode && TRAVEL_MODES[travelMode] ? TRAVEL_MODES[travelMode].emoji+' ' : '';
   // a non-arrival day (you're already there) drops the broader half of a "Palaiokastritsa,
   // Corfu"-style place - the arrival day's own arrival heading already said which country/

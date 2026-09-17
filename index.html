@@ -14185,7 +14185,10 @@ App.savePlan = (i, moodIndex, complete) => {
   if(moodIndex!=null && t.moodBoard && t.moodBoard[moodIndex]) t.moodBoard[moodIndex].itineraryId = s.id;
   PLAN_IMG = null; PLAN_STOP_CUSTOM_ICON = null;
   logEdit('Itinerary', (i>=0?'Stop edited: ':'Stop added: ')+name);
-  save(); closeModal(); CUR_TAB='plan'; rerender(); toast('Stop saved');
+  // flagged "Add as Task" (or just completed as one) - same reasoning as App.delPlan's
+  // version of this: land back on Tasks rather than wherever the tap happened to come from
+  CUR_TAB = (s.asTask || complete) ? 'tasks' : 'plan';
+  save(); closeModal(); rerender(); toast('Stop saved');
 };
 App.travelWhenChange = () => {
   const wrap = $('#tv-time-wrap'); if(!wrap) return;
@@ -14339,7 +14342,10 @@ App.saveTravelLeg = (i, complete) => {
   if(i>=0) t.itinerary[i]=s; else t.itinerary.push(s);
   TRAVEL_AUTO_LINK = null;
   logEdit('Itinerary', (i>=0?'Travel edited: ':'Travel added: ')+itineraryItemLabel(s));
-  save(); closeModal(); CUR_TAB='plan'; rerender(); toast(i>=0?'Travel saved':'Travel added');
+  // flagged "Add as Task" (or just completed as one) - same reasoning as App.delPlan's
+  // version of this: land back on Tasks rather than wherever the tap happened to come from
+  CUR_TAB = (s.asTask || complete) ? 'tasks' : 'plan';
+  save(); closeModal(); rerender(); toast(i>=0?'Travel saved':'Travel added');
 };
 /* a manually-defined stretch of the trip ("Melbourne, Day 1-6") - not a booking, just a name
    and, optionally, a country for the flag, so dayPlaceInfo has something to fall back on for a
@@ -15334,6 +15340,9 @@ App.saveAccom = (i, complete) => {
     ref:$('#ac-ref').value.trim(), bookingUrl:url, notes:$('#ac-notes').value.trim()};
   if(i>=0) t.accommodations[i]=a; else t.accommodations.push(a);
   logEdit('Accommodation', (i>=0?'Accommodation updated':'Accommodation added')+(name?': '+name:''));
+  // flagged "Add as Task" (or just completed as one) - same reasoning as App.delAccom's
+  // version of this: land back on Tasks rather than wherever the tap happened to come from
+  if(a.asTask || complete) CUR_TAB = 'tasks';
   save(); closeModal(); rerender();
 };
 /* accommodation holds a lot of detail (address, dates, ref, booking link), confirm before

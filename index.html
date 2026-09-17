@@ -11695,7 +11695,7 @@ function tabHome(t, ro){
   const n = t.notes||{contacts:[],general:''};
   const nTravel = (t.flights||[]).length + (t.ferries||[]).length + (t.carHire||[]).length;
   const nDocs = (t.documents||[]).length, nLinks = (t.docLinks||[]).length,
-        nRec = (t.receipts||[]).length, nStops = (t.itinerary||[]).filter(s=>s.kind!=='travel').length,
+        nRec = (t.receipts||[]).length, nStops = (t.itinerary||[]).filter(s=>s.kind!=='travel' && !s.asTask).length,
         nPins = (t.moodBoard||[]).length,
         nContacts = (n.contacts||[]).length;
   const albumUrl = t.photoAlbum && t.photoAlbum.url || '';
@@ -11720,8 +11720,8 @@ function tabHome(t, ro){
   const nNotes = (n.items||[]).length;
   /* travel legs live in the same itinerary array as the stops but aren't activities, so they
      don't inflate the count; a plan that's only travel still isn't "nothing planned" though.
-     One flagged "Add as Task" isn't on the Itinerary at all any more (see planDayGroups), so
-     it doesn't count as a leg planned either - it's in the Tasks count below instead. */
+     Anything flagged "Add as Task" (a stop or a leg) doesn't count as planned/an activity either
+     - it's still outstanding, so it's in the Tasks count below instead. */
   const nLegs = (t.itinerary||[]).filter(s=>s.kind==='travel' && !s.asTask).length;
   const planSum = nStops ? nStops+(nStops===1?' Activity Planned':' Activities Planned')
     : nLegs ? nLegs+(nLegs===1?' Leg Planned':' Legs Planned')
@@ -11736,8 +11736,9 @@ function tabHome(t, ro){
   const gapFirstNights = new Set(gaps.map(g=>g.firstNight));
   const emptyDayCount = planKeys.filter(k => planGroups[k].length===0 && !gapFirstNights.has(k) && !isFreeDay(t,k)).length;
   const asTaskLegs = (t.itinerary||[]).filter(leg=>leg.kind==='travel' && leg.asTask).length;
+  const asTaskStops = (t.itinerary||[]).filter(s=>s.kind!=='travel' && s.asTask).length;
   const asTaskAccoms = (t.accommodations||[]).filter(a=>a.asTask).length;
-  const outstanding = openTasks + gaps.length + emptyDayCount + asTaskLegs + asTaskAccoms;
+  const outstanding = openTasks + gaps.length + emptyDayCount + asTaskLegs + asTaskStops + asTaskAccoms;
   const allBooked = tasks.length>0 && !outstanding;
   const taskSum = outstanding ? outstanding+(outstanding===1?' Thing to Book':' Things to Book')
     : allBooked ? 'All Booked' : 'Nothing Added Yet';
@@ -11990,6 +11991,17 @@ function undecidedItemsHTML(t, ro){
       title: travelTaskTitle(leg.mode, esc(leg.from), esc(leg.to)),
       time: leg.time || (leg.period && PLAN_PERIODS[leg.period] && PLAN_PERIODS[leg.period][0]) || '',
       undecided:true, editFn:`App.travelLegForm(${li})`, sortKey:k, timeKey:itineraryTimeKey(leg)});
+  });
+  /* a stop flagged "Add as Task" (App.planForm) lives only here too, same reasoning as the
+     travel leg above - read straight off the stop itself rather than a second record kept in
+     sync with it */
+  (t.itinerary||[]).forEach((s,si)=>{
+    if(s.kind==='travel' || !s.asTask) return;
+    const k = rough ? (s.day?'d'+s.day:'') : (s.date||'');
+    rows.push({dateLine: dateLineFor(k), icon:secEmoji(s.emoji || ideaEmojiFor(s.name)),
+      title: esc(s.name || 'Stop'),
+      time: s.time || (s.period && PLAN_PERIODS[s.period] && PLAN_PERIODS[s.period][0]) || '',
+      undecided:true, editFn:`App.planForm(${si})`, sortKey:k, timeKey:itineraryTimeKey(s)});
   });
   /* an accommodation flagged "Add as Task" (App.accomForm) lives only here too, same reasoning
      as the travel leg above - planDayGroups skips it, this reads it straight back off */
@@ -13080,7 +13092,7 @@ function planDaysHTML(t, ro, filterKeys){
       <div class="section-head" style="margin-bottom:${hasBelow?'4px':'0'}">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0">
           ${time?`<span class="itin-time">${esc(time)}</span>`:''}
-          <h3 class="plan-stop-title">${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}${s.location && s.location.trim().toLowerCase()!==(s.name||'').trim().toLowerCase() ? ' · '+esc(s.location) : ''}</h3>
+          <h3 class="plan-stop-title${s.asTask?' text-undecided':''}">${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}${s.location && s.location.trim().toLowerCase()!==(s.name||'').trim().toLowerCase() ? ' · '+esc(s.location) : ''}</h3>
         </div>
       </div>`;
     return `
@@ -14054,6 +14066,11 @@ App.planForm = (i, prefill, moodIndex) => {
     .map(m=>`<option value="${String(m).padStart(2,'0')}" ${m===initMin?'selected':''}>${String(m).padStart(2,'0')}</option>`).join('');
   openModal(`
     <h2>${i>=0?'Edit Stop':'Add Stop'}</h2>
+    <div class="field">
+      <label class="switch-row"><span>Add as Task</span>
+        <span class="switch"><input type="checkbox" id="pl-as-task" ${s.asTask?'checked':''} onchange="App.syncTaskCompleteBtn('pl')"><span class="knob"></span></span>
+      </label>
+    </div>
     <div class="field"><label class="label" for="pl-name">Place name</label>
       <input id="pl-name" type="text" value="${esc(s.name||'')}" placeholder="e.g. Time Out Market" oninput="App.ideaTitleTyped('#pl-name')"></div>
     ${ideaEmojiFieldHTML(s.emoji || ideaEmojiFor(s.name||''))}
@@ -14078,10 +14095,14 @@ App.planForm = (i, prefill, moodIndex) => {
     <div class="field"><label class="label">Photo</label>
       <div id="pl-img-status" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0">${planImgStatus()}</div>
       <label class="btn sm" style="cursor:pointer">${ICONS.upload} ${PLAN_IMG?'Replace photo':'Add photo'}<input type="file" accept="image/*" style="display:none" onchange="App.attachPlanImg(this)"></label></div>
-    <div class="modal-actions"><button class="btn primary" style="width:100%" onclick="App.savePlan(${i}, ${moodIndex!=null?moodIndex:'null'})">Save Stop</button>
+    <div class="modal-actions">
+      <div class="grid2">
+        <button class="btn primary" style="width:100%" onclick="App.savePlan(${i}, ${moodIndex!=null?moodIndex:'null'})">Save Stop</button>
+        <button id="pl-complete-btn" class="btn primary" style="width:100%;${s.asTask?'':'display:none'}" onclick="App.savePlan(${i}, ${moodIndex!=null?moodIndex:'null'}, true)">Save &amp; Complete Task</button>
+      </div>
       ${i>=0?`<button class="btn danger" style="width:100%;margin-top:10px" onclick="App.deleteStopFromForm(${i})">Delete Stop</button>`:''}</div>`, {autofocus:false});
 };
-App.savePlan = (i, moodIndex) => {
+App.savePlan = (i, moodIndex, complete) => {
   const t = getTrip(CUR_TRIP_ID); if(!t) return;
   const name = $('#pl-name').value.trim();
   if(!name) return markErr('#pl-name','Give the stop a place name');
@@ -14094,7 +14115,8 @@ App.savePlan = (i, moodIndex) => {
   const dd = readDayOrDate('pl');
   const s = {id: i>=0 && t.itinerary[i] ? t.itinerary[i].id : uid(), name, emoji,
              date:dd.date, day:dd.day, time, period, mapsUrl,
-             location:$('#pl-loc').value.trim(), notes:$('#pl-notes').value.trim(), image:PLAN_IMG};
+             location:$('#pl-loc').value.trim(), notes:$('#pl-notes').value.trim(), image:PLAN_IMG,
+             asTask: complete ? false : $('#pl-as-task').checked};
   t.itinerary = t.itinerary||[];
   if(i>=0) t.itinerary[i]=s; else t.itinerary.push(s);
   if(moodIndex!=null && t.moodBoard && t.moodBoard[moodIndex]) t.moodBoard[moodIndex].itineraryId = s.id;

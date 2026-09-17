@@ -1397,6 +1397,11 @@ details .d-body{padding:14px 16px;}
    title they read as sitting a touch low - nudged up to actually look aligned */
 .sec-emoji{font-size:1.15rem; line-height:1; flex-shrink:0; transform:translateY(-1px);
   font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;}
+/* a stop's custom icon image, sized in em so it scales with whatever font-size context .sec-emoji
+   is already given there (a card title, a day heading, a task-pill row) instead of needing its
+   own size for every one of them */
+.stop-icon-img{width:1.1em; height:1.1em; object-fit:cover; border-radius:3px; vertical-align:-0.15em;
+  display:inline-block; transform:none;}
 @media(max-width:560px){
   h1{font-size:1.5rem;}
   .wrap{padding:calc(14px + env(safe-area-inset-top)) 12px 80px;}
@@ -11998,7 +12003,7 @@ function undecidedItemsHTML(t, ro){
   (t.itinerary||[]).forEach((s,si)=>{
     if(s.kind==='travel' || !s.asTask) return;
     const k = rough ? (s.day?'d'+s.day:'') : (s.date||'');
-    rows.push({dateLine: dateLineFor(k), icon:secEmoji(s.emoji || ideaEmojiFor(s.name)),
+    rows.push({dateLine: dateLineFor(k), icon:stopIconHTML(s),
       title: esc(s.name || 'Stop'),
       time: s.time || (s.period && PLAN_PERIODS[s.period] && PLAN_PERIODS[s.period][0]) || '',
       undecided:true, editFn:`App.planForm(${si})`, sortKey:k, timeKey:itineraryTimeKey(s)});
@@ -13092,7 +13097,7 @@ function planDaysHTML(t, ro, filterKeys){
       <div class="section-head" style="margin-bottom:${hasBelow?'4px':'0'}">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0">
           ${time?`<span class="itin-time">${esc(time)}</span>`:''}
-          <h3 class="plan-stop-title${s.asTask?' text-undecided':''}">${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}${s.location && s.location.trim().toLowerCase()!==(s.name||'').trim().toLowerCase() ? ' · '+esc(s.location) : ''}</h3>
+          <h3 class="plan-stop-title${s.asTask?' text-undecided':''}">${stopIconHTML(s)} ${esc(s.name)}${s.location && s.location.trim().toLowerCase()!==(s.name||'').trim().toLowerCase() ? ' · '+esc(s.location) : ''}</h3>
         </div>
       </div>`;
     return `
@@ -13318,7 +13323,7 @@ function dayNarrative(t, k, dayItems, rough){
   const gigItems = dayItems.filter(s=>s._autoGig);
   const activityText = gigItems.length ? esc(gigItems.map(g=>g.g.artist||'Gig').join(' & '))
     : stops.length ? [...stops].sort((a,b)=>itineraryTimeKey(a).localeCompare(itineraryTimeKey(b)))
-        .map(s=>`${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}`).join(' & ') : '';
+        .map(s=>`${stopIconHTML(s)} ${esc(s.name)}`).join(' & ') : '';
   const travelEmoji = arriving && travelMode && TRAVEL_MODES[travelMode] ? TRAVEL_MODES[travelMode].emoji+' ' : '';
   // a non-arrival day (you're already there) drops the broader half of a "Palaiokastritsa,
   // Corfu"-style place - the arrival day's own arrival heading already said which country/
@@ -14020,6 +14025,47 @@ function planImgStatus(){
     ? `<img src="${PLAN_IMG}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px"> <button type="button" class="iconbtn del" aria-label="Remove photo" title="Remove photo" onclick="App.clearPlanImg()">${ICONS.trash}</button>`
     : `<span class="muted small">No photo added</span>`;
 }
+/* for a stop none of the emoji picks look right for - a custom sticker (Apple's Emoji Maker/
+   Genmoji works well, since it exports a small transparent-background image) or any other small
+   image, downscaled and kept as a PNG (see downscaleToDataURLPng) so a transparent background
+   stays transparent. Takes over from the emoji wherever this stop's own icon shows (see
+   stopIconHTML) whenever it's set - separate from the stop's own larger Photo field above, this
+   is just the small glyph that otherwise sits next to its name. Same pattern as Plants'
+   customIcon (plantIconStatusHTML). */
+let PLAN_STOP_CUSTOM_ICON = null;   // a data: URL, or null while a plain emoji is in use
+function planStopIconStatusHTML(){
+  if(!PLAN_STOP_CUSTOM_ICON) return `
+    <label class="btn sm" style="cursor:pointer; margin-top:8px">${ICONS.upload} Use a Custom Image
+      <input type="file" accept="image/*" style="display:none" onchange="App.attachStopIcon(this)"></label>
+    <p class="small muted" style="margin:6px 0 0">No emoji looks right for this one? Upload a small image instead.</p>`;
+  return `
+    <div style="display:flex; align-items:center; gap:10px; margin-top:8px">
+      <img src="${esc(PLAN_STOP_CUSTOM_ICON)}" alt="" style="width:40px; height:40px; border-radius:8px; object-fit:cover; border:1px solid var(--line); background:var(--bg)">
+      <button type="button" class="btn sm ghost" onclick="App.clearStopIcon()">Remove, Use Emoji Instead</button>
+    </div>`;
+}
+App.attachStopIcon = input => {
+  const file = input.files[0]; input.value=''; if(!file) return;
+  downscaleToDataURLPng(file, 160, dataUrl => {
+    if(!dataUrl) return;
+    PLAN_STOP_CUSTOM_ICON = dataUrl;
+    const status = $('#pl-stop-icon-status'); if(status) status.innerHTML = planStopIconStatusHTML();
+  });
+};
+App.clearStopIcon = () => {
+  PLAN_STOP_CUSTOM_ICON = null;
+  const status = $('#pl-stop-icon-status'); if(status) status.innerHTML = planStopIconStatusHTML();
+};
+/* a stop's own small icon - a custom image (see planStopIconStatusHTML) when one's been set,
+   the emoji otherwise. Shares the same .sec-emoji class the emoji span would use, so every
+   context that already sizes/positions .sec-emoji (the day heading, the card title, a task-pill
+   row) sizes this the same way without needing its own separate layout - same technique
+   plantIconHTML uses for .plant-icon-img. */
+function stopIconHTML(s){
+  return s.customIcon
+    ? `<img class="sec-emoji stop-icon-img" src="${esc(s.customIcon)}" alt="">`
+    : secEmoji(s.emoji || ideaEmojiFor(s.name));
+}
 /* round an existing HH:MM to the nearest quarter hour, for prefilling the hour/minute selects */
 function roundToQuarterHour(timeStr){
   if(!timeStr) return {h:9, m:0};
@@ -14058,6 +14104,7 @@ App.planForm = (i, prefill, moodIndex) => {
   const s = prefill || (i>=0 ? (t.itinerary||[])[i] || {} : {});
   IDEA_EMOJI_TOUCHED = !!s.emoji;   // a stop that already has one keeps it while you edit
   PLAN_IMG = (i>=0 && t.itinerary[i] && t.itinerary[i].image) || (prefill && prefill.image) || null;
+  PLAN_STOP_CUSTOM_ICON = s.customIcon || null;
   const initWhen = s.time ? 'time' : (s.period || 'morning');
   const {h:initHour, m:initMin} = roundToQuarterHour(s.time);
   const hourOpts = Array.from({length:24}, (_,h)=>h)
@@ -14074,6 +14121,7 @@ App.planForm = (i, prefill, moodIndex) => {
     <div class="field"><label class="label" for="pl-name">Place name</label>
       <input id="pl-name" type="text" value="${esc(s.name||'')}" placeholder="e.g. Time Out Market" oninput="App.ideaTitleTyped('#pl-name')"></div>
     ${ideaEmojiFieldHTML(s.emoji || ideaEmojiFor(s.name||''))}
+    <div id="pl-stop-icon-status">${planStopIconStatusHTML()}</div>
     <div class="grid2">
       ${dayOrDateFieldHTML('pl', t, s)}
       <div class="field"><label class="label" for="pl-when">When</label>
@@ -14116,11 +14164,12 @@ App.savePlan = (i, moodIndex, complete) => {
   const s = {id: i>=0 && t.itinerary[i] ? t.itinerary[i].id : uid(), name, emoji,
              date:dd.date, day:dd.day, time, period, mapsUrl,
              location:$('#pl-loc').value.trim(), notes:$('#pl-notes').value.trim(), image:PLAN_IMG,
+             customIcon: PLAN_STOP_CUSTOM_ICON || null,
              asTask: complete ? false : $('#pl-as-task').checked};
   t.itinerary = t.itinerary||[];
   if(i>=0) t.itinerary[i]=s; else t.itinerary.push(s);
   if(moodIndex!=null && t.moodBoard && t.moodBoard[moodIndex]) t.moodBoard[moodIndex].itineraryId = s.id;
-  PLAN_IMG = null;
+  PLAN_IMG = null; PLAN_STOP_CUSTOM_ICON = null;
   logEdit('Itinerary', (i>=0?'Stop edited: ':'Stop added: ')+name);
   save(); closeModal(); CUR_TAB='plan'; rerender(); toast('Stop saved');
 };

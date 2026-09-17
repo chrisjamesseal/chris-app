@@ -4883,7 +4883,7 @@ function dashGigWidgetHTML(){
                  : `<div class="dash-item-flags" aria-hidden="true">🎤</div>`}
       <div class="dash-item-title">${esc(g.artist||'Untitled')}</div>
       ${gigPeopleLineHTML(g)}
-      ${miniCountdownHTML(g.date)}
+      ${miniCountdownHTML(g.date, g.time)}
     </div>`;
 }
 /* CUR_DASH_SONG_RANGE drives the OTHER dashboard stat tiles that share this same range concept
@@ -5059,7 +5059,7 @@ function dashShowWidgetHTML(){
                  : `<div class="dash-item-flags" aria-hidden="true">🎭</div>`}
       <div class="dash-item-title">${esc(t.title||'Untitled')}</div>
       <div class="dash-item-sub">Next Show</div>
-      ${miniCountdownHTML(t.date)}
+      ${miniCountdownHTML(t.date, t.time)}
     </div>`;
 }
 /* Board Games marks (bgMarks) carry no date, unlike the diary-backed stat tiles above, so this

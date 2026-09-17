@@ -13320,7 +13320,12 @@ function dayNarrative(t, k, dayItems, rough){
   // so its date line carries the date alone rather than inventing a "Day ?"
   const dayLabel = num ? `Day ${num}` : '';
   const dateLine = rough ? dayLabel : (dayLabel ? `${dayLabel} - ${fmtDateOrdinal(k)}` : fmtDateOrdinal(k));
-  return {dateLine, headingHTML: [placeText, activityText].filter(Boolean).join(' - ')};
+  // an arrival day's placeText already carries its own verb phrase ("to 🇦🇱 Tiranë"), so tacking
+  // an activity on with another dash reads as two unrelated fragments ("to Tiranë - Hotel Spa");
+  // "&" reads as one coordinated day ("to Tiranë & Hotel Spa"). A non-arrival day's placeText is
+  // just the bare place name, where "-" still reads right ("Palaiokastritsa - Hike & Snorkel").
+  const headingJoiner = arriving ? ' & ' : ' - ';
+  return {dateLine, headingHTML: [placeText, activityText].filter(Boolean).join(headingJoiner)};
 }
 /* which stop/gap accordions are open - a UI-only choice, not trip data, so it's a plain
    module variable rather than anything saved or synced; resets on reload same as the rest of
@@ -13978,7 +13983,7 @@ function tripLocations(t){
   });
   (t.ferries||[]).forEach(f=>{ if(f.from) set.add(f.from); if(f.to) set.add(f.to); });
   (t.carHire||[]).forEach(c=>{ if(c.pickupLoc) set.add(c.pickupLoc); if(c.dropoffLoc) set.add(c.dropoffLoc); });
-  return [...set];
+  return [...set].sort((a,b)=>a.localeCompare(b));
 }
 function locationDatalist(t){
   return `<datalist id="loc-list">${tripLocations(t).map(l=>`<option value="${esc(l)}">`).join('')}</datalist>`;

@@ -1386,11 +1386,13 @@ details .d-body{padding:14px 16px;}
 .section-head h3{display:inline-flex; align-items:center; gap:8px;}
 .section-head h3 .icon{font-size:1.3rem; color:var(--brand); flex-shrink:0;}
 /* an itinerary stop's title reads at the same size as the "Midday"/"Evening" time beside it,
-   with its place folded onto the same line ("Beach Day · Corfu Beach") */
-.section-head h3.plan-stop-title{font-size:.85rem;}
-/* the map shortcut keeps a square hover/focus background rather than the wider pill the default
-   .iconbtn padding gives it */
-.plan-map-icon{padding:6px;}
+   with its place folded onto the same line ("Beach Day · Corfu Beach"). display:inline overrides
+   the shared h3's inline-flex above - inline-flex treats the emoji span and the surrounding text
+   as separate flex items, which don't share a line the way normal inline content does, so a long
+   name pushed the emoji onto its own line above the text instead of sitting inline with it. Plain
+   inline lets the browser wrap the whole run together, word by word, the way it would for any
+   other run of text with an inline icon in it. */
+.section-head h3.plan-stop-title{font-size:.85rem; display:inline;}
 /* most emoji glyphs carry extra padding low in their own box, so flex-centred against a
    title they read as sitting a touch low - nudged up to actually look aligned */
 .sec-emoji{font-size:1.15rem; line-height:1; flex-shrink:0; transform:translateY(-1px);
@@ -13052,33 +13054,34 @@ function planDaysHTML(t, ro, filterKeys){
     const hasImage = !!s.image;
     const mapHref = s.mapsUrl || (s.location ? mapsSearchUrl(t, s.location) : '');
     const time = timeBadge(s);
+    // a small icon-only shortcut sitting on the photo itself, when there IS one
     const mapBtnHTML = cls => mapHref ? `<a class="btn icon-only${cls?' '+cls:''}" href="${esc(mapHref)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Open Map" title="Open Map">${mapIcon(mapHref)}</a>` : '';
-    // a plain icon, not a bordered/backgrounded button - it sits inline on the title's own row
-    // (see head, below), right-aligned there by .section-head's own space-between, rather than
-    // getting a full button's worth of visual weight for what's just a shortcut off the title
-    const mapIconLink = mapHref ? `<a class="iconbtn plan-map-icon" href="${esc(mapHref)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Open Map" title="Open Map">${mapIcon(mapHref)}</a>` : '';
+    // no photo to hang a corner shortcut off, so it's a full button under the title instead -
+    // the same shape accommodation's own Google Maps button already uses, rather than a bare
+    // icon with nothing to say what it does
+    const mapButtonRowHTML = (!hasImage && mapHref)
+      ? `<div class="itin-actions"><a class="btn itin-action-btn" href="${esc(mapHref)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${mapIcon(mapHref)} Google Maps</a></div>` : '';
     // a title-only card (nothing following it at all) has nothing to space away from, so the
     // head keeps no margin below it - otherwise the bottom padding stacks on top of that
     // margin and reads as lopsided against the plain top padding above the title
-    const hasBelow = !!(s.notes || hasImage);
-    // with nothing below the head at all (no notes, image, or location line) the card's own
+    const hasBelow = !!(s.notes || hasImage || mapHref);
+    // with nothing below the head at all (no notes, image, or Google Maps button) the card's own
     // plain bottom padding is the only space under the title, and .card's usual 18px reads as
     // too much with just one line above it - trimmed back for this solo-title case only
     const solo = !hasBelow;
-    // a timed stop leads with when it happens - "Evening - 🏰 Castle Walk & Sunset" - the same
-    // "time - name" shape every other timed line on this page already uses (the Check Out pill,
-    // the flight/ferry auto-tags), in the same plain, non-bold weight as the accommodation
-    // card's own leading time (.itin-time) rather than getting swept up into the bold heading
-    // next to it. The place folds onto the title line after the name ("Beach Day · Corfu Beach"),
-    // same as the day heading above it reads - but is dropped when it just repeats the name (a
-    // stop called "Jet Ski" at a place called "Jet Ski" shouldn't say it twice).
+    // a timed stop leads with when it happens - "Evening 🏰 Castle Walk & Sunset" - the time sits
+    // in its own plain, non-bold badge (.itin-time) ahead of the title rather than a dash-joined
+    // "time - name"; the title itself is a single run of inline text (see .plan-stop-title) so a
+    // long name wraps together with its emoji instead of shoving it onto its own line. The place
+    // folds onto the title line after the name ("Beach Day · Corfu Beach"), same as the day
+    // heading above it reads - but is dropped when it just repeats the name (a stop called
+    // "Jet Ski" at a place called "Jet Ski" shouldn't say it twice).
     const head = `
       <div class="section-head" style="margin-bottom:${hasBelow?'4px':'0'}">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0">
           ${time?`<span class="itin-time">${esc(time)}</span>`:''}
-          <h3 class="plan-stop-title">${time?'- ':''}${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}${s.location && s.location.trim().toLowerCase()!==(s.name||'').trim().toLowerCase() ? ' · '+esc(s.location) : ''}</h3>
+          <h3 class="plan-stop-title">${secEmoji(s.emoji || ideaEmojiFor(s.name))} ${esc(s.name)}${s.location && s.location.trim().toLowerCase()!==(s.name||'').trim().toLowerCase() ? ' · '+esc(s.location) : ''}</h3>
         </div>
-        ${!hasImage ? mapIconLink : ''}
       </div>`;
     return `
     <div class="card plan-card${hasImage?' plan-card-photo':''}${solo?' plan-card-solo':''}${!ro?' plan-click':''}" ${clickAttrs(`App.planForm(${s._i})`)}>
@@ -13087,7 +13090,7 @@ function planDaysHTML(t, ro, filterKeys){
       ${hasImage ? `<div class="plan-img-wrap">
         <img class="plan-img" src="${s.image}" alt="${esc(s.name)}">
         ${mapBtnHTML('plan-img-map')}
-      </div>` : ''}
+      </div>` : mapButtonRowHTML}
     </div>`;
   };
   const taskCard = s => `

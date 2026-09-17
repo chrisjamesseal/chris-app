@@ -1271,6 +1271,10 @@ input[list]::-webkit-calendar-picker-indicator, input[list]::-webkit-list-button
   padding:11px 12px;}
 .task-pill-text{color:var(--ink); font-size:.9rem;}
 .task-pill-time{color:var(--ink); font-weight:400;}
+/* wraps the title line and an optional note stacked underneath it, same shape
+   .itin-gap-pill-body already uses for its own second line */
+.task-pill-body{display:flex; flex-direction:column; gap:2px; min-width:0;}
+.task-pill-notes{color:var(--muted); font-size:.8rem; font-weight:400; white-space:pre-wrap;}
 .task-pill-plus{color:var(--brand); flex-shrink:0; font-size:1.05rem; line-height:1;}
 /* a day deliberately left free reads as a plan of its own, not something still outstanding -
    same pill shape as .task-pill but without the red "needs deciding" tint */
@@ -11993,7 +11997,7 @@ function undecidedItemsHTML(t, ro){
     const mode = TRAVEL_MODES[leg.mode] || TRAVEL_MODES.undecided;
     const k = rough ? (leg.day?'d'+leg.day:'') : (leg.date||'');
     rows.push({dateLine: dateLineFor(k), icon:mode.icon,
-      title: travelTaskTitle(leg.mode, esc(leg.from), esc(leg.to)),
+      title: travelTaskTitle(leg.mode, esc(leg.from), esc(leg.to)), notes: leg.notes,
       time: leg.time || (leg.period && PLAN_PERIODS[leg.period] && PLAN_PERIODS[leg.period][0]) || '',
       undecided:true, editFn:`App.travelLegForm(${li})`, sortKey:k, timeKey:itineraryTimeKey(leg)});
   });
@@ -12004,7 +12008,7 @@ function undecidedItemsHTML(t, ro){
     if(s.kind==='travel' || !s.asTask) return;
     const k = rough ? (s.day?'d'+s.day:'') : (s.date||'');
     rows.push({dateLine: dateLineFor(k), icon:stopIconHTML(s),
-      title: esc(s.name || 'Stop'),
+      title: esc(s.name || 'Stop'), notes: s.notes,
       time: s.time || (s.period && PLAN_PERIODS[s.period] && PLAN_PERIODS[s.period][0]) || '',
       undecided:true, editFn:`App.planForm(${si})`, sortKey:k, timeKey:itineraryTimeKey(s)});
   });
@@ -12015,7 +12019,7 @@ function undecidedItemsHTML(t, ro){
     const k = rough ? roughDayKey(t, ac.checkin) : (ac.checkin||'');
     const dateLine = rough ? '' : ac.checkin && ac.checkout ? fmtDateOrdinalRange(ac.checkin, ac.checkout)
       : ac.checkin ? fmtDateOrdinal(ac.checkin) : '';
-    rows.push({dateLine, icon:secEmoji('🏠'), title: esc(ac.name || 'Accommodation'),
+    rows.push({dateLine, icon:secEmoji('🏠'), title: esc(ac.name || 'Accommodation'), notes: ac.notes,
       time: ac.arrivalTime || ac.checkinTime || '',
       undecided:true, editFn:`App.accomForm(${aci})`, sortKey:k,
       timeKey: itineraryTimeKey({time: ac.arrivalTime || ac.checkinTime})});
@@ -12029,7 +12033,10 @@ function undecidedItemsHTML(t, ro){
       ${r.dateLine?`<div class="task-date">${esc(r.dateLine)}</div>`:''}
       <div class="task-pill${!ro?' plan-click':''}" ${!ro?`role="button" tabindex="0" onclick="${r.editFn}"
            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${r.editFn}}"`:''}>
-        <span class="task-pill-text">${r.time?`<span class="task-pill-time">${esc(r.time)} -</span> `:''}${r.icon?r.icon+' ':''}<strong${r.undecided?' class="text-undecided"':''}>${r.title}</strong></span>
+        <span class="task-pill-body">
+          <span class="task-pill-text">${r.time?`<span class="task-pill-time">${esc(r.time)} -</span> `:''}${r.icon?r.icon+' ':''}<strong${r.undecided?' class="text-undecided"':''}>${r.title}</strong></span>
+          ${r.notes?`<span class="task-pill-notes">${esc(r.notes)}</span>`:''}
+        </span>
         ${!ro?`<span class="task-pill-plus" aria-hidden="true">${r.trailIcon||fa('circle-plus')}</span>`:''}
       </div>
     </div>`}));
@@ -14285,6 +14292,8 @@ App.travelLegForm = (i, prefill) => {
         <select id="tv-dur-m" aria-label="Duration minutes">${durMinOpts}</select>
       </div></div>
     <div class="field"><label class="label">Link</label><input id="tv-link" type="url" value="${esc(s.link||'')}" placeholder="Booking confirmation, timetable…"></div>
+    <div class="field"><label class="label" for="tv-notes">Notes</label>
+      <textarea id="tv-notes" rows="3" placeholder="Optional">${esc(s.notes||'')}</textarea></div>
     <div class="modal-actions">
       <div class="grid2">
         <button class="btn primary" style="width:100%" onclick="App.saveTravelLeg(${i})">${i>=0?'Save':'Add Travel'}</button>
@@ -14318,9 +14327,10 @@ App.saveTravelLeg = (i, complete) => {
   const dd = readDayOrDate('tv');
   const mode = $('#tv-mode').value;
   const link = normalizeUrl($('#tv-link').value.trim());
+  const notes = $('#tv-notes').value.trim();
   const s = {id: existing ? existing.id : uid(), kind:'travel', mode,
              from, to, date:dd.date, day:dd.day, time, period, timing, durationH, durationM,
-             link, asTask: complete ? false : $('#tv-as-task').checked, ...(autoLink || {})};
+             link, notes, asTask: complete ? false : $('#tv-as-task').checked, ...(autoLink || {})};
   if(i>=0) t.itinerary[i]=s; else t.itinerary.push(s);
   TRAVEL_AUTO_LINK = null;
   logEdit('Itinerary', (i>=0?'Travel edited: ':'Travel added: ')+itineraryItemLabel(s));
@@ -15285,6 +15295,8 @@ App.accomForm = (i, prefill) => {
     <div class="field"><label class="label">Your leave time <span class="muted">(optional)</span></label><input id="ac-leave-time" type="time" value="${esc(a.leaveTime||'')}">
       <p class="muted small" style="margin-top:6px">Only if you're leaving earlier than the standard check-out time above, used instead of it to work out when you need to leave in the itinerary.</p></div>
     <div class="field"><label class="label">Booking ref</label><input id="ac-ref" type="text" value="${esc(a.ref||'')}"></div>
+    <div class="field"><label class="label" for="ac-notes">Notes</label>
+      <textarea id="ac-notes" rows="3" placeholder="Optional">${esc(a.notes||'')}</textarea></div>
     <div class="modal-actions">
       <div class="grid2">
         <button class="btn primary" style="width:100%" onclick="App.saveAccom(${i})">Save</button>
@@ -15314,7 +15326,7 @@ App.saveAccom = (i, complete) => {
     name, address, asTask: complete ? false : $('#ac-as-task').checked,
     checkin:$('#ac-in').value, checkinTime:$('#ac-in-time').value, arrivalTime:$('#ac-arrival-time').value,
     checkout:$('#ac-out').value, checkoutTime:$('#ac-out-time').value, leaveTime:$('#ac-leave-time').value,
-    ref:$('#ac-ref').value.trim(), bookingUrl:url};
+    ref:$('#ac-ref').value.trim(), bookingUrl:url, notes:$('#ac-notes').value.trim()};
   if(i>=0) t.accommodations[i]=a; else t.accommodations.push(a);
   logEdit('Accommodation', (i>=0?'Accommodation updated':'Accommodation added')+(name?': '+name:''));
   save(); closeModal(); rerender();

@@ -12685,11 +12685,13 @@ function stayMoves(t){
     if(!fromName && !toName) return;                       // nothing to name the journey by
     if(fromName && fromName === toName) return;            // same place under two bookings
     if((t.itinerary||[]).some(s=>s._autoForStay===arriving)) return;  // you've already saved it
-    /* the check-out time is the hard deadline (you have to be out), so that's what the
-       journey is pinned to. With no check-out time, fall back to being there for check-in. */
-    const time = leaving.checkoutTime || to.checkinTime || '';
+    /* your own leave time, when set, is the real deadline; otherwise the check-out time is the
+       hard deadline (you have to be out), so that's what the journey is pinned to. With neither,
+       fall back to being there for check-in. */
+    const departTime = leaving.leaveTime || leaving.checkoutTime || '';
+    const time = departTime || to.checkinTime || '';
     out.push({date: leaving.checkout, from: fromName, to: toName, aci: arriving,
-      time, timing: time ? (leaving.checkoutTime ? 'leave' : 'arrive') : ''});
+      time, timing: time ? (departTime ? 'leave' : 'arrive') : ''});
   });
   return out;
 }
@@ -12744,15 +12746,15 @@ function planDayGroups(t){
     }
   });
   (t.accommodations||[]).forEach((ac,aci)=>{
-    // your actual arrival time, when you've set one, is what the day should sort by, not
-    // the property's generic check-in time
+    // your actual arrival/leave time, when you've set one, is what the day should sort by,
+    // not the property's generic check-in/check-out time
     const ik = rough ? roughDayKey(t, ac.checkin) : ac.checkin, ok = rough ? roughDayKey(t, ac.checkout) : ac.checkout;
     if(!ac.checkin && !ac.checkout){
       // undecided with no dates yet: same Anytime bucket an unscheduled Task would use
       (groups['']=groups['']||[]).push({_autoStay:'checkin', time:'', ac, aci});
     } else {
       if(ac.checkin) (groups[ik]=groups[ik]||[]).push({_autoStay:'checkin', time:ac.arrivalTime||ac.checkinTime||'', ac, aci});
-      if(ac.checkout) (groups[ok]=groups[ok]||[]).push({_autoStay:'checkout', time:ac.checkoutTime||'', ac, aci});
+      if(ac.checkout) (groups[ok]=groups[ok]||[]).push({_autoStay:'checkout', time:ac.leaveTime||ac.checkoutTime||'', ac, aci});
     }
   });
   /* checking out of one place and into another on the same day means a journey between them
@@ -15206,6 +15208,8 @@ App.accomForm = (i, prefill) => {
       <div class="field"><label class="label">Check-out date</label><input id="ac-out" type="date" value="${esc(a.checkout||'')}"></div>
       <div class="field"><label class="label">Check-out time</label><select id="ac-out-time">${hourOnlyOptionsHTML(a.checkoutTime||'')}</select></div>
     </div>
+    <div class="field"><label class="label">Your leave time <span class="muted">(optional)</span></label><input id="ac-leave-time" type="time" value="${esc(a.leaveTime||'')}">
+      <p class="muted small" style="margin-top:6px">Only if you're leaving earlier than the standard check-out time above, used instead of it to work out when you need to leave in the itinerary.</p></div>
     <div class="field"><label class="label">Booking ref</label><input id="ac-ref" type="text" value="${esc(a.ref||'')}"></div>
     <div class="modal-actions">
       <div class="grid2">
@@ -15235,7 +15239,7 @@ App.saveAccom = (i, complete) => {
   const a = {id: i>=0 && t.accommodations[i] ? t.accommodations[i].id : uid(),
     name, address, asTask: complete ? false : $('#ac-as-task').checked,
     checkin:$('#ac-in').value, checkinTime:$('#ac-in-time').value, arrivalTime:$('#ac-arrival-time').value,
-    checkout:$('#ac-out').value, checkoutTime:$('#ac-out-time').value,
+    checkout:$('#ac-out').value, checkoutTime:$('#ac-out-time').value, leaveTime:$('#ac-leave-time').value,
     ref:$('#ac-ref').value.trim(), bookingUrl:url};
   if(i>=0) t.accommodations[i]=a; else t.accommodations.push(a);
   logEdit('Accommodation', (i>=0?'Accommodation updated':'Accommodation added')+(name?': '+name:''));

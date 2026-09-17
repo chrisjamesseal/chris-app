@@ -4874,7 +4874,7 @@ function dashPlacesBeenWidgetHTML(){
   return dashStatTileHTML('🌍', dashPlacesBeenCount(CUR_DASH_SONG_RANGE), 'Places Been', "App.goPlaces()");
 }
 function dashNextGig(){
-  const upcoming = (DB.gigs||[]).filter(g=>g.date && g.date>todayStr());
+  const upcoming = (DB.gigs||[]).filter(g=>g.date && g.date>=todayStr());
   upcoming.sort((a,b)=>a.date.localeCompare(b.date));
   return upcoming[0]||null;
 }
@@ -5050,7 +5050,7 @@ function dashTheatreSeenWidgetHTML(){
    existing widget order/hidden choice carries over unchanged) - the Watchlist is wishlist titles
    with no date at all, this reads an actual ticket with a real one to count down to. */
 function dashNextShow(){
-  const upcoming = (DB.theatre||[]).filter(t=>t.date && t.date>todayStr());
+  const upcoming = (DB.theatre||[]).filter(t=>t.date && t.date>=todayStr());
   upcoming.sort((a,b)=>a.date.localeCompare(b.date));
   return upcoming[0]||null;
 }
@@ -5131,7 +5131,7 @@ const DASH_WATCHNEXT_CHECK_CAP = 25;
    seeing it, say - beats any Watchlist pick for "what's next": it's not a maybe, it's already
    on the calendar. Soonest one wins when there's more than one. */
 function dashScheduledFilm(){
-  return (DB.films||[]).filter(f=>f.watchedDate && f.watchedDate>todayStr())
+  return (DB.films||[]).filter(f=>f.watchedDate && f.watchedDate>=todayStr())
     .sort((a,b)=>a.watchedDate.localeCompare(b.watchedDate))[0] || null;
 }
 function dashScheduledFilmHTML(f){

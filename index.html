@@ -5129,9 +5129,11 @@ let DASH_WATCHNEXT_TOKEN = null;
 const DASH_WATCHNEXT_CHECK_CAP = 25;
 /* a Diary entry logged with a future Watched date - a cinema booking made ahead of actually
    seeing it, say - beats any Watchlist pick for "what's next": it's not a maybe, it's already
-   on the calendar. Soonest one wins when there's more than one. */
+   on the calendar. Soonest one wins when there's more than one. Excludes anything already
+   rated - unlike a show/gig's own time-of-day, a film has no time on its date, so a same-day
+   entry that's already been rated means it's been watched today, not booked for later today. */
 function dashScheduledFilm(){
-  return (DB.films||[]).filter(f=>f.watchedDate && f.watchedDate>=todayStr())
+  return (DB.films||[]).filter(f=>f.watchedDate && f.rating==null && f.watchedDate>=todayStr())
     .sort((a,b)=>a.watchedDate.localeCompare(b.watchedDate))[0] || null;
 }
 function dashScheduledFilmHTML(f){
@@ -7971,6 +7973,10 @@ async function letterboxdSyncImpl(){
       if(existingIdx!=null){ DB.films[existingIdx] = entry; indexFilmAt(DB.films, byId, byKey, existingIdx); updated++; }
       else { DB.films.push(entry); indexFilmAt(DB.films, byId, byKey, DB.films.length-1); added++; }
     });
+    // the feed's rating is Letterboxd's own raw 0.5-5 stars, same as a freshly-migrated old
+    // entry - convert it right away rather than waiting for the Diary tab to happen to open
+    // (migrateFilmScores) first, so Home's widgets never show the un-doubled score in between
+    migrateFilmScores(DB.films);
     saveFilms();
     drawLetterboxdConnect();
     drawFilmsGrid();
@@ -8079,6 +8085,9 @@ function filmsImportCsvFileImpl(file){
         if(existingIdx!=null){ DB.films[existingIdx] = entry; indexFilmAt(DB.films, byId, byKey, existingIdx); updated++; }
         else { DB.films.push(entry); indexFilmAt(DB.films, byId, byKey, DB.films.length-1); added++; }
       });
+      // the CSV's Rating column is Letterboxd's own raw 0.5-5 stars too - see the same call in
+      // letterboxdSyncImpl for why this can't wait for the Diary tab's own migrateFilmScores
+      migrateFilmScores(DB.films);
       saveFilms();
       closeModal();
       drawFilmsGrid();

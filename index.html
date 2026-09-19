@@ -15127,6 +15127,7 @@ App.flightForm = i => {
     <div class="modal-actions">
       <button class="btn primary" style="width:100%" onclick="App.saveFlight(${i})">Save Flight</button>
       ${i>=0?`<button class="btn danger" style="width:100%;margin-top:10px" onclick="App.deleteFlightFromForm(${i})">Delete Flight</button>`:''}
+      <button class="btn" style="width:100%;margin-top:10px" onclick="App.flightCalendar(${i})">${secEmoji('📅')} Add to Apple Calendar</button>
     </div>`, {autofocus:false});
 };
 App.saveFlight = i => {
@@ -15146,6 +15147,60 @@ App.saveFlight = i => {
   FORM_DOC = null;
   logEdit('Travel', (i>=0?'Travel edited: ':'Travel added: ')+label);
   save(); closeModal(); rerender(); toast('Flight saved');
+};
+/* exports the flight straight out of the open form's own fields, not the saved record - so it
+   still works for a brand new flight, and reflects an edit not yet saved. No real timezone
+   handling anywhere else in the app (times are always just the device's own local wall clock),
+   so this follows the same convention as App.packReminder rather than trying to be smarter. */
+App.flightCalendar = i => {
+  const t = getTrip(CUR_TRIP_ID); if(!t) return;
+  const date = $('#fl-date').value;
+  if(!date) return markErr('#fl-date','Add a date first');
+  const airline = $('#fl-air').value.trim(), flightNo = $('#fl-no').value.trim().toUpperCase();
+  const from = parseAirport($('#fl-from').value), to = parseAirport($('#fl-to').value);
+  const depTime = $('#fl-dep').value, arrTime = $('#fl-arr').value;
+  const ref = $('#fl-ref').value.trim(), seats = $('#fl-seats').value.trim();
+  const fromName = from ? (airportName(from)||from) : '', toName = to ? (airportName(to)||to) : '';
+  const title = [airline, flightNo].filter(Boolean).join(' ') || 'Flight';
+  const route = fromName && toName ? `${fromName} → ${toName}` : (fromName || toName || '');
+  const summary = [title, route].filter(Boolean).join(': ');
+  const descLines = [];
+  if(ref) descLines.push('Booking ref: '+ref);
+  if(seats) descLines.push('Seat(s): '+seats);
+  const timeLines = [];
+  if(depTime){
+    const start = new Date(date+'T'+depTime+':00');
+    let end;
+    if(arrTime){
+      end = new Date(date+'T'+arrTime+':00');
+      if(end<=start) end.setDate(end.getDate()+1);   // arrives past midnight
+    } else end = new Date(start.getTime()+2*3600000);   // no arrival time given - guess 2h
+    timeLines.push('DTSTART:'+icsStamp(start), 'DTEND:'+icsStamp(end),
+      'BEGIN:VALARM','TRIGGER:-PT3H','ACTION:DISPLAY','DESCRIPTION:'+icsEscape('Flight in 3 hours: '+summary),'END:VALARM');
+  } else {
+    const ymd = d => d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+    const start = new Date(date+'T00:00:00'), end = new Date(start); end.setDate(end.getDate()+1);
+    timeLines.push('DTSTART;VALUE=DATE:'+ymd(start), 'DTEND;VALUE=DATE:'+ymd(end));
+  }
+  const ics = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//My Trips//Flights//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    'UID:flight-'+(i>=0 && t.flights[i] ? t.flights[i].id : uid())+'-'+Date.now()+'@cals-trippin',
+    'DTSTAMP:'+icsStamp(new Date()),
+    ...timeLines,
+    'SUMMARY:'+icsEscape(summary),
+    ...(fromName ? ['LOCATION:'+icsEscape(fromName)] : []),
+    ...(descLines.length ? ['DESCRIPTION:'+icsEscape(descLines.join('\n'))] : []),
+    'END:VEVENT','END:VCALENDAR'
+  ].map(icsFold).join('\r\n');
+  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `flight-${(summary||'flight').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}.ics`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  toast('Open the file to add it to your calendar');
 };
 App.deleteFlightFromForm = i => { closeModal(); App.delFlight(i); };
 App.delFlight = i => {

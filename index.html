@@ -15100,7 +15100,10 @@ App.flightForm = i => {
   FORM_DOC = (i>=0 && t.flights[i] && t.flights[i].doc) || null;
   const inc = f.includes || [];
   openModal(`
-    <h2>${i>=0?'Edit Flight':'Add Flight'}</h2>
+    <div class="section-head">
+      <h2>${i>=0?'Edit Flight':'Add Flight'}</h2>
+      <button class="btn sm" onclick="App.flightCalendar(${i})">${secEmoji('📅')} Add to Calendar</button>
+    </div>
     <div class="grid2">
       <div>${airlineFieldHTML('fl-air', f.airline)}</div>
       <div class="field"><label class="label">Flight no.</label><input id="fl-no" type="text" value="${esc(f.flightNo||'')}" placeholder="BA432"></div>
@@ -15127,7 +15130,6 @@ App.flightForm = i => {
     <div class="modal-actions">
       <button class="btn primary" style="width:100%" onclick="App.saveFlight(${i})">Save Flight</button>
       ${i>=0?`<button class="btn danger" style="width:100%;margin-top:10px" onclick="App.deleteFlightFromForm(${i})">Delete Flight</button>`:''}
-      <button class="btn" style="width:100%;margin-top:10px" onclick="App.flightCalendar(${i})">${secEmoji('📅')} Add to Apple Calendar</button>
     </div>`, {autofocus:false});
 };
 App.saveFlight = i => {

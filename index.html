@@ -15211,7 +15211,7 @@ App.flightCalendar = i => {
     'DTSTAMP:'+icsStamp(new Date()),
     ...timeLines,
     'SUMMARY:'+icsEscape(summary),
-    ...(fromName ? ['LOCATION:'+icsEscape(fromName)] : []),
+    ...(route ? ['LOCATION:'+icsEscape(route)] : []),
     ...(descLines.length ? ['DESCRIPTION:'+icsEscape(descLines.join('\n'))] : []),
     'END:VEVENT','END:VCALENDAR'
   ].map(icsFold).join('\r\n');

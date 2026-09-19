@@ -15149,9 +15149,13 @@ App.saveFlight = i => {
   save(); closeModal(); rerender(); toast('Flight saved');
 };
 /* exports the flight straight out of the open form's own fields, not the saved record - so it
-   still works for a brand new flight, and reflects an edit not yet saved. No real timezone
-   handling anywhere else in the app (times are always just the device's own local wall clock),
-   so this follows the same convention as App.packReminder rather than trying to be smarter. */
+   still works for a brand new flight, and reflects an edit not yet saved. Departs/Arrives are
+   each the local clock time at their own airport, not the device's - a naive same-zone diff
+   between them can be badly wrong (LTN 16:05 -> CFU 19:05 is a 3 hour flight, not the 5 hours
+   two Europe/London wall-clock times would suggest, since Corfu's already 2 hours ahead), so
+   this reuses flightDurationMinutes' own AIRPORT_TZ/zonedTimeToUtc conversion to get the real
+   UTC instant for each end when both airports are known, falling back to the old flat clock
+   diff exactly when that function does. */
 App.flightCalendar = i => {
   const t = getTrip(CUR_TRIP_ID); if(!t) return;
   const date = $('#fl-date').value;
@@ -15167,14 +15171,23 @@ App.flightCalendar = i => {
   const descLines = [];
   if(ref) descLines.push('Booking ref: '+ref);
   if(seats) descLines.push('Seat(s): '+seats);
+  const fromTz = AIRPORT_TZ[from], toTz = AIRPORT_TZ[to];
+  const useTz = !!(depTime && arrTime && fromTz && toTz);
   const timeLines = [];
   if(depTime){
-    const start = new Date(date+'T'+depTime+':00');
-    let end;
-    if(arrTime){
-      end = new Date(date+'T'+arrTime+':00');
-      if(end<=start) end.setDate(end.getDate()+1);   // arrives past midnight
-    } else end = new Date(start.getTime()+2*3600000);   // no arrival time given - guess 2h
+    let start, end;
+    if(useTz){
+      start = new Date(zonedTimeToUtc(date, depTime, fromTz));
+      let arrMs = zonedTimeToUtc(date, arrTime, toTz);
+      if(arrMs <= start.getTime()) arrMs += 24*3600000;   // arrives past midnight, local to its own zone
+      end = new Date(arrMs);
+    } else {
+      start = new Date(date+'T'+depTime+':00');
+      if(arrTime){
+        end = new Date(date+'T'+arrTime+':00');
+        if(end<=start) end.setDate(end.getDate()+1);   // arrives past midnight
+      } else end = new Date(start.getTime()+2*3600000);   // no arrival time given - guess 2h
+    }
     timeLines.push('DTSTART:'+icsStamp(start), 'DTEND:'+icsStamp(end),
       'BEGIN:VALARM','TRIGGER:-PT3H','ACTION:DISPLAY','DESCRIPTION:'+icsEscape('Flight in 3 hours: '+summary),'END:VALARM');
   } else {

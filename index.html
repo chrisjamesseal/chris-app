@@ -277,19 +277,10 @@ a{color:var(--brand-dark);}
 .game-star{background:none; border:none; padding:5px 2px; cursor:pointer; font-size:1.3rem; color:var(--line-strong);}
 .game-star.on{color:var(--brand);}
 .game-star:hover,.game-star:focus-visible{color:var(--brand-dark);}
-/* ---------- individual board game page ---------- */
-.bg-detail-card{display:flex; flex-direction:column; align-items:center; text-align:center;}
-.bg-detail-cover{width:min(220px,58vw); aspect-ratio:1/1; height:auto; border-radius:var(--radius); object-fit:cover;
-  background:var(--bg); margin-bottom:14px; font-size:3rem; box-shadow:var(--shadow);}
-.bg-detail-cover.bg-cover-fallback{width:min(220px,58vw); height:min(220px,58vw);}
-.bg-detail-facts{margin:10px 0 4px;}
-.bg-detail-section{width:100%; text-align:left; margin-top:18px;}
-.bg-detail-section h3{font-size:.9rem; margin-bottom:6px;}
-.bg-detail-desc{color:var(--ink); opacity:.8; line-height:1.5;}
 .game-tier-label{flex:1; text-align:left; font-weight:700; font-size:.85rem;}
 .game-tier-count{color:var(--muted); font-size:.85rem;}
 
-/* ---------- sub-tabs (Games: PlayStation / Board Games) ---------- */
+/* ---------- sub-tabs (Music: Not Seen / Gigs / Artists / Songs) ---------- */
 /* wraps onto a second row rather than squeezing every label down to fit - four subtabs (Music)
    was crushing "Not Seen" into an unreadable ellipsis when every tab had to share equal width */
 .subtabs{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px;}
@@ -306,48 +297,7 @@ a{color:var(--brand-dark);}
 .gigs-subtabs-row{display:flex; gap:8px;}
 .gigs-subtabs-row-fill .subtab{flex:1; text-align:center;}
 
-/* ---------- board games ---------- */
-/* the category chips scroll sideways rather than wrapping into three rows of shelf labels */
-.bg-chips{display:flex; gap:7px; overflow-x:auto; padding-bottom:10px; margin-bottom:4px; -webkit-overflow-scrolling:touch;}
-.bg-chips::-webkit-scrollbar{display:none;}
-.bg-chip{
-  display:inline-flex; align-items:center; gap:5px; flex-shrink:0; font:inherit;
-  font-weight:700; font-size:.76rem; padding:7px 12px; cursor:pointer; white-space:nowrap;
-  border:1px solid var(--line-strong); border-radius:999px; background:var(--paper); color:var(--ink);
-}
-.bg-chip.on{background:var(--brand); border-color:var(--brand); color:#fff;}
-.bg-chip-emoji{font-size:.9rem; line-height:1;
-  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;}
-.bg-selects{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:18px;}
-.bg-sel{display:block; min-width:0;}
-.songs-range-sel{width:100%; font-size:.82rem; font-weight:700; padding:9px 32px 9px 12px; margin-bottom:18px;}
-.bg-sel .label{margin-bottom:3px;}
-.bg-sel select{width:100%; font-size:.82rem; padding:8px 6px;}
-.bg-list{display:flex; flex-direction:column; gap:12px;}
-.bg-card{border:1px solid var(--line); border-radius:var(--radius); background:var(--paper);
-  box-shadow:var(--shadow); padding:14px; cursor:pointer;}
-.bg-marked{border-color:var(--brand);}
-.bg-top{display:flex; gap:12px; align-items:flex-start;}
-.bg-cover{width:64px; height:64px; flex-shrink:0; border-radius:var(--radius-sm); object-fit:cover;
-  border:1px solid var(--line); background:var(--bg);}
-.bg-cover-fallback{display:inline-flex; align-items:center; justify-content:center; font-size:1.7rem;
-  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;}
-.bg-info{min-width:0; flex:1;}
-.bg-name{font-family:var(--font-head); font-weight:700; font-size:.95rem; color:var(--ink); overflow-wrap:anywhere;}
-.bg-facts{margin-top:2px;}
-.bg-tags{display:flex; flex-wrap:wrap; gap:5px; margin-top:7px;}
-.bg-tag{display:inline-flex; align-items:center; gap:4px; font-size:.68rem; font-weight:700;
-  padding:3px 8px; border-radius:999px; background:var(--brand-tint); color:var(--brand-dark);}
-.bg-highlights{margin:10px 0 0; padding-left:18px; color:var(--ink); opacity:.75;}
-.bg-highlights li{margin-top:3px;}
-.bg-actions{margin-top:12px; flex-wrap:nowrap;}
-.bg-mark{flex:1; min-width:0; gap:5px;}
-/* a solid fill rather than the light tint most other ".on" toggles use - Played's own ✅ emoji
-   already reads as "done" even unmarked, so a subtle background shift was easy to miss; this
-   reads as a definite state change at a glance */
-.bg-mark.on{background:var(--brand); border-color:var(--brand); color:#fff;}
-
-/* ---------- wishlist (new & upcoming video games) - same shape as board game cards ---------- */
+/* ---------- wishlist (new & upcoming video games) ---------- */
 .wl-list{display:flex; flex-direction:column; gap:12px;}
 .wl-card{border:1px solid var(--line); border-radius:var(--radius); background:var(--paper);
   box-shadow:var(--shadow); padding:14px;}
@@ -484,9 +434,10 @@ a{color:var(--brand-dark);}
 .dash-stat-grid .dash-item-flags{font-size:1.15rem;}
 .dash-stat-grid .dash-item-title{font-size:.95rem;}
 /* the Plants tile's text ("Watering Needed"/"Watering Done"/"Start Growing") is a full phrase,
-   not a bare count like its six neighbours - a single column crushes it onto two cramped lines,
-   so it gets the width of two */
-.dash-stat-grid #dash-plants-slot{grid-column:span 2;}
+   not a bare count like its five neighbours - a single column crushes it onto two cramped lines,
+   so it gets the width of three, filling out the second row exactly (5 bare-count tiles + this
+   one 3-wide tile = 8 grid units, two full rows of 4, no leftover gap) */
+.dash-stat-grid #dash-plants-slot{grid-column:span 3;}
 /* Branch's earnings card - full width rather than squeezed into the 2-column stat grid above,
    since it's carrying two figures (today/this week) side by side, not one. Reuses the same
    .dash-stat-num/.dash-stat-label look each stat tile already has, just two of them sharing one
@@ -517,9 +468,9 @@ a{color:var(--brand-dark);}
 .dash-watchnext-fav{position:absolute; top:8px; right:8px; background:var(--paper); border-radius:50%; box-shadow:var(--shadow);}
 .dash-watchnext-fav.on{color:var(--brand);}
 .dash-item-row .dash-item-flags{font-size:1.5rem; margin-bottom:0; flex-shrink:0;}
-/* Next Gig / Play Next (board game): icon stacked above the title, like Watch Next's own poster,
-   rather than beside it - a bigger image reads better as the tile's main visual than a small one
-   crammed into a row next to two lines of text */
+/* Next Gig: icon stacked above the title, like Watch Next's own poster, rather than beside it -
+   a bigger image reads better as the tile's main visual than a small one crammed into a row
+   next to two lines of text */
 .dash-item-img-lg{display:block; width:64px; height:64px; object-fit:cover; border-radius:var(--radius-sm); margin-bottom:10px;}
 .dash-item-img-lg.round{border-radius:50%;}
 /* Theatre's own Next Show/Watch Next tiles: no .round (a show's own art isn't a face, same
@@ -1164,9 +1115,9 @@ input[list]::-webkit-calendar-picker-indicator, input[list]::-webkit-list-button
    alone) all still left it floating somewhere above the keyboard with a gap of page showing
    through underneath. Living in normal flow sidesteps the whole problem - focusing the input
    just scrolls it into view above the keyboard the way every native text field does, no custom
-   positioning code involved anywhere. Every page using this (Places, Games, Board Games,
-   Wishlist, Gig Artists, Films Diary/Watchlist) puts the box first, right above its grid, so it's
-   still the first thing you reach on the way in rather than buried below a long list. */
+   positioning code involved anywhere. Every page using this (Places, Games, Wishlist, Gig
+   Artists, Films Diary/Watchlist) puts the box first, right above its grid, so it's still the
+   first thing you reach on the way in rather than buried below a long list. */
 .places-search,.games-search{margin-bottom:14px;}
 .places-search input,.games-search input{background:var(--paper);}
 /* the Been tab's own glanceable stat row (beenStatsHTML) - same plain two-column tile grid
@@ -1457,7 +1408,7 @@ details .d-body{padding:14px 16px;}
   .btn.danger:hover{background:#FCEBE9; border-color:#FCEBE9; color:#C0392B;}
   .trip-card:hover,.hub-card:hover,.dash-tile:hover{
     transform:none; box-shadow:var(--shadow); border-color:var(--line);}
-  .theme-swatch:hover,.bg-card:hover{transform:none; box-shadow:var(--shadow);}
+  .theme-swatch:hover{transform:none; box-shadow:var(--shadow);}
   .emoji-pick:hover,.pack-check[role=checkbox]:hover,
   .poll-opt[role=button]:hover{border-color:var(--line-strong);}
   .plan-auto.plan-click:hover .flight-strip,.plan-auto.plan-click:hover .card,
@@ -1840,7 +1791,7 @@ body.kb-open .tabbar.on{display:none;}
   .gig-list-artists{grid-template-columns:repeat(6,1fr);}
   .plants-list{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
   .places-grid.dense{grid-template-columns:repeat(4,1fr);}
-  /* Home's top stat row sits on one line (six single tiles + the double-width Watering tile) */
+  /* Home's top stat row sits on one line (five single tiles + the triple-width Watering tile) */
   .dash-stat-grid{grid-template-columns:repeat(8,1fr);}
   /* a plant's own page: actions + growing conditions pinned on the left, only the timeline/log
      on the right scrolls with the page */
@@ -1899,8 +1850,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.5';
+const APP_VERSION = '2.85.6';
 const CHANGELOG = [
+  {version:'2.85.6', notes:[
+    "Removed Board Games entirely - the subtab, its BoardGameGeek-backed search/shelves, and the two Home dashboard widgets it had (the stat tile and Play Next) are all gone. Games is back to a straight PS5/PS4/Leaderboard split."
+  ]},
   {version:'2.85.5', notes:[
     "Theatre's Diary is a 2-column poster grid now too, matching the Watchlist - and neither forces the poster into a square any more, it just shows at whatever shape Ticketmaster's own image actually is.",
     "Removed the Watchlist card's own delete icon (mark a show as seen from there, or use Log Show's own Delete for something already in the Diary).",
@@ -4717,8 +4671,8 @@ document.addEventListener('focusin', e => {
    reappears, .wrap's top padding shrinks), and tapping a button right after typing blurs the
    field on mousedown, before that same tap's mouseup lands. If the reflow happens in that gap,
    the content the tap was aiming for has physically moved by mouseup, so the click can land on
-   whatever the shifted layout now has at that screen point instead - a board game's Played
-   button, most reported, but really any tap right after leaving a text field. A short delay
+   whatever the shifted layout now has at that screen point instead - any tap right after
+   leaving a text field. A short delay
    (cancelled by a new focusin, so tabbing between two fields doesn't flash the bar) lets that
    click finish landing on its real target first. */
 document.addEventListener('focusout', e => {
@@ -4890,9 +4844,9 @@ function loadDashboardBranch(){
     const slot = $('#dash-branch-slot'); if(slot) slot.innerHTML = '';
   });
 }
-/* every top-row stat tile (Places/Gigs/Films/Games/Board Games/Theatre) is just "icon + bare
-   count" now - the "N Places Been"-style label still reaches a screen reader via aria-label on
-   the tile, it's just not printed on the tile itself any more. */
+/* every top-row stat tile (Places/Gigs/Films/Games/Theatre) is just "icon + bare count" now -
+   the "N Places Been"-style label still reaches a screen reader via aria-label on the tile,
+   it's just not printed on the tile itself any more. */
 function dashStatTileHTML(icon, count, label, onclick){
   return `
     <div class="dash-widget dash-widget-row" role="button" tabindex="0" onclick="${onclick}" aria-label="${esc(count+' '+label)}"
@@ -5163,15 +5117,6 @@ function dashShowWidgetHTML(){
       ${miniCountdownHTML(t.date, t.time)}
     </div>`;
 }
-/* Board Games marks (bgMarks) carry no date, unlike the diary-backed stat tiles above, so this
-   one has no time-range filter to apply - it's just a straight count of everything marked
-   Played, regardless of when. */
-function dashBoardGamesPlayedCount(){
-  return Object.values(bgMarks()).filter(v=>v==='played').length;
-}
-function dashBoardGamesPlayedWidgetHTML(){
-  return dashStatTileHTML('🎲', dashBoardGamesPlayedCount(), 'Board Games Played', 'App.goBoardGamesPlayed()');
-}
 function dashLastSeenFilmWidgetHTML(){
   // a diary entry logged with a future watchedDate (a planned rewatch, a release date noted
   // ahead of actually seeing it) isn't watched yet, so it shouldn't be able to win "Last Seen"
@@ -5273,49 +5218,6 @@ function dashWatchNextFilmHTML(f, providersData){
       <div class="dash-item-sub">Watch Next</div>
       <div id="dash-watchnext-providers" class="dash-watchnext-providers">${providersData ? filmProvidersHTML(providersData) : ''}</div>
     </a>`;
-}
-/* Board Games' Want to Play list doesn't carry its own cover/name the way theatreWatchlist
-   does - that data only exists on BGG, so unlike the widget above this one needs a real fetch
-   (see loadDashBoardGameNext) before it has anything but a game's bare id to show. "First
-   marked" (plain object key order = insertion order) rather than any fancier pick - Board
-   Games itself has no manual "play this one next" override to defer to, the way the old PSN
-   Play List pin used to before it was replaced by release-date sorting. */
-function dashBoardGameNextWidgetHTML(){
-  const marks = bgMarks();
-  const wantId = Object.keys(marks).find(id => marks[id]==='want');
-  if(!wantId) return `
-    <div class="dash-widget dash-widget-item" role="button" tabindex="0" onclick="App.goBoardGamesWant()"
-      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.goBoardGamesWant()}">
-      <div class="dash-item-flags" aria-hidden="true">🎲</div>
-      <div class="dash-item-title">Nothing on Want to Play</div>
-    </div>`;
-  const g = BG_MARKED_CACHE[wantId];
-  if(!g) return `
-    <div class="dash-widget dash-widget-item">
-      <div class="dash-item-flags" aria-hidden="true">🎲</div>
-      <div class="dash-item-title">Loading…</div>
-    </div>`;
-  return `
-    <div class="dash-widget dash-widget-item" role="button" tabindex="0" onclick="App.goBoardGamesWant()"
-      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.goBoardGamesWant()}">
-      ${g.thumb ? `<img class="dash-item-img-lg" src="${esc(g.thumb)}" alt="" loading="lazy">`
-                 : `<div class="dash-item-flags" aria-hidden="true">🎲</div>`}
-      <div class="dash-item-title">${esc(g.name||'Untitled')}</div>
-      <div class="dash-item-sub">Play Next</div>
-    </div>`;
-}
-function loadDashBoardGameNext(){
-  const marks = bgMarks();
-  const wantId = Object.keys(marks).find(id => marks[id]==='want');
-  if(!wantId || BG_MARKED_CACHE[wantId]) return;   // nothing marked, or already cached from a Board Games visit
-  fetch('/api/board-games?ids='+encodeURIComponent(wantId))
-    .then(r => r.ok ? r.json() : Promise.reject())
-    .then(data => {
-      const g = (data.games||[])[0]; if(!g) return;
-      BG_MARKED_CACHE[wantId] = g;
-      const slot = $('#dash-boardgame-slot'); if(slot){ slot.innerHTML = dashBoardGameNextWidgetHTML(); balanceDashboardColumns(); }
-    })
-    .catch(()=>{});   // the widget just stays on "Loading…" until a retry (next Home visit) works
 }
 function dashRandomWatchlistWidgetHTML(){
   const scheduled = dashScheduledFilm();
@@ -5436,7 +5338,6 @@ const DASH_WIDGET_DEFS = [
   {key:'song', label:'Most Played'},
   {key:'watchnext', label:'Watch Next'},
   {key:'theatrenext', label:'Next Show'},
-  {key:'boardgamenext', label:'Board Game Play Next'},
   {key:'lastseen', label:'Last Seen'},
 ];
 /* reconciles whatever's saved with the widgets that actually exist right now - any widget added
@@ -5465,7 +5366,6 @@ function dashWidgetHTML(key){
   if(key==='song') return `<div id="dash-song-slot">${dashSongPlaceholderHTML()}</div>`;
   if(key==='watchnext') return `<div id="dash-watchnext-slot">${dashRandomWatchlistWidgetHTML()}</div>`;
   if(key==='theatrenext') return dashShowWidgetHTML();
-  if(key==='boardgamenext') return `<div id="dash-boardgame-slot">${dashBoardGameNextWidgetHTML()}</div>`;
   if(key==='lastseen') return dashLastSeenFilmWidgetHTML();
   return '';
 }
@@ -5503,7 +5403,6 @@ function renderDashboard(){
       <div id="dash-gigs-slot">${dashGigsStatWidgetHTML()}</div>
       <div id="dash-films-slot">${dashFilmsSeenWidgetHTML()}</div>
       <div id="dash-games-stat-slot">${dashGamesStatPlaceholderHTML()}</div>
-      <div id="dash-boardgames-stat-slot">${dashBoardGamesPlayedWidgetHTML()}</div>
       <div id="dash-theatre-stat-slot">${dashTheatreSeenWidgetHTML()}</div>
       <div id="dash-plants-slot">${dashPlantsWidgetHTML()}</div>
     </div>
@@ -5523,7 +5422,6 @@ function renderDashboard(){
   loadDashboardNextRelease();
   loadDashboardSong();
   loadDashWatchNextProviders();
-  loadDashBoardGameNext();
   startMiniCountdownTicker();
 }
 function renderPlacesHub(){
@@ -6024,8 +5922,8 @@ function savePsnHidden(set){ try{ localStorage.setItem(PSN_HIDDEN_KEY, JSON.stri
 /* a game's own rating, 0.5-10 in half steps same as Films (FILM_SCORE_VALUES/filmScoreLabel,
    reused as-is rather than a second copy of the same scale) - PSN_TITLES only ever lives in
    memory for the session (see its own comment), so this is the one thing about a game this app
-   actually keeps: {gameId: rating}, synced to the cloud the same way board game marks are, since
-   PSN itself has nowhere to put an opinion about a game. */
+   actually keeps: {gameId: rating}, synced to the cloud the same way Films' own ratings are,
+   since PSN itself has nowhere to put an opinion about a game. */
 const GAME_RATINGS_KEY = 'calstrippin_game_ratings';
 function gameRatings(){ try{ return JSON.parse(localStorage.getItem(GAME_RATINGS_KEY)||'{}'); }catch(e){ return {}; } }
 function saveGameRatings(m){ try{ localStorage.setItem(GAME_RATINGS_KEY, JSON.stringify(m)); }catch(e){} pushGameRatings(); }
@@ -6104,28 +6002,22 @@ async function psnApi(path){
   if(!res.ok) throw new Error('Could not reach PlayStation (status '+res.status+')');
   return res.json();
 }
-/* Games holds two unrelated collections - what you're playing on the PlayStation, and board
-   games you might get to the table - so it splits into sub-tabs rather than one mixed list.
-   Board Games needs its own BGG_API_TOKEN Vercel environment variable (BoardGameGeek requires
-   a registered app token on every request - see psn-proxy/README.md); now that it's set up,
-   the subtab is back. */
-const BOARD_GAMES_ENABLED = true;
 let CUR_GAMES_TAB = 'ps5';
 function renderGames(){
-  // 'psn' (the old single combined tab) and 'wishlist' (its own subtab before Play List folded
-  // in) were both replaced - fall back for anything still holding one of those values
-  if((CUR_GAMES_TAB==='board' && !BOARD_GAMES_ENABLED) || CUR_GAMES_TAB==='psn' || CUR_GAMES_TAB==='wishlist') CUR_GAMES_TAB = 'ps5';
+  // 'psn' (the old single combined tab), 'wishlist' (its own subtab before Play List folded
+  // in) and 'board' (Board Games, removed) were all replaced - fall back for anything still
+  // holding one of those values
+  if(CUR_GAMES_TAB==='board' || CUR_GAMES_TAB==='psn' || CUR_GAMES_TAB==='wishlist') CUR_GAMES_TAB = 'ps5';
   const tab = (k, label) => `<button class="subtab${CUR_GAMES_TAB===k?' on':''}" onclick="App.gamesTab('${k}')">${label}</button>`;
-  const showAdd = CUR_GAMES_TAB!=='board' && CUR_GAMES_TAB!=='leaderboard';
+  const showAdd = CUR_GAMES_TAB!=='leaderboard';
   $('#app').classList.toggle('has-sticky-add', showAdd);
   $('#app').innerHTML = `
     <div class="crumb"><div class="crumb-titlerow">
       <span class="crumb-here">Games</span>
     </div></div>
-    <div class="subtabs">${tab('ps5',fab('playstation')+' PS5')}${tab('ps4',fab('playstation')+' PS4')}${tab('leaderboard','🏆 Leaderboard')}${BOARD_GAMES_ENABLED?tab('board','🎲 Board Games'):''}</div>
+    <div class="subtabs">${tab('ps5',fab('playstation')+' PS5')}${tab('ps4',fab('playstation')+' PS4')}${tab('leaderboard','🏆 Leaderboard')}</div>
     <div id="games-body"></div>
     ${showAdd?`<div class="add-bar"><div class="add-bar-row"><button class="btn primary" onclick="App.wlAddOpen()">+ Add Game</button></div></div>`:''}`;
-  if(CUR_GAMES_TAB==='board'){ renderBoardGames(); return; }
   if(CUR_GAMES_TAB==='leaderboard'){ renderGameLeaderboard(); return; }
   renderPsnGames();
 }
@@ -6438,327 +6330,11 @@ function psnToggleHiddenImpl(id){
   drawGamesList();
 }
 
-/* ================= Board games (BoardGameGeek) =================
-   Talks to /api/board-games (see api/board-games.js), a Vercel function rather than the PSN
-   proxy - BGG 401s every request that comes from the proxy's Cloudflare network no matter what
-   headers are sent, so this one endpoint lives on different infrastructure instead. No login -
-   the list is the same for everyone - so what's yours is just which games you've marked, synced
-   to the cloud the same way Places/Gigs/Films are so those marks show up on every device. */
-const BG_MARKS_KEY = 'calstrippin_boardgames';
-let BG_GAMES = [];          // the last fetch (hot list or search), held so filters re-run without refetching
-/* Want to Play/Played games, keyed by id, fetched independently of whatever's currently
-   searched/browsed (via /api/board-games?ids=...) so the shelf never loses a marked game just
-   because it scrolled off the hot list or isn't the thing you last searched for */
-let BG_MARKED_CACHE = {};
-let BG_FILTER = {cat:'all', players:0, time:0};
-let BG_SEARCH_TIMER = null;
-function bgMarks(){ try{ return JSON.parse(localStorage.getItem(BG_MARKS_KEY)||'{}'); }catch(e){ return {}; } }
-function saveBgMarks(m){ try{ localStorage.setItem(BG_MARKS_KEY, JSON.stringify(m)); }catch(e){} pushBgMarks(); }
-function bgMarkOf(id){ return bgMarks()[id] || ''; }
-function loadBgMarksCloud(cb){
-  if(!fbRoot){ cb(bgMarks()); return; }
-  fbRoot.ref('boardGameMarks').once('value')
-    .then(snap => cb(snap.exists() ? snap.val() : bgMarks()))
-    .catch(() => cb(bgMarks()));
-}
-function pushBgMarks(){
-  if(!fbRoot) return;
-  fbRoot.ref('boardGameMarks').set(bgMarks())
-    .catch(err => console.error("My Trips, couldn't save board game marks:", err));
-}
-
-/* BGG returns dozens of categories and mechanics; these are the handful of shelves people
-   actually choose between, matched off the category/mechanic names (and weight rating) it
-   returns. They live here rather than in api/board-games.js so a bucket can be retuned without
-   a redeploy. */
-/* BGG's own data is inconsistent about whether an entry even carries mechanics/categories at
-   all (sparser for older or less-documented games) - g.mechanics/g.categories defaulting to []
-   here means a card missing either just tests false on every chip instead of throwing and
-   aborting the whole grid's render (every card after the bad one in the list silently never
-   even reaching the DOM, however the render was triggered - including the one place, before
-   updateBgCardMarkButtons existed, that ran the full render again on every mark). */
-const BG_CATS = [
-  {k:'coop',     emoji:'🤝', label:'Co-op',    test:g => (g.mechanics||[]).some(m=>/cooperative/i.test(m))},
-  {k:'party',    emoji:'🎉', label:'Party',    test:g => (g.categories||[]).some(c=>/party game|humor/i.test(c))},
-  {k:'strategy', emoji:'🧠', label:'Strategy', test:g => (g.weight||0) >= 3
-                                                  || (g.categories||[]).some(c=>/abstract strategy|economic|civilization|territory building/i.test(c))},
-  {k:'family',   emoji:'🧸', label:'Family',   test:g => (g.weight||5) < 2
-                                                  || (g.categories||[]).some(c=>/children|educational/i.test(c))},
-  {k:'cards',    emoji:'🃏', label:'Cards',    test:g => (g.categories||[]).some(c=>/card game/i.test(c))},
-  {k:'mystery',  emoji:'🕵️', label:'Mystery',  test:g => (g.categories||[]).some(c=>/deduction|murder|spies/i.test(c))},
-  {k:'fighting', emoji:'⚔️', label:'Fighting', test:g => (g.categories||[]).some(c=>/wargame|fighting|miniatures/i.test(c))},
-  {k:'words',    emoji:'🔤', label:'Words',    test:g => (g.categories||[]).some(c=>/word game|trivia/i.test(c))},
-];
-/* the two mark buttons every card carries - not filter chips (that put a marked game at the
-   mercy of whatever's currently searched/browsed, see bg-shelf below), just the labels for
-   bgCardHTML's own mark buttons */
-const BG_MARK_FILTERS = [
-  {k:'want',   emoji:'⭐', label:'Want to Play'},
-  {k:'played', emoji:'✅', label:'Played'},
-];
-function bgCatsOf(g){ return BG_CATS.filter(c => c.test(g)); }
-function bgPlayersLabel(g){
-  if(!g.minPlayers && !g.maxPlayers) return '';
-  if(!g.maxPlayers || g.minPlayers===g.maxPlayers) return `${g.minPlayers||g.maxPlayers} players`;
-  return `${g.minPlayers||1}-${g.maxPlayers} players`;
-}
-function bgTimeLabel(g){
-  const lo = g.minTime, hi = g.maxTime || g.playTime;
-  if(!lo && !hi) return '';
-  if(!lo || lo===hi) return `${hi} min`;
-  return `${lo}-${hi} min`;
-}
-let BG_SUBTAB = 'want';   // 'want' | 'played' | 'search'
-function renderBoardGames(){
-  const body = $('#games-body'); if(!body) return;
-  loadBgMarksCloud(cloud => {
-    try{ localStorage.setItem(BG_MARKS_KEY, JSON.stringify(cloud && typeof cloud==='object' ? cloud : {})); }catch(e){}
-    if(BG_SUBTAB!=='search'){ drawBgShelf(); loadBgShelf(); }
-  });
-  const tab = (k, label) => `<button class="subtab${BG_SUBTAB===k?' on':''}" onclick="App.bgSubtab('${k}')">${label}</button>`;
-  body.innerHTML = `
-    <div class="subtabs">${tab('want','⭐ Want to Play')}${tab('played','✅ Played')}${tab('search','🔍 Search')}</div>
-    <div id="bg-body"></div>`;
-  if(BG_SUBTAB==='search'){ renderBgSearch(); return; }
-  renderBgShelfPage();
-}
-/* Want to Play/Played are each their own page now, not filter chips living alongside the
-   search grid - putting a marked game at the mercy of whatever's currently browsed/searched is
-   exactly the bug (#146) that shelf approach caused. Fetches full details for exactly the
-   marked ids via ?ids=, independent of the search page's hot list/results, so a marked game
-   never depends on still being part of some other list. Only fetches ids not already cached. */
-function renderBgShelfPage(){
-  const el = $('#bg-body'); if(!el) return;
-  el.innerHTML = `<div id="bg-shelf"><div class="empty">Loading…</div></div>`;
-  drawBgShelf();
-  loadBgShelf();
-}
-function loadBgShelf(){
-  const ids = Object.keys(bgMarks()).filter(id => !BG_MARKED_CACHE[id]);
-  if(!ids.length) return;
-  fetch('/api/board-games?ids='+ids.map(encodeURIComponent).join(','))
-    .then(r => r.ok ? r.json() : Promise.reject())
-    .then(data => {
-      (data.games||[]).forEach(g => { BG_MARKED_CACHE[g.id] = g; });
-      if(CUR_GAMES_TAB==='board' && BG_SUBTAB!=='search') drawBgShelf();
-    })
-    .catch(()=>{});   // the shelf just stays without that game's card until a retry works
-}
-function drawBgShelf(){
-  const el = $('#bg-shelf'); if(!el) return;
-  const marks = bgMarks();
-  const shelfGame = id => BG_GAMES.find(g=>g.id===id) || BG_MARKED_CACHE[id] || null;
-  const games = Object.keys(marks).filter(id => marks[id]===BG_SUBTAB).map(shelfGame).filter(Boolean);
-  el.innerHTML = games.length
-    ? `<div class="bg-list">${games.map(bgCardHTML).join('')}</div>`
-    : `<div class="empty">${BG_SUBTAB==='want' ? "Nothing marked Want to Play yet - find something in Search." : 'Nothing marked Played yet.'}</div>`;
-}
-function renderBgSearch(){
-  const el = $('#bg-body'); if(!el) return;
-  el.innerHTML = `
-    <div id="bg-filters"></div>
-    <div class="games-search">
-      <input type="text" id="bg-search" placeholder="Search board games…" oninput="App.bgSearchInput()">
-    </div>
-    <div id="bg-grid"><div class="empty">Loading board games…</div></div>`;
-  attachFieldClears(el);
-  drawBgFilters();
-  loadBoardGames('');
-}
-/* one network call per distinct search; every filter after that works on the held list. Leaves
-   whatever's already showing in place while a reload is in flight rather than blanking the grid
-   to a loading placeholder - typing a search re-triggers this on a debounce, and wiping the
-   cards mid-fetch meant a tap on a mark button landing in that window (a real, easy-to-hit
-   window against BGG's own network latency) hit nothing, since the button it was aiming for
-   had just been torn out from under it. */
-function loadBoardGames(q){
-  const grid = $('#bg-grid'); if(!grid) return;
-  if(!BG_GAMES.length) grid.innerHTML = `<div class="empty">Loading board games…</div>`;
-  /* same-origin Vercel function (api/board-games.js), not the Cloudflare Worker the rest of
-     this proxy's endpoints go through - see that file for why */
-  fetch('/api/board-games' + (q ? '?q='+encodeURIComponent(q) : ''))
-    .then(async r => {
-      if(!r.ok){
-        // the function's own {error: e.message} body carries the real reason (BoardGameGeek
-        // rejecting the request, most likely) - a bare "status 500" hid that
-        const body = await r.json().catch(()=>({}));
-        throw new Error(body.error || ('status '+r.status));
-      }
-      return r.json();
-    })
-    .then(data => {
-      if(CUR_GAMES_TAB!=='board' || BG_SUBTAB!=='search' || !$('#bg-grid')) return;   // moved on while it was in flight
-      BG_GAMES = data.games||[];
-      // whatever's marked among what we just fetched is already full data - free shelf entries
-      BG_GAMES.forEach(g => { if(bgMarkOf(g.id)) BG_MARKED_CACHE[g.id] = g; });
-      drawBgGrid();
-    })
-    .catch(e => {
-      if(CUR_GAMES_TAB!=='board' || BG_SUBTAB!=='search' || !$('#bg-grid')) return;
-      $('#bg-grid').innerHTML = `<div class="empty">Couldn't load board games.<br>${esc(e.message||'')}
-        <div class="btn-row" style="justify-content:center; margin-top:14px">
-          <button class="btn sm" onclick="App.bgReload()">Try Again</button>
-        </div></div>`;
-    });
-}
-function drawBgFilters(){
-  const el = $('#bg-filters'); if(!el) return;
-  const chip = (k, emoji, label) => `
-    <button class="bg-chip${BG_FILTER.cat===k?' on':''}" onclick="App.bgCat('${k}')">
-      <span class="bg-chip-emoji" aria-hidden="true">${emoji}</span>${esc(label)}</button>`;
-  const sel = (id, value, label, opts) => `
-    <label class="bg-sel"><span class="label">${esc(label)}</span>
-      <select onchange="App.bgFilter('${id}', this.value)">
-        ${opts.map(o=>`<option value="${o[0]}"${String(value)===String(o[0])?' selected':''}>${esc(o[1])}</option>`).join('')}
-      </select></label>`;
-  el.innerHTML = `
-    <div class="bg-chips">
-      ${chip('all','🎲','All')}
-      ${BG_CATS.map(c=>chip(c.k, c.emoji, c.label)).join('')}
-    </div>
-    <div class="bg-selects">
-      ${sel('players', BG_FILTER.players, 'Players', [[0,'Any'],[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6'],[7,'7'],[8,'8+']])}
-      ${sel('time', BG_FILTER.time, 'Playtime', [[0,'Any'],[30,'Under 30 min'],[60,'Under 1 hour'],[120,'Under 2 hours'],[121,'2 hours +']])}
-    </div>`;
-}
-function bgMatches(g){
-  const f = BG_FILTER;
-  if(f.cat!=='all'){
-    const c = BG_CATS.find(x=>x.k===f.cat); if(c && !c.test(g)) return false;
-  }
-  /* "plays 6" means a group of 6 fits between the game's two ends, not that 6 is its maximum */
-  if(f.players){
-    const lo = g.minPlayers||1, hi = g.maxPlayers||99, want = +f.players;
-    if(want===8 ? hi < 8 : (want < lo || want > hi)) return false;
-  }
-  if(f.time){
-    const t = g.maxTime || g.playTime || g.minTime || 0;
-    if(+f.time===121 ? t <= 120 : !(t && t <= +f.time)) return false;
-  }
-  return true;
-}
-function drawBgGrid(){
-  const grid = $('#bg-grid'); if(!grid) return;
-  const list = BG_GAMES.filter(bgMatches);
-  if(!list.length){
-    grid.innerHTML = `<div class="empty">${BG_GAMES.length
-      ? 'No board games match those filters.' : 'No board games found.'}</div>`;
-    return;
-  }
-  grid.innerHTML = `<div class="bg-list">${list.map(bgCardHTML).join('')}</div>`;
-}
-/* short, scannable highlights instead of BGG's own (often dry, catalog-copy) description -
-   built entirely from data /api/board-games already returns, so no extra fetch */
-function bgHighlights(g){
-  const out = [];
-  if(g.weight!=null){
-    out.push(g.weight<1.8 ? 'Easy to learn, quick to teach'
-      : g.weight<2.8 ? 'Light-to-medium strategy'
-      : g.weight<3.6 ? 'Solid strategic depth'
-      : 'Heavy, deeply strategic ruleset');
-  }
-  if(g.mechanics && g.mechanics.length) out.push('Mechanics: '+g.mechanics.slice(0,3).join(', '));
-  if(g.categories && g.categories.length) out.push('Themes: '+g.categories.slice(0,2).join(', '));
-  return out.slice(0,3);
-}
-function bgCardHTML(g){
-  const mark = bgMarkOf(g.id);
-  const tags = bgCatsOf(g).slice(0,3)
-    .map(c=>`<span class="bg-tag"><span aria-hidden="true">${c.emoji}</span>${esc(c.label)}</span>`).join('');
-  const facts = [bgPlayersLabel(g), bgTimeLabel(g)].filter(Boolean).join(' · ');
-  const highlights = bgHighlights(g);
-  // stopPropagation - these buttons sit inside the now-clickable card, and marking a game
-  // shouldn't also navigate to its detail page
-  const markBtn = (k, emoji, label) => `
-    <button type="button" class="btn sm bg-mark${mark===k?' on':''}" data-mark-key="${k}"
-      onclick="event.stopPropagation();App.bgMark('${esc(g.id)}','${k}')" aria-pressed="${mark===k}">
-      <span aria-hidden="true">${emoji}</span>${esc(label)}</button>`;
-  const href = '#/boardgame/'+encodeURIComponent(g.id);
-  return `
-    <div class="bg-card${mark?' bg-marked':''}" data-bg-id="${esc(g.id)}" role="button" tabindex="0" onclick="location.hash='${href}'"
-      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();location.hash='${href}'}">
-      <div class="bg-top">
-        ${g.thumb ? `<img class="bg-cover" src="${esc(g.thumb)}" alt="" loading="lazy">`
-                  : `<span class="bg-cover bg-cover-fallback" aria-hidden="true">🎲</span>`}
-        <div class="bg-info">
-          <div class="bg-name">${esc(g.name)}${g.year?` <span class="muted">(${g.year})</span>`:''}</div>
-          ${facts?`<div class="bg-facts muted small">${esc(facts)}</div>`:''}
-          ${g.rating?`<div class="bg-facts muted small">★ ${g.rating.toFixed(1)} on BoardGameGeek</div>`:''}
-          ${tags?`<div class="bg-tags">${tags}</div>`:''}
-        </div>
-      </div>
-      ${highlights.length?`<ul class="bg-highlights small">${highlights.map(h=>`<li>${esc(h)}</li>`).join('')}</ul>`:''}
-      <div class="btn-row bg-actions">
-        ${markBtn('want','⭐','Want to Play')}
-        ${markBtn('played','✅','Played')}
-      </div>
-    </div>`;
-}
-/* full write-up for one game - BGG's own description (which the grid card drops in favour of
-   bgHighlights' short bullets), every category/mechanic, and a link out to BGG itself for
-   reviews/rules/expansions this app doesn't carry. BG_GAMES and BG_MARKED_CACHE only live in
-   memory for the session, so a direct link (a reload, a shared URL) fetches it fresh first -
-   same pattern renderGameDetail uses for a PSN title. */
-function renderBoardGameDetail(id){
-  const g = BG_GAMES.find(x=>x.id===id) || BG_MARKED_CACHE[id];
-  if(!g){
-    $('#app').innerHTML = `
-      <div class="crumb"><div class="crumb-titlerow"><span class="crumb-here">
-        <button class="crumb-backbtn" onclick="location.hash='#/games'" aria-label="Back to Games">${ICONS.back}</button>
-        Board Game</span></div></div>
-      <div class="empty">Loading…</div>`;
-    fetch('/api/board-games?ids='+encodeURIComponent(id))
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => {
-        const found = (data.games||[])[0];
-        if(!found){ location.hash = '#/games'; return; }
-        BG_MARKED_CACHE[id] = found;
-        if(location.hash==='#/boardgame/'+encodeURIComponent(id)) renderBoardGameDetail(id);
-      })
-      .catch(()=>{ location.hash = '#/games'; });
-    return;
-  }
-  const mark = bgMarkOf(g.id);
-  const facts = [bgPlayersLabel(g), bgTimeLabel(g)].filter(Boolean).join(' · ');
-  const markBtn = (k, emoji, label) => `
-    <button type="button" class="btn sm bg-mark${mark===k?' on':''}"
-      onclick="App.bgMark('${esc(g.id)}','${k}');renderBoardGameDetail('${esc(g.id)}')" aria-pressed="${mark===k}">
-      <span aria-hidden="true">${emoji}</span>${esc(label)}</button>`;
-  const list = (label, items) => items && items.length
-    ? `<div class="bg-detail-section"><h3>${esc(label)}</h3><div class="bg-tags">${
-        items.map(i=>`<span class="bg-tag">${esc(i)}</span>`).join('')}</div></div>` : '';
-  $('#app').innerHTML = `
-    <div class="crumb">
-      <div class="crumb-titlerow">
-        <span class="crumb-here">
-          <button class="crumb-backbtn" onclick="location.hash='#/games'" aria-label="Back to Games">${ICONS.back}</button>
-          ${esc(g.name||'Board Game')}</span>
-      </div>
-    </div>
-    <div class="card bg-detail-card">
-      ${g.image ? `<img class="bg-detail-cover" src="${esc(g.image)}" alt="">`
-                 : `<span class="bg-detail-cover bg-cover-fallback" aria-hidden="true">🎲</span>`}
-      <div class="game-detail-name">${esc(g.name||'Untitled')}${g.year?` <span class="muted">(${g.year})</span>`:''}</div>
-      <div class="small muted bg-detail-facts">${esc(facts)}</div>
-      ${g.rating?`<div class="small muted">★ ${g.rating.toFixed(1)} on BoardGameGeek</div>`:''}
-      ${g.description?`<div class="bg-detail-section"><p class="small bg-detail-desc">${esc(g.description)}</p></div>`:''}
-      ${list('Categories', g.categories)}
-      ${list('Mechanics', g.mechanics)}
-      <div class="btn-row" style="margin-top:18px; width:100%">
-        ${markBtn('want','⭐','Want to Play')}
-        ${markBtn('played','✅','Played')}
-      </div>
-      <a class="btn sm ghost" style="margin-top:10px; width:100%; justify-content:center"
-        href="https://boardgamegeek.com/boardgame/${encodeURIComponent(g.id)}" target="_blank" rel="noopener">
-        View on BoardGameGeek</a>
-    </div>`;
-}
-
 /* ================= Wishlist (new & upcoming video games) =================
-   Same proxy pattern as Board Games: a Vercel function (api/game-search.js) rather than the
-   Cloudflare Worker, same-origin, no CORS header to add. No login - just a search box, backed
-   by RAWG (rawg.io), and a shelf of what you've marked - synced to the cloud the same way
-   Places/Gigs/Films are, so a Play List built on one device shows up on every other. */
+   A Vercel function (api/game-search.js), same-origin, no CORS header to add. No login - just
+   a search box, backed by RAWG (rawg.io), and a shelf of what you've marked - synced to the
+   cloud the same way Places/Gigs/Films are, so a Play List built on one device shows up on
+   every other. */
 const WL_KEY = 'calstrippin_game_wishlist';
 let WL_LAST_GAMES = [];   // the last fetch, so App.wlToggle can find a game's full data by id
 let WL_SEARCH_TIMER = null;
@@ -6794,9 +6370,9 @@ function wishlistSorted(){
    means when there's no query - see api/game-search.js. Lives in the + Add Game modal now
    (see App.wlAddOpen), not a console-tab-specific section, so the guard is just "the modal's
    still open" rather than which of the PS5/PS4 tabs is showing underneath it. Leaves whatever's
-   already showing in place while a reload is in flight instead of blanking to a loading message
-   - see loadBoardGames' own comment for why (a tap landing in that window would otherwise hit
-   nothing, since the button it was aiming for had just been torn out from under it). */
+   already showing in place while a reload is in flight instead of blanking to a loading
+   message - a tap landing in that window would otherwise hit nothing, since the button it
+   was aiming for had just been torn out from under it. */
 function loadGameSearch(q){
   const grid = $('#wl-grid'); if(!grid) return;
   if(!WL_LAST_GAMES.length) grid.innerHTML = `<div class="empty">Loading games…</div>`;
@@ -7061,7 +6637,7 @@ function drawGigsArtists(){
   drawGigArtistsGrid();
 }
 /* re-filters the already-fetched list; leaves the search box and its cursor alone, same
-   pattern as Games' drawGamesList() and Board Games' drawBgGrid() */
+   pattern as Games' own drawGamesList() */
 function drawGigArtistsGrid(){
   const grid = $('#gig-artists-grid'); if(!grid) return;
   const q = (($('#gig-artists-search')||{}).value||'').trim().toLowerCase();
@@ -7243,7 +6819,7 @@ function drawGigPeoplePills(){
     `<span class="chip">${esc(x)}<button aria-label="Remove ${esc(x)}" onclick="App.gigDelPerson(${i})">${fa('xmark')}</button></span>`).join('');
 }
 /* each keystroke would hammer Spotify (via the proxy) on every letter, so this waits for a
-   pause in typing before firing, same as Board Games' search */
+   pause in typing before firing, same as Gigs' own artist search elsewhere in this file */
 function gigArtistInputImpl(){
   GIG_PICKED = null;
   const picked = $('#gig-picked'); if(picked) picked.innerHTML = '';
@@ -7569,7 +7145,7 @@ function filmsGenreSelectHTML(id, list, current, onchange){
    nav, since it's an occasional-use page rather than a destination. Connect Letterboxd (and its
    CSV imports) live here rather than on the Diary tab itself, so that page stays about the films
    rather than opening with an account-management card every time. Real secrets (TMDb/Spotify/
-   RAWG/BGG API keys) can't live here: this is a static site with no backend and only a light PIN
+   RAWG API keys) can't live here: this is a static site with no backend and only a light PIN
    gate ("Security is deliberately light" - see the README), so anything typed into an in-app
    settings screen would sit in plain, readable localStorage. Those stay as Vercel/Cloudflare
    environment variables set outside the app, same as always. */
@@ -7627,7 +7203,7 @@ function streamingServicesChipsHTML(){
 }
 
 /* Films holds two unrelated things - what you've actually watched, and what you mean to - so it
-   splits into sub-tabs the same way Games does for PlayStation/Board Games/Wishlist. */
+   splits into sub-tabs the same way Games does for PlayStation/Leaderboard. */
 let CUR_FILMS_TAB = 'diary';
 function renderFilms(){
   const tab = (k, label) => `<button class="subtab${CUR_FILMS_TAB===k?' on':''}" onclick="App.filmsTab('${k}')">${label}</button>`;
@@ -7824,7 +7400,7 @@ function filmFormImpl(i, prefill){
   const picked = $('#film-picked'); if(picked) picked.innerHTML = filmPickedHTML();
 }
 /* each keystroke would hammer TMDb on every letter, so this waits for a pause in typing before
-   firing, same as Gigs' artist search and Board Games' own search */
+   firing, same as Gigs' own artist search */
 let FILM_SEARCH_TIMER = null;
 let FILM_SEARCH_RESULTS = [];
 let FILM_WATCHLIST_REMOVE_ID = null;   // set when Log Film opened via the Watchlist's "Watched" button
@@ -9242,7 +8818,7 @@ function theatreTitleFieldHTML(prefix, value){
   </div>`;
 }
 /* each keystroke would hammer Ticketmaster on every letter, so this waits for a pause in typing
-   before firing, same as Films/Gigs/Board Games' own search */
+   before firing, same as Films/Gigs' own search */
 let THEATRE_SEARCH_TIMER = null;
 let THEATRE_SEARCH_RESULTS = [];
 function theatreTitleInputImpl(prefix){
@@ -9445,10 +9021,6 @@ function route(){
   if(h.startsWith('#/game/')){
     CUR_TRIP_ID = null; stopSub();
     renderGameDetail(decodeURIComponent(h.slice('#/game/'.length))); window.scrollTo(0,0); return;
-  }
-  if(h.startsWith('#/boardgame/')){
-    CUR_TRIP_ID = null; stopSub();
-    renderBoardGameDetail(decodeURIComponent(h.slice('#/boardgame/'.length))); window.scrollTo(0,0); return;
   }
   if(h === '#/settings'){
     CUR_TRIP_ID = null; stopSub();
@@ -10617,13 +10189,10 @@ App.goToYourTrips = () => {
 };
 /* the actual "take me to Games" entry point (bottom tabbar, sidebar, Home's own stat/currently-
    playing tiles) - always lands on the PS5 tab, same as a cold load would. CUR_GAMES_TAB is a
-   plain module-level var, so without this reset it stays wherever it was last left - including
-   'board', which App.goBoardGamesWant/Played (Home's own Play Next board game widget) set as a
-   deliberate side effect of jumping straight to that subtab. Left un-reset, the *next* unrelated
-   tap of the Games icon would silently land on Board Games instead, making the PS5 tab's own
-   Play List look like it had vanished. The four in-page "Back to Games"/"Try Again" buttons
-   (renderGameDetail/renderBoardGameDetail) intentionally skip this and hash straight to '#/games'
-   instead, since those *should* return to whichever subtab they were opened from. */
+   plain module-level var, so without this reset it stays wherever it was last left. The
+   in-page "Back to Games"/"Try Again" buttons (renderGameDetail) intentionally skip this and
+   hash straight to '#/games' instead, since those *should* return to whichever subtab they
+   were opened from. */
 App.goGames = () => { CUR_GAMES_TAB = 'ps5'; location.hash = '#/games'; };
 App.goSettings = () => { location.hash = '#/settings'; };
 App.dashWidgetMove = (key, dir) => {
@@ -10892,60 +10461,6 @@ App.dashSongRange = k => {
   balanceDashboardColumns();
 };
 App.gamesTab = k => { CUR_GAMES_TAB = k; renderGames(); window.scrollTo(0,0); };
-App.goBoardGamesWant = () => { CUR_GAMES_TAB = 'board'; BG_SUBTAB = 'want'; location.hash = '#/games'; };
-App.goBoardGamesPlayed = () => { CUR_GAMES_TAB = 'board'; BG_SUBTAB = 'played'; location.hash = '#/games'; };
-/* switching category clears whatever's typed in the search box and goes back to the plain hot
-   list - a leftover search term silently narrowing a new category felt like it was missing
-   games */
-App.bgCat = k => {
-  BG_FILTER.cat = k;
-  const input = $('#bg-search'); if(input) input.value = '';
-  drawBgFilters();
-  loadBoardGames('');
-};
-App.bgFilter = (id, v) => { BG_FILTER[id] = +v; drawBgGrid(); };
-App.bgReload = () => loadBoardGames((($('#bg-search')||{}).value||'').trim());
-/* each search is a real BGG call, so wait for a pause in typing rather than firing per key -
-   the reverse of App.bgCat above: typing a search term clears whatever category/players/time
-   filter was still set, since a leftover narrow filter was hiding the exact game being searched
-   for (e.g. Monopoly filtered out by a stale "Strategy" chip) */
-App.bgSearchInput = () => {
-  const q = (($('#bg-search')||{}).value||'').trim();
-  if(q && (BG_FILTER.cat!=='all' || BG_FILTER.players || BG_FILTER.time)){
-    BG_FILTER = {cat:'all', players:0, time:0};
-    drawBgFilters();
-  }
-  clearTimeout(BG_SEARCH_TIMER);
-  BG_SEARCH_TIMER = setTimeout(App.bgReload, 400);
-};
-App.bgSubtab = k => { BG_SUBTAB = k; renderBoardGames(); };
-App.bgMark = (id, k) => {
-  const marks = bgMarks();
-  if(marks[id]===k) delete marks[id]; else marks[id] = k;   // tapping the same one again clears it
-  saveBgMarks(marks);
-  const g = BG_GAMES.find(x=>x.id===id); if(g) BG_MARKED_CACHE[id] = g;
-  // Want to Play/Played are their own pages now, not a filter chip alongside the search grid -
-  // whichever one is showing is the one that needs to reflect the new mark. On the search grid,
-  // only the one card that changed gets touched (see updateBgCardMarkButtons) rather than
-  // tearing down and rebuilding the whole result list on every tap - a search can return plenty
-  // of cards, and a full rebuild right as you're tapping the next one down the list is exactly
-  // the kind of mid-tap reflow that's already bitten this same button once before (see the
-  // kb-open/focusout comment nearby). The shelf views still redraw in full since marking a game
-  // there can remove it from the list entirely, not just change how one card looks.
-  if(BG_SUBTAB==='search') updateBgCardMarkButtons(id); else drawBgShelf();
-};
-/* patches one search-result card's own two buttons in place after a mark toggle - no other
-   card's DOM is touched, so nothing else on the page can shift mid-tap */
-function updateBgCardMarkButtons(id){
-  const card = document.querySelector(`.bg-card[data-bg-id="${CSS.escape(id)}"]`); if(!card) return;
-  const mark = bgMarkOf(id);
-  card.classList.toggle('bg-marked', !!mark);
-  card.querySelectorAll('.bg-mark').forEach(btn=>{
-    const on = btn.dataset.markKey===mark;
-    btn.classList.toggle('on', on);
-    btn.setAttribute('aria-pressed', String(on));
-  });
-}
 /* the + Add Game button next to the Games title - what used to be a permanent "Find Something
    New" section sitting below the whole PS5 library is now a modal you open on demand, reached
    from either console tab (see renderGames' crumb-titlerow) since it's always the same PS5-only

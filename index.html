@@ -417,6 +417,11 @@ a{color:var(--brand-dark);}
    photo Gigs' identical dropdown uses, everything else (positioning, item layout) shared as-is */
 .film-search-thumb{width:32px; height:46px; border-radius:3px; object-fit:cover; flex-shrink:0;
   background:var(--bg); border:1px solid var(--line);}
+/* Theatre's own search dropdown reuses .film-search-thumb for position/border/background, but
+   overrides the shape - Ticketmaster's Arts & Theatre images are square artwork, not a portrait
+   poster crop (see .theatre-cover's own comment), so the shared 2:3 sizing was cutting a chunk
+   off every thumbnail here. */
+.theatre-search-thumb{width:40px; height:40px;}
 /* Films Stats: the 3 headline numbers reuse the Home dashboard's own stat-tile look
    (.dash-widget.dash-widget-stat) - Logged/Rewatches are clickable (App.filmsTab('diary')/
    filmsStatsRewatches - Logged switches tab in place rather than going through
@@ -918,10 +923,11 @@ a{color:var(--brand-dark);}
 .gig-cover{width:56px; height:56px; flex-shrink:0; border-radius:50%; object-fit:cover;
   border:1px solid var(--line); background:var(--bg);}
 /* Theatre's own version of .gig-cover - an artist photo reads fine as a circular avatar, but a
-   show's poster art doesn't (it's not a face, and posters are portrait-shaped to begin with) -
-   same width as the circle it replaces, just the poster's actual 2:3 shape instead of a square
-   crop, with the poster's usual small-radius corners instead of a full circle. */
-.theatre-cover{width:56px; height:84px; flex-shrink:0; border-radius:var(--radius-sm); object-fit:cover;
+   show's own art doesn't (it's not a face), so this keeps the small-radius corners of a poster
+   crop instead of a full circle. Square, not the 2:3 portrait a film poster gets: Ticketmaster's
+   Arts & Theatre images (see api/theatre-search.js) are square-format artwork, not portrait
+   posters - a 2:3 crop was cutting a chunk off every one of them. */
+.theatre-cover{width:56px; height:56px; flex-shrink:0; border-radius:var(--radius-sm); object-fit:cover;
   border:1px solid var(--line); background:var(--bg);}
 .gig-cover-fallback{display:inline-flex; align-items:center; justify-content:center; font-size:1.3rem; color:var(--muted);}
 .gig-info{min-width:0; flex:1;}
@@ -1869,8 +1875,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.0';
+const APP_VERSION = '2.85.1';
 const CHANGELOG = [
+  {version:'2.85.1', notes:[
+    "Theatre: show images are square now, not a portrait poster crop - Ticketmaster's Arts & Theatre images are square-format artwork, so the old 2:3 crop was cutting a chunk off every one (search dropdown included). Existing Diary entries with no image also get backfilled automatically from Ticketmaster search next time the Diary loads, the same way Films already fills in missing posters."
+  ]},
   {version:'2.85.0', notes:[
     "The sidebar (desktop/tablet) now shows the app version at the bottom, same tappable v-number/What's New link the Travel hub already has - an easy way to tell whether a fix has actually landed yet without checking GitHub.",
     "Saving a stop, travel leg or accommodation flagged \"Add as Task\" (or just completing one) now lands back on the Tasks tab instead of always jumping to the Itinerary, matching how deleting one already worked.",
@@ -9057,6 +9066,37 @@ function migrateTheatreScores(shows){
   });
   return changed;
 }
+/* backfills an image for any Diary entry that doesn't already have one - a show logged before
+   Ticketmaster search existed (or typed by hand rather than picked from a result) never got a
+   photo. Same worker-pool pattern as Films' own backfillPosters, against api/theatre-search.js
+   instead of api/film-search.js; only fills a blank, never replaces a photo already there
+   (manually uploaded or otherwise). Matched on title (ignoring trailing punctuation, same as the
+   search endpoint's own dedupe) and, when there's more than one same-titled result, the venue
+   already on this entry - Mamma Mia! (Touring) shouldn't fill in the West End's own poster. */
+async function backfillTheatreImages(list, saveFn){
+  const missing = (list||[]).filter(t => t.title && !t.image);
+  if(!missing.length) return 0;
+  let filled = 0, idx = 0;
+  const titleKey = s => (s||'').toLowerCase().trim().replace(/[!?.]+$/, '').trim();
+  async function worker(){
+    while(idx < missing.length){
+      const t = missing[idx++];
+      try{
+        const r = await fetch('/api/theatre-search?q='+encodeURIComponent(t.title));
+        if(!r.ok) continue;
+        const data = await r.json();
+        const sameTitle = (data.shows||[]).filter(s=>titleKey(s.title)===titleKey(t.title));
+        const match = (t.venue && sameTitle.find(s=>s.venue && s.venue.includes(t.venue))) || sameTitle[0];
+        if(!match || !match.image) continue;
+        t.image = match.image;
+        filled++;
+      }catch(e){}
+    }
+  }
+  await Promise.all(Array.from({length:4}, worker));
+  if(filled) saveFn();
+  return filled;
+}
 function renderTheatreDiary(){
   const body = $('#theatre-body'); if(!body) return;
   body.innerHTML = `<div id="theatre-list"></div>`;
@@ -9066,6 +9106,9 @@ function renderTheatreDiary(){
     const migrated = migrateTheatreScores(DB.theatre);
     if(migrated) saveTheatre(); else saveLocal();
     if(CUR_THEATRE_TAB==='diary') drawTheatreList();
+    backfillTheatreImages(DB.theatre, saveTheatre).then(n => {
+      if(n && CUR_THEATRE_TAB==='diary'){ drawTheatreList(); toast(`Filled in images for ${n} show${n===1?'':'s'}`); }
+    });
   });
 }
 function theatreSorted(){
@@ -9188,7 +9231,7 @@ function theatreTitleSearch(prefix, q){
       cur.innerHTML = `<div class="gig-search-results">${THEATRE_SEARCH_RESULTS.map((s,n)=>`
         <div class="gig-search-item" role="button" tabindex="0" onclick="App.theatreTitlePick('${prefix}',${n})"
           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.theatreTitlePick('${prefix}',${n})}">
-          ${s.image ? `<img class="film-search-thumb" src="${esc(s.image)}" alt="">` : `<span class="film-search-thumb gig-cover-fallback">🎭</span>`}
+          ${s.image ? `<img class="film-search-thumb theatre-search-thumb" src="${esc(s.image)}" alt="">` : `<span class="film-search-thumb theatre-search-thumb gig-cover-fallback">🎭</span>`}
           <span>${esc(s.title)}${s.venue?` <span class="muted">- ${esc(s.venue)}</span>`:''}</span>
         </div>`).join('')}</div>`;
     })

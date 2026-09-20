@@ -1875,8 +1875,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.1';
+const APP_VERSION = '2.85.2';
 const CHANGELOG = [
+  {version:'2.85.2', notes:[
+    "Home's Next Show tile no longer dead-ends at \"No Upcoming Shows\" when nothing's booked - it now suggests something from your Theatre watchlist instead, same idea as Films' own Watch Next."
+  ]},
   {version:'2.85.1', notes:[
     "Theatre: show images are square now, not a portrait poster crop - Ticketmaster's Arts & Theatre images are square-format artwork, so the old 2:3 crop was cutting a chunk off every one (search dropdown included). Existing Diary entries with no image also get backfilled automatically from Ticketmaster search next time the Diary loads, the same way Films already fills in missing posters."
   ]},
@@ -5082,14 +5085,38 @@ function dashNextShow(){
   upcoming.sort((a,b)=>a.date.localeCompare(b.date));
   return upcoming[0]||null;
 }
+/* nothing booked - same "unfiltered instant pick" idea as Films' own dashRandomWatchlistWidgetHTML,
+   just without the streaming-provider check that has no equivalent for a stage show: a fresh
+   random pick from the Theatre watchlist every render, rather than the flat "No Upcoming Shows"
+   dead end this used to be. */
+function dashTheatreWatchNext(){
+  const list = DB.theatreWatchlist||[];
+  if(!list.length) return null;
+  return list[Math.floor(Math.random()*list.length)];
+}
+function dashTheatreWatchNextHTML(w){
+  const i = (DB.theatreWatchlist||[]).indexOf(w);
+  return `
+    <div class="dash-widget dash-widget-item" role="button" tabindex="0" onclick="App.theatreWatchlistForm(${i})"
+      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.theatreWatchlistForm(${i})}">
+      ${w.image ? `<img class="dash-item-img-lg round" src="${esc(w.image)}" alt="" loading="lazy">`
+                 : `<div class="dash-item-flags" aria-hidden="true">🎭</div>`}
+      <div class="dash-item-title">${esc(w.title||'Untitled')}</div>
+      <div class="dash-item-sub">Watch Next</div>
+    </div>`;
+}
 function dashShowWidgetHTML(){
   const t = dashNextShow();
-  if(!t) return `
-    <div class="dash-widget dash-widget-item" role="button" tabindex="0" onclick="App.goTheatre()"
-      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.goTheatre()}">
-      <div class="dash-item-flags" aria-hidden="true">🎭</div>
-      <div class="dash-item-title">No Upcoming Shows</div>
-    </div>`;
+  if(!t){
+    const w = dashTheatreWatchNext();
+    if(w) return dashTheatreWatchNextHTML(w);
+    return `
+      <div class="dash-widget dash-widget-item" role="button" tabindex="0" onclick="App.goTheatre()"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.goTheatre()}">
+        <div class="dash-item-flags" aria-hidden="true">🎭</div>
+        <div class="dash-item-title">No Upcoming Shows</div>
+      </div>`;
+  }
   const i = (DB.theatre||[]).indexOf(t);
   return `
     <div class="dash-widget dash-widget-item" role="button" tabindex="0" onclick="App.theatreForm(${i})"

@@ -12,7 +12,8 @@
    side, not this file's. */
 export const config = { runtime: 'edge' };
 
-const TM_SEARCH = 'https://app.ticketmaster.com/discovery/v2/events.json';
+const TM_EVENTS = 'https://app.ticketmaster.com/discovery/v2/events.json';
+const TM_ATTRACTIONS = 'https://app.ticketmaster.com/discovery/v2/attractions.json';
 
 function apiKey(){
   const key = process.env.TICKETMASTER_API_KEY;
@@ -56,10 +57,11 @@ function dedupeByTitle(shows){
   return out;
 }
 
-async function fetchEvents(key, q, countryCode){
-  const url = new URL(TM_SEARCH);
+async function fetchEvents(key, {keyword, attractionId, countryCode}){
+  const url = new URL(TM_EVENTS);
   url.searchParams.set('apikey', key);
-  url.searchParams.set('keyword', q);
+  if(keyword) url.searchParams.set('keyword', keyword);
+  if(attractionId) url.searchParams.set('attractionId', attractionId);
   url.searchParams.set('classificationName', 'Arts & Theatre');
   url.searchParams.set('size', '20');
   if(countryCode) url.searchParams.set('countryCode', countryCode);
@@ -69,20 +71,47 @@ async function fetchEvents(key, q, countryCode){
   return (data._embedded && data._embedded.events) || [];
 }
 
+/* an open-ended West End residency (Mamma Mia! at the Novello, say) can exist as a Ticketmaster
+   "attraction" - a real, sellable listing on ticketmaster.co.uk - without a plain keyword search
+   on /events.json turning up any of its individual performances: the two searches don't share
+   the same relevance ranking or coverage. Looking the keyword up as an attraction first, then
+   asking for that attraction's own events by id, catches the ones a keyword-only events search
+   quietly drops. Best-effort - a Ticketmaster hiccup here still leaves the plain keyword
+   searches below to fall back on, so it never turns a working search into a broken one. */
+async function fetchAttractionIds(key, q, countryCode){
+  try{
+    const url = new URL(TM_ATTRACTIONS);
+    url.searchParams.set('apikey', key);
+    url.searchParams.set('keyword', q);
+    url.searchParams.set('classificationName', 'Arts & Theatre');
+    url.searchParams.set('size', '5');
+    if(countryCode) url.searchParams.set('countryCode', countryCode);
+    const res = await fetch(url.toString());
+    if(!res.ok) return [];
+    const data = await res.json();
+    const attractions = (data._embedded && data._embedded.attractions) || [];
+    return attractions.map(a=>a.id).filter(Boolean);
+  }catch(e){ return []; }
+}
+
 /* Ticketmaster's Discovery API is US-centric by default: a plain keyword search with no
    countryCode can bury (or drop entirely) a title that's also touring/running elsewhere, which
    is exactly the case for most of what gets logged here (West End shows). Runs the GB-scoped
-   search first so a London show wins the title-dedupe below, then tops up with an unscoped
-   search for anything GB didn't have (a show seen abroad, on a trip) - so this stays useful
-   for logging a show from anywhere, not just London. */
+   search first (plus the attraction lookup above) so a London show wins the title-dedupe below,
+   then tops up with an unscoped search for anything GB didn't have (a show seen abroad, on a
+   trip) - so this stays useful for logging a show from anywhere, not just London. */
 async function searchShows(q){
   if(!q) return {shows: []};
   const key = apiKey();
-  const [gb, everywhere] = await Promise.all([
-    fetchEvents(key, q, 'GB'),
-    fetchEvents(key, q, null),
+  const [gb, everywhere, attractionIds] = await Promise.all([
+    fetchEvents(key, {keyword:q, countryCode:'GB'}),
+    fetchEvents(key, {keyword:q, countryCode:null}),
+    fetchAttractionIds(key, q, 'GB'),
   ]);
-  const events = [...gb, ...everywhere];
+  const byAttraction = attractionIds.length
+    ? (await Promise.all(attractionIds.map(id=>fetchEvents(key, {attractionId:id, countryCode:'GB'}).catch(()=>[])))).flat()
+    : [];
+  const events = [...gb, ...byAttraction, ...everywhere];
   return {shows: dedupeByTitle(events.map(simplify).filter(s=>s.title))};
 }
 

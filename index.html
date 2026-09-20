@@ -1525,14 +1525,18 @@ body.kb-open .tabbar.on{display:none;}
    set after the narrow-screen rule above so it wins on phones too, where the bar still needs
    the same clearance the wider layouts give it */
 .wrap{padding-bottom:96px;}
-/* the Itinerary's single sticky Add button - stacked directly above the tabbar via --bar-h
-   (the tabbar's own real rendered height, safe-area inset and all, kept live by renderTabbar),
-   rather than a guessed pixel offset that would drift on a notched phone. .wrap gets extra
-   bottom clearance to match while it's showing, so the last stop on the page doesn't end up
-   hidden underneath both bars. */
+/* the sticky Add/Log button shared by Itinerary, Films, Theatre, Music and Growing - stacked
+   directly above the tabbar via --bar-h (the tabbar's own real rendered height, safe-area inset
+   and all, kept live by renderTabbar), rather than a guessed pixel offset that would drift on a
+   notched phone. .wrap gets extra bottom clearance to match while it's showing, so the last item
+   on the page doesn't end up hidden underneath both bars.
+   No transform here any more either - this used to carry translateZ(0), on the assumption
+   (see .film-sort-progress-wrap's own comment) that only the tab bar's compositing layer was
+   the actual source of the WebKit mid-page-drift bug documented on .tabbar.on. That assumption
+   was wrong: this bar drifting (dragging the fixed tab bar below it out of position along with
+   it) is the same bug, so it loses the transform for the same reason the tab bar's fix did. */
 .add-bar{position:fixed; left:0; right:0; bottom:var(--bar-h,0px); z-index:59;
-  background:var(--paper); border-top:1px solid var(--line); padding:10px 16px;
-  transform:translateZ(0);}
+  background:var(--paper); border-top:1px solid var(--line); padding:10px 16px;}
 .add-bar-row{display:flex; gap:8px;}
 .add-bar-row .btn.primary{flex:1; min-width:0;}
 .add-bar-row .btn:not(.primary){flex-shrink:0;}
@@ -1602,8 +1606,10 @@ body.kb-open .tabbar.on{display:none;}
    advanceFilmSort). Pinned above the tabbar via --bar-h, same pattern as .add-bar - this was
    briefly made a plain in-flow element instead (see .tabbar.on's comment on the drift bug that
    motivated it), but a fixed progress bar read better in practice, so it's back; the drift bug
-   that prompted the in-flow attempt was in the TAB BAR itself losing its own compositing layer,
-   not something this bar shares just by also being position:fixed. */
+   that prompted the in-flow attempt was from a transform:translateZ(0) forcing its own
+   compositing layer, which this bar (like .tabbar.on's own fix) never had - see .add-bar's own
+   comment, which turned out to share the exact same problem until its matching transform came
+   off too. Being position:fixed on its own isn't what causes it. */
 .film-sort-progress-wrap{position:fixed; left:0; right:0; bottom:var(--bar-h,0px); z-index:58;
   background:var(--paper); border-top:1px solid var(--line); padding:10px 16px calc(10px + env(safe-area-inset-bottom));}
 .film-sort-progress-label{text-align:center; margin:0 0 6px;}

@@ -945,6 +945,17 @@ a{color:var(--brand-dark);}
 .gig-facts{margin-top:2px;}
 .gig-actions{display:flex; gap:2px; flex-shrink:0;}
 .gig-card.gig-clickable{cursor:pointer;}
+/* Theatre's Watchlist: 2 cards per row instead of one full-width row each - same idea as Films'
+   own Watchlist grid (.film-grid.film-grid-2col), own classes since the poster itself is square
+   with object-fit:contain rather than a 2:3 cover crop (see .theatre-cover's own comment). */
+.theatre-poster-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
+.theatre-poster-card{padding:10px; margin-bottom:0; cursor:pointer;}
+.theatre-poster{display:block; width:100%; aspect-ratio:1; object-fit:contain; border-radius:var(--radius-sm);
+  border:1px solid var(--line); background:var(--bg); margin-bottom:8px;}
+.theatre-poster-fallback{display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:var(--muted);}
+.theatre-poster-title{font-family:var(--font-head); font-weight:700; font-size:.88rem; color:var(--ink); overflow-wrap:anywhere;}
+.theatre-poster-venue{margin-top:2px;}
+.theatre-poster-del{position:absolute; top:8px; right:8px; background:var(--paper); border-radius:50%;}
 /* Theatre's 0.5-10 rating shown as five stars (halves supported) - a muted base star with a
    brand-coloured copy clipped to its fill fraction on top */
 .theatre-stars{display:inline-flex; gap:3px; margin-top:4px; font-size:.85rem; line-height:1;}
@@ -1885,8 +1896,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.3';
+const APP_VERSION = '2.85.4';
 const CHANGELOG = [
+  {version:'2.85.4', notes:[
+    "Theatre's Watchlist is a 2-column poster grid now instead of one full-width row per show, same idea as Films' own Watchlist grid."
+  ]},
   {version:'2.85.3', notes:[
     "Theatre images changed from a fixed square crop to object-fit:contain everywhere they show up (Diary/Watchlist cards, the search dropdown, Home's Next Show/Watch Next tiles) - Ticketmaster's own images have no one consistent aspect ratio (some are square, some are genuine portrait posters like The Book of Mormon's), so any single fixed crop cuts a chunk off some of them. Nothing gets cropped now, whatever shape the source image actually is."
   ]},
@@ -9361,25 +9375,19 @@ function drawTheatreWatchlistList(){
   const el = $('#theatre-watchlist-list'); if(!el) return;
   const mine = DB.theatreWatchlist||[];
   el.innerHTML = mine.length
-    ? `<div class="gig-list">${mine.map(t=>theatreWatchlistCardHTML(t)).join('')}</div>`
+    ? `<div class="theatre-poster-grid">${mine.map(t=>theatreWatchlistCardHTML(t)).join('')}</div>`
     : `<div class="empty">Nothing on your Theatre watchlist yet - tap + Add Show above to add one.</div>`;
 }
 function theatreWatchlistCardHTML(t){
   return `
-    <div class="card gig-card" role="button" tabindex="0" aria-label="Mark ${esc(t.title||'Untitled')} as seen"
+    <div class="card theatre-poster-card" role="button" tabindex="0" aria-label="Mark ${esc(t.title||'Untitled')} as seen"
       onclick="App.theatreMarkSeen('${esc(t.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.theatreMarkSeen('${esc(t.id)}')}">
-      <div class="gig-top">
-        ${t.image ? `<img class="theatre-cover" src="${esc(t.image)}" alt="" loading="lazy">`
-                   : `<span class="theatre-cover gig-cover-fallback" aria-hidden="true">🎭</span>`}
-        <div class="gig-info">
-          <div class="gig-name">${esc(t.title||'Untitled')}</div>
-          ${t.venue?`<div class="gig-facts muted small">${esc(t.venue)}</div>`:''}
-        </div>
-        <div class="gig-actions">
-          <button class="iconbtn del" aria-label="Remove from watchlist" title="Remove" onclick="event.stopPropagation();App.delTheatreWatchlist('${esc(t.id)}')">${ICONS.trash}</button>
-        </div>
-      </div>
-      ${t.notes?`<div class="small muted" style="margin-top:8px">${esc(t.notes)}</div>`:''}
+      <button class="iconbtn del theatre-poster-del" aria-label="Remove from watchlist" title="Remove" onclick="event.stopPropagation();App.delTheatreWatchlist('${esc(t.id)}')">${ICONS.trash}</button>
+      ${t.image ? `<img class="theatre-poster" src="${esc(t.image)}" alt="" loading="lazy">`
+                 : `<span class="theatre-poster theatre-poster-fallback" aria-hidden="true">🎭</span>`}
+      <div class="theatre-poster-title">${esc(t.title||'Untitled')}</div>
+      ${t.venue?`<div class="theatre-poster-venue muted small">${esc(t.venue)}</div>`:''}
+      ${t.notes?`<div class="small muted" style="margin-top:6px">${esc(t.notes)}</div>`:''}
     </div>`;
 }
 function theatreWatchlistFormImpl(i){

@@ -87,6 +87,10 @@ body{
 .version-tag{background:none; border:none; padding:6px; margin:0; color:var(--muted); font-size:.8rem; font-weight:400;
   cursor:pointer; text-decoration:underline; text-decoration-color:transparent; transition:text-decoration-color .15s;}
 .version-tag:hover{text-decoration-color:currentColor; color:var(--brand-dark);}
+/* margin-top:auto pushes this to the bottom of .sidebar's own column flexbox (see its CSS) -
+   harmless to declare outside that component's own media query, since .sidebar is display:none
+   below it anyway */
+.sidebar-foot{display:flex; justify-content:center; margin-top:auto; padding-top:14px;}
 
 /* ---------- type ---------- */
 h1{font-family:var(--font-head); font-size:1.9rem; font-weight:800; letter-spacing:-.03em; line-height:1.15; color:var(--ink);}
@@ -1865,8 +1869,17 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.84.4';
+const APP_VERSION = '2.85.0';
 const CHANGELOG = [
+  {version:'2.85.0', notes:[
+    "The sidebar (desktop/tablet) now shows the app version at the bottom, same tappable v-number/What's New link the Travel hub already has - an easy way to tell whether a fix has actually landed yet without checking GitHub.",
+    "Saving a stop, travel leg or accommodation flagged \"Add as Task\" (or just completing one) now lands back on the Tasks tab instead of always jumping to the Itinerary, matching how deleting one already worked.",
+    "Dashboard: a show, gig or booked film happening later today no longer disappears from Next Show/Next Gig/Watch Next until tomorrow - it now counts as upcoming (with a live countdown) the same day it's happening.",
+    "Films: a freshly synced or CSV-imported Letterboxd rating is converted onto this app's 0.5-10 scale immediately instead of only once the Diary tab happened to be opened, so Home never shows the raw un-doubled score. Watch Next also no longer shows a film that's already been rated today as if it were still just booked.",
+    "Fixed the sticky Add/Log button (and the tab bar stacked below it) occasionally drifting to render mid-page instead of staying pinned to the bottom - the same compositing-layer bug already fixed on the tab bar itself, just not yet on this button too.",
+    "Flights: added an \"Add to Apple Calendar\" button next to the Edit Flight title - correctly accounts for the departure/arrival airports being in different timezones, and lists both airports as the event's location.",
+    "Theatre search is GB-only now (a non-UK result never made sense here), and also looks a title up as a Ticketmaster \"attraction\" as well as a plain keyword search - catches a long-running West End show (Mamma Mia! included) that a keyword-only search was missing, with punctuation ignored when telling two results apart."
+  ]},
   {version:'2.84.4', notes:[
     "Games: a rated game's grid card now shows its rating too, right above the progress bar - it was previously only visible on the game's own page."
   ]},
@@ -11573,9 +11586,16 @@ function sidebarGlobalNav(inTrip){
     + item('Games','🎮',"App.goGames()", onGames)
     + item('Growing','🥕',"App.goPlants()", onPlants);
 }
+/* pinned to the bottom via margin-top:auto (the sidebar is already a column flexbox - see
+   .sidebar's own CSS) rather than living only on the Travel hub's own .home-foot, so there's
+   always a quick way to tell whether a fix has actually been pushed yet without checking
+   GitHub, whichever page happens to be open */
+function sidebarVersionFootHTML(){
+  return `<div class="sidebar-foot"><button class="version-tag" onclick="App.toggleChangelog()">v${esc(APP_VERSION)} &middot; What's new</button></div>`;
+}
 function renderSidebar(t){
   const root = $('#sidebar-root'); if(!root) return;
-  root.innerHTML = (t ? tripNavItems(t) + '<hr class="menu-sep">' : '') + sidebarGlobalNav(!!t);
+  root.innerHTML = (t ? tripNavItems(t) + '<hr class="menu-sep">' : '') + sidebarGlobalNav(!!t) + sidebarVersionFootHTML();
 }
 /* ---- bottom bar: the app's main navigation, always within thumb reach ----
    Trip-specific slots stay in place but go inert on the home and Places pages, so the

@@ -44,12 +44,15 @@ function simplify(e){
 /* the same show sells tickets as a separate event per performance/venue date, so a plain
    keyword search comes back with the same title many times over - keeps just the first
    (Ticketmaster's own relevance order) result per title, case-insensitively, same as picking
-   one representative result per film already works in film-search.js */
+   one representative result per film already works in film-search.js. Trailing punctuation is
+   stripped from the comparison too - a long-running show's individual dates don't always agree
+   on it ("Mamma Mia" one date, "Mamma Mia!" the next, confirmed against real Discovery API
+   results), which otherwise reads as two separate shows instead of the one it actually is. */
 function dedupeByTitle(shows){
   const seen = new Set();
   const out = [];
   for(const s of shows){
-    const key = s.title.toLowerCase().trim();
+    const key = s.title.toLowerCase().trim().replace(/[!?.]+$/, '').trim();
     if(!key || seen.has(key)) continue;
     seen.add(key);
     out.push(s);

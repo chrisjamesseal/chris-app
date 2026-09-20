@@ -945,17 +945,20 @@ a{color:var(--brand-dark);}
 .gig-facts{margin-top:2px;}
 .gig-actions{display:flex; gap:2px; flex-shrink:0;}
 .gig-card.gig-clickable{cursor:pointer;}
-/* Theatre's Watchlist: 2 cards per row instead of one full-width row each - same idea as Films'
-   own Watchlist grid (.film-grid.film-grid-2col), own classes since the poster itself is square
-   with object-fit:contain rather than a 2:3 cover crop (see .theatre-cover's own comment). */
+/* Theatre's Diary and Watchlist: 2 cards per row instead of one full-width row each, same idea
+   as Films' own Watchlist grid (.film-grid.film-grid-2col) - own classes since the poster has no
+   forced aspect ratio (no width/height on the real img, just width:100%, so it renders at
+   whatever shape it actually is - Ticketmaster's own images vary a lot, see .theatre-cover's own
+   comment, and a poster-grid card has room to just let that happen rather than needing every
+   tile a uniform height the way a list row's small icon does). The emoji fallback (nothing to
+   take its shape from) keeps a square aspect-ratio of its own. */
 .theatre-poster-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
 .theatre-poster-card{padding:10px; margin-bottom:0; cursor:pointer;}
-.theatre-poster{display:block; width:100%; aspect-ratio:1; object-fit:contain; border-radius:var(--radius-sm);
+.theatre-poster{display:block; width:100%; border-radius:var(--radius-sm);
   border:1px solid var(--line); background:var(--bg); margin-bottom:8px;}
-.theatre-poster-fallback{display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:var(--muted);}
+.theatre-poster-fallback{aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:var(--muted);}
 .theatre-poster-title{font-family:var(--font-head); font-weight:700; font-size:.88rem; color:var(--ink); overflow-wrap:anywhere;}
 .theatre-poster-venue{margin-top:2px;}
-.theatre-poster-del{position:absolute; top:8px; right:8px; background:var(--paper); border-radius:50%;}
 /* Theatre's 0.5-10 rating shown as five stars (halves supported) - a muted base star with a
    brand-coloured copy clipped to its fill fraction on top */
 .theatre-stars{display:inline-flex; gap:3px; margin-top:4px; font-size:.85rem; line-height:1;}
@@ -1896,8 +1899,13 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.4';
+const APP_VERSION = '2.85.5';
 const CHANGELOG = [
+  {version:'2.85.5', notes:[
+    "Theatre's Diary is a 2-column poster grid now too, matching the Watchlist - and neither forces the poster into a square any more, it just shows at whatever shape Ticketmaster's own image actually is.",
+    "Removed the Watchlist card's own delete icon (mark a show as seen from there, or use Log Show's own Delete for something already in the Diary).",
+    "Theatre no longer offers uploading your own photo - every image comes from Ticketmaster's search now, and an existing manually-uploaded one gets swapped out for Ticketmaster's own automatically next time the Diary or Watchlist loads."
+  ]},
   {version:'2.85.4', notes:[
     "Theatre's Watchlist is a 2-column poster grid now instead of one full-width row per show, same idea as Films' own Watchlist grid."
   ]},
@@ -9120,15 +9128,16 @@ function migrateTheatreScores(shows){
   });
   return changed;
 }
-/* backfills an image for any Diary entry that doesn't already have one - a show logged before
-   Ticketmaster search existed (or typed by hand rather than picked from a result) never got a
-   photo. Same worker-pool pattern as Films' own backfillPosters, against api/theatre-search.js
-   instead of api/film-search.js; only fills a blank, never replaces a photo already there
-   (manually uploaded or otherwise). Matched on title (ignoring trailing punctuation, same as the
-   search endpoint's own dedupe) and, when there's more than one same-titled result, the venue
-   already on this entry - Mamma Mia! (Touring) shouldn't fill in the West End's own poster. */
+/* backfills an image for any Diary/Watchlist entry that doesn't already have one - a show logged
+   before Ticketmaster search existed (or typed by hand rather than picked from a result) never
+   got a photo - and also replaces one that's a data: URI, i.e. a leftover from the old manual
+   upload option (now removed; every image comes from Ticketmaster's own search now, see
+   api/theatre-search.js). Same worker-pool pattern as Films' own backfillPosters. Matched on
+   title (ignoring trailing punctuation, same as the search endpoint's own dedupe) and, when
+   there's more than one same-titled result, the venue already on this entry - Mamma Mia!
+   (Touring) shouldn't fill in the West End's own poster. */
 async function backfillTheatreImages(list, saveFn){
-  const missing = (list||[]).filter(t => t.title && !t.image);
+  const missing = (list||[]).filter(t => t.title && (!t.image || t.image.startsWith('data:')));
   if(!missing.length) return 0;
   let filled = 0, idx = 0;
   const titleKey = s => (s||'').toLowerCase().trim().replace(/[!?.]+$/, '').trim();
@@ -9176,26 +9185,22 @@ function drawTheatreList(){
   const body = $('#theatre-list'); if(!body) return;
   const ordered = theatreSorted();
   body.innerHTML = ordered.length
-    ? `<div class="gig-list">${ordered.map(o=>theatreCardHTML(o.t,o.i)).join('')}</div>`
+    ? `<div class="theatre-poster-grid">${ordered.map(o=>theatreCardHTML(o.t,o.i)).join('')}</div>`
     : `<div class="empty">No shows logged yet.<br>Tap + Log Show to log the first one.</div>`;
 }
 function theatreCardHTML(t, i){
   const facts = [t.venue, t.date?fmtShortDate(t.date):'', t.time||''].filter(Boolean).join(' · ');
   return `
-    <div class="card gig-card gig-clickable" role="button" tabindex="0" onclick="App.theatreForm(${i})"
+    <div class="card theatre-poster-card" role="button" tabindex="0" onclick="App.theatreForm(${i})"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.theatreForm(${i})}">
-      <div class="gig-top">
-        ${t.image ? `<img class="theatre-cover" src="${esc(t.image)}" alt="" loading="lazy">`
-                   : `<span class="theatre-cover gig-cover-fallback" aria-hidden="true">🎭</span>`}
-        <div class="gig-info">
-          <div class="gig-name">${esc(t.title||'Untitled')}</div>
-          ${facts?`<div class="gig-facts muted small">${esc(facts)}</div>`:''}
-          ${theatreStarsHTML(t.rating)}
-        </div>
-        <div class="gig-actions">
-          <button class="iconbtn edit" aria-label="Edit show" title="Edit" onclick="event.stopPropagation();App.theatreForm(${i})">${ICONS.edit}</button>
-          <button class="iconbtn del" aria-label="Remove show" title="Remove" onclick="event.stopPropagation();App.delTheatre(${i})">${ICONS.trash}</button>
-        </div>
+      ${t.image ? `<img class="theatre-poster" src="${esc(t.image)}" alt="" loading="lazy">`
+                 : `<span class="theatre-poster theatre-poster-fallback" aria-hidden="true">🎭</span>`}
+      <div class="theatre-poster-title">${esc(t.title||'Untitled')}</div>
+      ${facts?`<div class="theatre-poster-venue muted small">${esc(facts)}</div>`:''}
+      ${theatreStarsHTML(t.rating)}
+      <div class="btn-row" style="margin-top:8px">
+        <button class="iconbtn edit" aria-label="Edit show" title="Edit" onclick="event.stopPropagation();App.theatreForm(${i})">${ICONS.edit}</button>
+        <button class="iconbtn del" aria-label="Remove show" title="Remove" onclick="event.stopPropagation();App.delTheatre(${i})">${ICONS.trash}</button>
       </div>
       ${t.notes?`<div class="small muted" style="margin-top:8px">${esc(t.notes)}</div>`:''}
     </div>`;
@@ -9217,34 +9222,12 @@ function theatreRatingFieldHTML(value){
     </div>
   </div>`;
 }
-/* a manual upload (Plants' own "no icon fits, upload one" fallback - downscaleToDataURLPng, same
-   status-slot swap pattern) alongside the search below, rather than instead of it - a show
-   search doesn't find turns up nothing to pick a photo from either. Shared by both the Log Show
-   and Add-to-Watchlist forms - only one of those modals is ever open at a time, and each resets
-   this when it opens. */
+/* the show's photo is Ticketmaster's own now, filled in automatically by picking a search
+   result below - no manual upload option any more (there used to be one, Plants-style), so
+   every image is one this app actually recognises rather than something typed in by hand.
+   Shared by both the Log Show and Add-to-Watchlist forms - only one of those modals is ever
+   open at a time, and each resets this when it opens. */
 let THEATRE_FORM_IMAGE = null;
-function theatrePosterStatusHTML(){
-  if(!THEATRE_FORM_IMAGE) return `
-    <label class="btn sm" style="cursor:pointer; margin-bottom:6px">${ICONS.upload} Add a Photo
-      <input type="file" accept="image/*" style="display:none" onchange="App.theatreAttachPoster(this)"></label>`;
-  return `
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px">
-      <img src="${esc(THEATRE_FORM_IMAGE)}" alt="" style="width:40px; height:40px; border-radius:8px; object-fit:cover; border:1px solid var(--line); background:var(--bg)">
-      <button type="button" class="btn sm ghost" onclick="App.theatreClearPoster()">Remove Photo</button>
-    </div>`;
-}
-function theatreAttachPosterImpl(input){
-  const file = input.files[0]; input.value=''; if(!file) return;
-  downscaleToDataURLPng(file, 400, dataUrl => {
-    if(!dataUrl) return;
-    THEATRE_FORM_IMAGE = dataUrl;
-    const status = $('#theatre-poster-status'); if(status) status.innerHTML = theatrePosterStatusHTML();
-  });
-}
-function theatreClearPosterImpl(){
-  THEATRE_FORM_IMAGE = null;
-  const status = $('#theatre-poster-status'); if(status) status.innerHTML = theatrePosterStatusHTML();
-}
 /* the title field: a live search against Ticketmaster's Discovery API (via
    api/theatre-search.js) when it's configured, a plain text box otherwise - same shape as
    Films' TMDb search (filmTitleFieldHTML). Shared by the Log Show form ("theatre" prefix, its
@@ -9302,10 +9285,7 @@ function theatreTitlePickImpl(prefix, n){
   const s = THEATRE_SEARCH_RESULTS[n]; if(!s) return;
   const titleInp = $('#'+prefix+'-title'); if(titleInp) titleInp.value = s.title;
   const venueInp = $('#'+prefix+'-venue'); if(venueInp) venueInp.value = s.venue||'';
-  if(s.image){
-    THEATRE_FORM_IMAGE = s.image;
-    const status = $('#theatre-poster-status'); if(status) status.innerHTML = theatrePosterStatusHTML();
-  }
+  if(s.image) THEATRE_FORM_IMAGE = s.image;
   const results = $('#'+prefix+'-search-results'); if(results) results.innerHTML = '';
 }
 let THEATRE_WATCHLIST_REMOVE_ID = null;   // set when Log Show opened via the Watchlist's "Seen" button
@@ -9320,7 +9300,6 @@ function theatreFormImpl(i, prefill){
     <div class="field"><label class="label" for="theatre-date">Date</label><input id="theatre-date" type="date" value="${esc(t.date||'')}"></div>
     <div class="field"><label class="label" for="theatre-time">Time <span class="muted">(optional)</span></label><input id="theatre-time" type="time" value="${esc(t.time||'')}"></div>
     ${theatreRatingFieldHTML(t.rating!=null?t.rating:null)}
-    <div class="field"><label class="label">Photo</label><div id="theatre-poster-status">${theatrePosterStatusHTML()}</div></div>
     <div class="field"><label class="label" for="theatre-notes">Notes</label><textarea id="theatre-notes" rows="3">${esc(t.notes||'')}</textarea></div>
     <button class="btn primary" style="width:100%" onclick="App.saveTheatre(${i>=0?i:-1})">${i>=0?'Save':'Log Show'}</button>`);
 }
@@ -9369,6 +9348,9 @@ function renderTheatreWatchlist(){
     DB.theatreWatchlist = Array.isArray(cloud) ? cloud : [];
     saveLocal();
     if(CUR_THEATRE_TAB==='watchlist') drawTheatreWatchlistList();
+    backfillTheatreImages(DB.theatreWatchlist, saveTheatreWatchlist).then(n => {
+      if(n && CUR_THEATRE_TAB==='watchlist'){ drawTheatreWatchlistList(); toast(`Filled in images for ${n} show${n===1?'':'s'}`); }
+    });
   });
 }
 function drawTheatreWatchlistList(){
@@ -9382,7 +9364,6 @@ function theatreWatchlistCardHTML(t){
   return `
     <div class="card theatre-poster-card" role="button" tabindex="0" aria-label="Mark ${esc(t.title||'Untitled')} as seen"
       onclick="App.theatreMarkSeen('${esc(t.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.theatreMarkSeen('${esc(t.id)}')}">
-      <button class="iconbtn del theatre-poster-del" aria-label="Remove from watchlist" title="Remove" onclick="event.stopPropagation();App.delTheatreWatchlist('${esc(t.id)}')">${ICONS.trash}</button>
       ${t.image ? `<img class="theatre-poster" src="${esc(t.image)}" alt="" loading="lazy">`
                  : `<span class="theatre-poster theatre-poster-fallback" aria-hidden="true">🎭</span>`}
       <div class="theatre-poster-title">${esc(t.title||'Untitled')}</div>
@@ -9397,7 +9378,6 @@ function theatreWatchlistFormImpl(i){
     <h2>${i>=0?'Edit':'Add to Watchlist'}</h2>
     ${theatreTitleFieldHTML('tw', t.title)}
     <div class="field"><label class="label" for="tw-venue">Venue</label><input id="tw-venue" type="text" value="${esc(t.venue||'')}"></div>
-    <div class="field"><label class="label">Photo</label><div id="theatre-poster-status">${theatrePosterStatusHTML()}</div></div>
     <div class="field"><label class="label" for="tw-notes">Notes</label><textarea id="tw-notes" rows="3">${esc(t.notes||'')}</textarea></div>
     <button class="btn primary" style="width:100%" onclick="App.saveTheatreWatchlist(${i>=0?i:-1})">${i>=0?'Save':'Add'}</button>`);
 }
@@ -10887,8 +10867,6 @@ App.delTheatre = delTheatreImpl;
 App.theatreWatchlistForm = theatreWatchlistFormImpl;
 App.saveTheatreWatchlist = saveTheatreWatchlistImpl;
 App.delTheatreWatchlist = delTheatreWatchlistImpl;
-App.theatreAttachPoster = theatreAttachPosterImpl;
-App.theatreClearPoster = theatreClearPosterImpl;
 App.theatreMarkSeen = id => {
   const t = (DB.theatreWatchlist||[]).find(x=>x.id===id); if(!t) return;
   theatreFormImpl(-1, {title:t.title, venue:t.venue, image:t.image, watchlistId:t.id});

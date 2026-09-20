@@ -56,18 +56,33 @@ function dedupeByTitle(shows){
   return out;
 }
 
-async function searchShows(q){
-  if(!q) return {shows: []};
-  const key = apiKey();
+async function fetchEvents(key, q, countryCode){
   const url = new URL(TM_SEARCH);
   url.searchParams.set('apikey', key);
   url.searchParams.set('keyword', q);
   url.searchParams.set('classificationName', 'Arts & Theatre');
   url.searchParams.set('size', '20');
+  if(countryCode) url.searchParams.set('countryCode', countryCode);
   const res = await fetch(url.toString());
   if(!res.ok) throw new Error('Show search returned '+res.status);
   const data = await res.json();
-  const events = (data._embedded && data._embedded.events) || [];
+  return (data._embedded && data._embedded.events) || [];
+}
+
+/* Ticketmaster's Discovery API is US-centric by default: a plain keyword search with no
+   countryCode can bury (or drop entirely) a title that's also touring/running elsewhere, which
+   is exactly the case for most of what gets logged here (West End shows). Runs the GB-scoped
+   search first so a London show wins the title-dedupe below, then tops up with an unscoped
+   search for anything GB didn't have (a show seen abroad, on a trip) - so this stays useful
+   for logging a show from anywhere, not just London. */
+async function searchShows(q){
+  if(!q) return {shows: []};
+  const key = apiKey();
+  const [gb, everywhere] = await Promise.all([
+    fetchEvents(key, q, 'GB'),
+    fetchEvents(key, q, null),
+  ]);
+  const events = [...gb, ...everywhere];
   return {shows: dedupeByTitle(events.map(simplify).filter(s=>s.title))};
 }
 

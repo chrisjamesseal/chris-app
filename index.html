@@ -523,10 +523,13 @@ a{color:var(--brand-dark);}
 .dash-item-img-lg{display:block; width:64px; height:64px; object-fit:cover; border-radius:var(--radius-sm); margin-bottom:10px;}
 .dash-item-img-lg.round{border-radius:50%;}
 /* Theatre's own Next Show/Watch Next tiles: no .round (a show's own art isn't a face, same
-   reasoning as .theatre-cover) and object-fit:contain instead of the default cover - see
-   .theatre-cover's own comment on why a fixed crop doesn't suit Ticketmaster's inconsistent
-   aspect ratios here. */
-.theatre-dash-img{object-fit:contain;}
+   reasoning as .theatre-cover). Height:auto instead of the fixed 64px square too - unlike
+   .theatre-cover's own fixed-size list row (where every row wants the same height), this is a
+   single hero image with nothing beside it to stay level with, so there's no reason to force a
+   square box and letterbox whatever doesn't fit it (a wide banner-shaped image, Mamma Mia!'s
+   included, was rendering as a thin strip with a lot of padding above and below). Sizing to the
+   image's own real shape at a fixed width has no such padding, whatever shape it is. */
+.theatre-dash-img{height:auto;}
 /* Watch Next's provider logos sit below the title/sub, with a bit more breathing room above
    them than the tight 4px gap Watchlist's own cards use below their poster, see .film-providers-badge */
 .dash-watchnext-providers{margin-top:10px;}
@@ -1885,8 +1888,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.3';
+const APP_VERSION = '2.85.4';
 const CHANGELOG = [
+  {version:'2.85.4', notes:[
+    "Home's Theatre Next Show/Watch Next tiles size the image to its own real shape now instead of squeezing it into a fixed square box - a wide banner-style image (Mamma Mia!'s included) was rendering as a thin strip with a lot of empty padding above and below it."
+  ]},
   {version:'2.85.3', notes:[
     "Theatre images changed from a fixed square crop to object-fit:contain everywhere they show up (Diary/Watchlist cards, the search dropdown, Home's Next Show/Watch Next tiles) - Ticketmaster's own images have no one consistent aspect ratio (some are square, some are genuine portrait posters like The Book of Mormon's), so any single fixed crop cuts a chunk off some of them. Nothing gets cropped now, whatever shape the source image actually is."
   ]},

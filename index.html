@@ -418,10 +418,12 @@ a{color:var(--brand-dark);}
 .film-search-thumb{width:32px; height:46px; border-radius:3px; object-fit:cover; flex-shrink:0;
   background:var(--bg); border:1px solid var(--line);}
 /* Theatre's own search dropdown reuses .film-search-thumb for position/border/background, but
-   overrides the shape - Ticketmaster's Arts & Theatre images are square artwork, not a portrait
-   poster crop (see .theatre-cover's own comment), so the shared 2:3 sizing was cutting a chunk
-   off every thumbnail here. */
-.theatre-search-thumb{width:40px; height:40px;}
+   overrides the shape and crop - Ticketmaster's Arts & Theatre images have no one aspect ratio
+   (some are square social-graphic style, some are genuine portrait posters like The Book of
+   Mormon's), so no single object-fit:cover box avoids cropping a chunk off some of them.
+   object-fit:contain letterboxes onto the background instead of cropping, whatever shape the
+   source image actually is (see .theatre-cover's own comment, which shares this exactly). */
+.theatre-search-thumb{width:40px; height:40px; object-fit:contain;}
 /* Films Stats: the 3 headline numbers reuse the Home dashboard's own stat-tile look
    (.dash-widget.dash-widget-stat) - Logged/Rewatches are clickable (App.filmsTab('diary')/
    filmsStatsRewatches - Logged switches tab in place rather than going through
@@ -520,6 +522,11 @@ a{color:var(--brand-dark);}
    crammed into a row next to two lines of text */
 .dash-item-img-lg{display:block; width:64px; height:64px; object-fit:cover; border-radius:var(--radius-sm); margin-bottom:10px;}
 .dash-item-img-lg.round{border-radius:50%;}
+/* Theatre's own Next Show/Watch Next tiles: no .round (a show's own art isn't a face, same
+   reasoning as .theatre-cover) and object-fit:contain instead of the default cover - see
+   .theatre-cover's own comment on why a fixed crop doesn't suit Ticketmaster's inconsistent
+   aspect ratios here. */
+.theatre-dash-img{object-fit:contain;}
 /* Watch Next's provider logos sit below the title/sub, with a bit more breathing room above
    them than the tight 4px gap Watchlist's own cards use below their poster, see .film-providers-badge */
 .dash-watchnext-providers{margin-top:10px;}
@@ -924,10 +931,13 @@ a{color:var(--brand-dark);}
   border:1px solid var(--line); background:var(--bg);}
 /* Theatre's own version of .gig-cover - an artist photo reads fine as a circular avatar, but a
    show's own art doesn't (it's not a face), so this keeps the small-radius corners of a poster
-   crop instead of a full circle. Square, not the 2:3 portrait a film poster gets: Ticketmaster's
-   Arts & Theatre images (see api/theatre-search.js) are square-format artwork, not portrait
-   posters - a 2:3 crop was cutting a chunk off every one of them. */
-.theatre-cover{width:56px; height:56px; flex-shrink:0; border-radius:var(--radius-sm); object-fit:cover;
+   crop instead of a full circle. Ticketmaster's Arts & Theatre images (see
+   api/theatre-search.js) have no one consistent aspect ratio - some are square social-graphic
+   style, some are genuine portrait posters (The Book of Mormon's included) - so neither a fixed
+   2:3 nor a fixed square object-fit:cover box avoids cropping a chunk off some of them.
+   object-fit:contain letterboxes onto the background instead, whatever shape the source image
+   actually is. */
+.theatre-cover{width:56px; height:56px; flex-shrink:0; border-radius:var(--radius-sm); object-fit:contain;
   border:1px solid var(--line); background:var(--bg);}
 .gig-cover-fallback{display:inline-flex; align-items:center; justify-content:center; font-size:1.3rem; color:var(--muted);}
 .gig-info{min-width:0; flex:1;}
@@ -1875,8 +1885,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.2';
+const APP_VERSION = '2.85.3';
 const CHANGELOG = [
+  {version:'2.85.3', notes:[
+    "Theatre images changed from a fixed square crop to object-fit:contain everywhere they show up (Diary/Watchlist cards, the search dropdown, Home's Next Show/Watch Next tiles) - Ticketmaster's own images have no one consistent aspect ratio (some are square, some are genuine portrait posters like The Book of Mormon's), so any single fixed crop cuts a chunk off some of them. Nothing gets cropped now, whatever shape the source image actually is."
+  ]},
   {version:'2.85.2', notes:[
     "Home's Next Show tile no longer dead-ends at \"No Upcoming Shows\" when nothing's booked - it now suggests something from your Theatre watchlist instead, same idea as Films' own Watch Next."
   ]},
@@ -5099,7 +5112,7 @@ function dashTheatreWatchNextHTML(w){
   return `
     <div class="dash-widget dash-widget-item" role="button" tabindex="0" onclick="App.theatreWatchlistForm(${i})"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.theatreWatchlistForm(${i})}">
-      ${w.image ? `<img class="dash-item-img-lg round" src="${esc(w.image)}" alt="" loading="lazy">`
+      ${w.image ? `<img class="dash-item-img-lg theatre-dash-img" src="${esc(w.image)}" alt="" loading="lazy">`
                  : `<div class="dash-item-flags" aria-hidden="true">🎭</div>`}
       <div class="dash-item-title">${esc(w.title||'Untitled')}</div>
       <div class="dash-item-sub">Watch Next</div>
@@ -5121,7 +5134,7 @@ function dashShowWidgetHTML(){
   return `
     <div class="dash-widget dash-widget-item" role="button" tabindex="0" onclick="App.theatreForm(${i})"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.theatreForm(${i})}">
-      ${t.image ? `<img class="dash-item-img-lg round" src="${esc(t.image)}" alt="" loading="lazy">`
+      ${t.image ? `<img class="dash-item-img-lg theatre-dash-img" src="${esc(t.image)}" alt="" loading="lazy">`
                  : `<div class="dash-item-flags" aria-hidden="true">🎭</div>`}
       <div class="dash-item-title">${esc(t.title||'Untitled')}</div>
       <div class="dash-item-sub">Next Show</div>

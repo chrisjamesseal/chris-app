@@ -1854,8 +1854,12 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.8';
+const APP_VERSION = '2.85.9';
 const CHANGELOG = [
+  {version:'2.85.9', notes:[
+    "Allergy Card's icon is a wheat stalk now instead of an ID card.",
+    "The bottom bar's Travel button jumps straight into a trip that's already happening (or starts within a week) instead of Places, since there's no real question which trip you mean at that point."
+  ]},
   {version:'2.85.8', notes:[
     "Allergy Card: rewritten as short bullet points instead of paragraphs, and dropped every em dash - quicker for a waiter to scan.",
     "Replaced Polls with a new Phrases tab - the top 10 travel phrases (hello, please, thank you, where's the toilet, the bill, and so on) with their English meaning alongside, in the same language(s) as the Allergy Card. Both tabs now share one language picker, so picking a language on either one carries over to the other."
@@ -3600,6 +3604,25 @@ function upcomingStartDate(t){
   if(isArchived(t) || !t.startDate) return null;
   const today = new Date(); today.setHours(0,0,0,0);
   return today < new Date(t.startDate+'T00:00:00') ? t.startDate : null;
+}
+/* the trip to jump straight into from the bottom bar's Travel button, when one's close enough
+   that "which trip" isn't really a question: already happening (including one running with no
+   end date set yet), or starting within the next week. Otherwise null, and the button falls
+   back to its normal destination (Places). Soonest-starting one wins if more than one trip
+   somehow qualifies at once. */
+function activeOrSoonTrip(){
+  const day = 86400000, today = new Date(); today.setHours(0,0,0,0);
+  const candidates = (DB.trips||[]).filter(t=>{
+    if(isArchived(t) || !t.startDate) return false;
+    const s = new Date(t.startDate+'T00:00:00');
+    const e = t.endDate ? new Date(t.endDate+'T00:00:00') : null;
+    if(today >= s && (!e || today <= e)) return true;
+    const daysToStart = Math.round((s-today)/day);
+    return daysToStart >= 0 && daysToStart <= 7;
+  });
+  if(!candidates.length) return null;
+  candidates.sort((a,b)=>a.startDate.localeCompare(b.startDate));
+  return candidates[0];
 }
 /* flat day count for the Edit Trip tile's summary, e.g. "45 days to go" */
 function daysToGoCount(startDate){
@@ -10180,6 +10203,13 @@ App.toggleChangelog = () => {
 };
 /* no argument goes to the hub; a view name opens that list */
 App.goPlaces = view => { location.hash = view ? '#/places/'+view : '#/places'; };
+/* the bottom bar's Travel button - straight into whichever trip is close enough that "which
+   trip" isn't really a question (see activeOrSoonTrip), otherwise Places as normal */
+App.goTravel = () => {
+  const t = activeOrSoonTrip();
+  if(t){ location.hash = '#/trip/'+t.id; return; }
+  App.goPlaces();
+};
 /* the Going hub card doesn't navigate anywhere - Your Trips is already the next thing down
    this same page, so it just scrolls to it */
 App.goToYourTrips = () => {
@@ -10891,7 +10921,7 @@ const ICONS = {
    The compact menu and in-button icons stay on Font Awesome, where a single-colour glyph
    lines up better at small sizes. */
 const TAB_EMOJI = {
-  edit:'✏️', plan:'🗺️', travel:'🚌', stay:'🏠', mood:'💡', allergy:'🪪', tasks:'☑',
+  edit:'✏️', plan:'🗺️', travel:'🚌', stay:'🏠', mood:'💡', allergy:'🌾', tasks:'☑',
   phrases:'💬', money:'💰', photos:'📸', contacts:'📞', docs:'📎', notes:'📝'
 };
 function tileIcon(k){
@@ -11158,7 +11188,7 @@ function sidebarGlobalNav(inTrip){
       ${secEmoji(emoji)}<span>${label}</span>
     </div>`;
   return (inTrip ? '' : item('Home','🏠',"App.goDashboard()", onHomeDash))
-    + (inTrip ? '' : item('Travel','🌎',"App.goPlaces()", onPlaces))
+    + (inTrip ? '' : item('Travel','🌎',"App.goTravel()", onPlaces))
     + item('Films','🎬',"App.goFilms()", onFilms)
     + item('Theatre','🎭',"App.goTheatre()", onTheatre)
     + item('Music','🎤',"App.goGigs()", onGigs)
@@ -11207,7 +11237,7 @@ function renderTabbar(){
     </button>`;
   bar.innerHTML =
       item('Home','🏠',go("App.goDashboard()"), onHomeDash && !menuOpen, false)
-    + item('Travel','🌎',go("App.goPlaces()"), onPlaces && !menuOpen, false)
+    + item('Travel','🌎',go("App.goTravel()"), onPlaces && !menuOpen, false)
     + item('Films','🎬',go("App.goFilms()"), onFilms && !menuOpen, false)
     + item('Theatre','🎭',go("App.goTheatre()"), onTheatre && !menuOpen, false)
     + item('Music','🎤',go("App.goGigs()"), onGigs && !menuOpen, false)

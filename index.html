@@ -1908,8 +1908,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.19';
+const APP_VERSION = '2.85.20';
 const CHANGELOG = [
+  {version:'2.85.20', notes:[
+    "Allergy Card's language chips read in English now too (\"Greek\", \"Albanian\"), matching Phrases' own picker - English stays first as the safety-net language, unchanged."
+  ]},
   {version:'2.85.19', notes:[
     "A flight's duration connector reads \"3 Hours to Corfu\" now instead of just \"3 Hours\" - the same \"duration to destination\" phrasing an unbooked travel leg's own connector already used."
   ]},
@@ -12093,16 +12096,13 @@ const LANG_NAMES_EN = {
   he:'Hebrew', sw:'Swahili', am:'Amharic', ka:'Georgian', hy:'Armenian', az:'Azerbaijani',
   mn:'Mongolian', so:'Somali',
 };
-/* the language-picker row itself - a chip per language, flag(s) plus the language's own name,
-   the selected one highlighted. Used by both tabAllergy and tabPhrases below; englishNames
-   switches the label from that language's own native name (the Allergy Card's default, since
-   what's on the chip doesn't matter to the waiter it's handed to, only the card's own content
-   does) to its English name (Phrases' own use - "Greek" is what you're scanning the row for,
-   not "Ελληνικά"). */
-function langPickerHTML(t, langs, englishNames){
+/* the language-picker row itself - a chip per language, flag(s) plus its English name ("Greek",
+   not "Ελληνικά" - that's what you're scanning the row for, on both tabAllergy and tabPhrases
+   below, which share this. */
+function langPickerHTML(t, langs){
   const chip = l => {
     const flags = tripLangFlags(t, l).join('');
-    const label = englishNames ? (LANG_NAMES_EN[l] || ALLERGY_TEXT[l].name) : ALLERGY_TEXT[l].name;
+    const label = LANG_NAMES_EN[l] || ALLERGY_TEXT[l].name;
     return `<button class="chip pick${l===CUR_TRIP_LANG?' on':''}" onclick="App.setTripLang('${l}')">${flags?`<span class="flag">${flags}</span>`:''}${esc(label)}</button>`;
   };
   return `<div class="lang-picker">${langs.map(chip).join('')}</div>`;
@@ -12184,7 +12184,7 @@ function tabPhrases(t){
     </div>`;
   }).join('');
   return `
-    ${langPickerHTML(t, langs, true)}
+    ${langPickerHTML(t, langs)}
     <div class="phrase-grid">${cards}</div>`;
 }
 /* BCP-47 locale tags for SpeechSynthesisUtterance.lang, one sensible default region per

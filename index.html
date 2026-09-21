@@ -1242,7 +1242,12 @@ input[list]::-webkit-calendar-picker-indicator, input[list]::-webkit-list-button
   background:var(--bg-wash);}
 .modal-bg.push{animation:pushIn .22s ease-out;}
 @keyframes pushIn{from{transform:translateX(7vw); opacity:0;} to{transform:none; opacity:1;}}
-.screen-top{max-width:592px; margin:0 auto; padding:10px 12px; position:sticky; top:0; background:var(--bg); z-index:3;}
+/* the sticky back-button bar every full-screen form shares - background matches the page's own
+   gradient wash (.modal-bg, same fixed attachment) rather than the old flat --bg, so it reads
+   as part of the page instead of a solid white strip sitting on top of it; still needs a real
+   background of its own (not transparent) since it's sticky over scrolling content below it. */
+.screen-top{max-width:592px; margin:0 auto; padding:10px 12px; position:sticky; top:0;
+  background:var(--bg-wash); background-attachment:fixed; z-index:3;}
 .screen-back{
   display:inline-flex; align-items:center; gap:5px; font:inherit; font-weight:600; font-size:.9rem;
   color:var(--brand-dark); background:none; border:none; cursor:pointer; padding:7px 14px 7px 8px; border-radius:999px;
@@ -1904,8 +1909,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.15';
+const APP_VERSION = '2.85.16';
 const CHANGELOG = [
+  {version:'2.85.16', notes:[
+    "Every full-screen form's sticky Back button bar now matches the page's own gradient wash instead of a flat white strip sitting on top of it."
+  ]},
   {version:'2.85.15', notes:[
     "Itinerary: a plain stop's Google Maps button sits a bit further from its title now, matching the same 12px gap the Accommodation card's own Google Maps button already used - the old 4px read as too tight once the title carried an emoji and wrapped to more than a single line.",
     "Allergy Card's English title reads \"My Food Allergies\" now instead of \"Food Allergy Card\".",

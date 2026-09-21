@@ -1909,8 +1909,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.16';
+const APP_VERSION = '2.85.17';
 const CHANGELOG = [
+  {version:'2.85.17', notes:[
+    "Route map's sea colour, actually fixed this time: turned out Voyager's own style paints an opaque cream layer under every polygon on the map, which is what was showing through once the water layers themselves went transparent - not the page behind the map. Recoloured the sea to the app's own background tone directly instead, sidestepping that entirely."
+  ]},
   {version:'2.85.16', notes:[
     "Every full-screen form's sticky Back button bar now matches the page's own gradient wash instead of a flat white strip sitting on top of it."
   ]},
@@ -13573,20 +13576,24 @@ const CARTO_LATIN_LABEL_LAYERS = ['place_hamlet','place_suburbs','place_villages
    levels surfaces them sooner, without changing what shows once you are zoomed in on a stop. */
 const CARTO_MINZOOM_OVERRIDES = {place_city_r6:6, place_city_r5:6, place_city_dot_r7:4,
   place_city_dot_r4:3, place_town:6, place_villages:8, place_capital_dot_z7:5, place_state:3};
-/* the sea/ocean/lake fill layers, made fully transparent so the map's own gradient wash (see
-   .route-map/.dash-trip-map, both set to the same --bg-wash the rest of the app uses) shows
-   through instead of Voyager's baked-in light blue - ids checked against the style's own JSON
+/* the sea/ocean/lake fill layers, recoloured to the app's own --bg tone instead of Voyager's
+   baked-in light blue - ids checked against the style's own JSON
    (github.com/CartoDB/basemap-styles/blob/master/mapboxgl/voyager.json), same as
    CARTO_LATIN_LABEL_LAYERS above. "water" is the sea/lake fill itself; "water_shadow" is a
-   second, separately-coloured fill Voyager draws underneath it for a bevelled-edge look (an
-   underscore, not a hyphen - the one id here that isn't a guess but was actually checked and
-   still got typed wrong the first time, which is exactly why the sea kept showing its old
-   colour: the top fill was already transparent, this second one just kept covering it up
-   wherever "water" left off) - both need clearing or the shadow alone still reads as solid sea.
-   "waterway" is rivers/streams (a line, not a fill). Opacity, not a flat colour, since it
-   survives regardless of whatever colour expression the layer already has. Only covers this GL
-   vector path - the plain raster-tile fallback bakes water colour into the image itself,
-   nothing to override there. */
+   second, separately-coloured fill Voyager draws underneath it for a bevelled-edge look;
+   "waterway" is rivers/streams (a line, not a fill).
+   This used to zero each layer's opacity instead, on the theory that would let the page's own
+   gradient wash show through the canvas - it didn't, because Voyager's style also paints its
+   own opaque "background" layer (a flat #fbf8f3 cream, background-opacity 1) underneath every
+   polygon, covering the whole canvas as its own base fill. That layer isn't shaped like water,
+   it's the canvas's blank page, so there's no way to zero it out without every semi-transparent
+   land layer (landuse, parks, ...) also turning washy against whatever's behind the canvas
+   instead of that cream base they're designed to sit on. Recolouring water to a flat tone
+   instead sidesteps that entirely - no canvas transparency involved, just a plain colour swap,
+   the same fix a raster-tile basemap would need too. Read from the CSS custom property at paint
+   time (not hardcoded) so it stays in sync with the token if the palette ever changes. Only
+   covers this GL vector path - the plain raster-tile fallback bakes water colour into the image
+   itself, nothing to override there. */
 const CARTO_WATER_LAYERS = ['water', 'water_shadow', 'waterway'];
 function tuneCartoLabels(glMap){
   CARTO_LATIN_LABEL_LAYERS.forEach(id => {
@@ -13597,10 +13604,11 @@ function tuneCartoLabels(glMap){
     if(!glMap.getLayer(id)) return;
     try{ glMap.setLayerZoomRange(id, minzoom, 24); }catch(e){}
   });
+  const bg = (getComputedStyle(document.documentElement).getPropertyValue('--bg')||'').trim() || '#EFF3FA';
   CARTO_WATER_LAYERS.forEach(id => {
     if(!glMap.getLayer(id)) return;
-    const type = glMap.getLayer(id).type;
-    try{ glMap.setPaintProperty(id, type+'-opacity', 0); }catch(e){}
+    const type = glMap.getLayer(id).type;   // "fill" (water/water_shadow) or "line" (waterway)
+    try{ glMap.setPaintProperty(id, type+'-color', bg); }catch(e){}
   });
 }
 /* the actual base layer every route map adds - MapLibre GL's vector rendering (via the

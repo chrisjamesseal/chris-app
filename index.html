@@ -1856,10 +1856,13 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.10';
+const APP_VERSION = '2.85.11';
 const CHANGELOG = [
-  {version:'2.85.10', notes:[
+  {version:'2.85.11', notes:[
     "Phrases: added a phonetic pronunciation to every phrase, laid the list out as a 2-column card grid, and dropped English from its own language picker (the Allergy Card keeps English as its safety-net language)."
+  ]},
+  {version:'2.85.10', notes:[
+    "Fixed a bug where a game's rating, the Games Leaderboard's order, the Games Wishlist and the Theatre Leaderboard's order could silently fail to back up to the cloud (the README's Firebase rules setup was missing all four) - only ever as safe as one browser's storage, so clearing site data or switching devices could lose them for good. Add the four new rules from the README to fix it for existing setups. A save that still fails now tells you why instead of failing silently."
   ]},
   {version:'2.85.9', notes:[
     "Allergy Card's icon is a wheat stalk now instead of an ID card.",
@@ -5963,7 +5966,14 @@ function loadGameRatingsCloud(cb){
 function pushGameRatings(){
   if(!fbRoot) return;
   fbRoot.ref('gameRatings').set(gameRatings())
-    .catch(err => console.error("My Trips, couldn't save game ratings:", err));
+    .catch(err => {
+      console.error("My Trips, couldn't save game ratings:", err);
+      if(/permission[_-]?denied/i.test((err&&(err.code||err.message||err)||'').toString())){
+        noteModal('Rating Not Saved', "The database rules don't allow writing gameRatings. Open the Firebase console, Realtime Database, Rules, and add a 'gameRatings' rule (see the README).");
+      }else{
+        noteModal('Not Saved', 'Check your connection and try again.');
+      }
+    });
 }
 /* the Leaderboard's own manual order - same shape and same reason as filmLeaderboardOrder: a
    fresh rating (or one never manually moved) defaults to highest-rated-first, but a tie, or just
@@ -5977,7 +5987,14 @@ function saveGameLeaderboardOrder(list){
   try{ localStorage.setItem(GAME_LB_ORDER_KEY, JSON.stringify(list)); }catch(e){}
   if(!fbRoot) return;
   fbRoot.ref('gameLeaderboardOrder').set(list)
-    .catch(err => console.error("My Trips, couldn't save the Games leaderboard order:", err));
+    .catch(err => {
+      console.error("My Trips, couldn't save the Games leaderboard order:", err);
+      if(/permission[_-]?denied/i.test((err&&(err.code||err.message||err)||'').toString())){
+        noteModal('Ranking Not Saved', "The database rules don't allow writing gameLeaderboardOrder. Open the Firebase console, Realtime Database, Rules, and add a 'gameLeaderboardOrder' rule (see the README).");
+      }else{
+        noteModal('Not Saved', 'Check your connection and try again.');
+      }
+    });
 }
 function loadGameLeaderboardOrderCloud(cb){
   const seq = GAME_LB_EDIT_SEQ;
@@ -6376,7 +6393,14 @@ function loadWishlistCloud(cb){
 function pushWishlist(){
   if(!fbRoot) return;
   fbRoot.ref('gameWishlist').set(wishlistGames())
-    .catch(err => console.error("My Trips, couldn't save Play List:", err));
+    .catch(err => {
+      console.error("My Trips, couldn't save Play List:", err);
+      if(/permission[_-]?denied/i.test((err&&(err.code||err.message||err)||'').toString())){
+        noteModal('Not Saved', "The database rules don't allow writing gameWishlist. Open the Firebase console, Realtime Database, Rules, and add a 'gameWishlist' rule (see the README).");
+      }else{
+        noteModal('Not Saved', 'Check your connection and try again.');
+      }
+    });
 }
 function wlReleaseLabel(g){
   // a manual entry with no date given isn't necessarily unannounced - the date just wasn't
@@ -8639,7 +8663,14 @@ function loadTheatreLeaderboardOrderCloud(cb){
 function pushTheatreLeaderboardOrder(){
   if(!fbRoot) return;
   fbRoot.ref('theatreLeaderboardOrder').set(DB.theatreLeaderboardOrder||[])
-    .catch(err => console.error("My Trips, couldn't save the Theatre leaderboard order:", err));
+    .catch(err => {
+      console.error("My Trips, couldn't save the Theatre leaderboard order:", err);
+      if(/permission[_-]?denied/i.test((err&&(err.code||err.message||err)||'').toString())){
+        noteModal('Ranking Not Saved', "The database rules don't allow writing theatreLeaderboardOrder. Open the Firebase console, Realtime Database, Rules, and add a 'theatreLeaderboardOrder' rule (see the README).");
+      }else{
+        noteModal('Not Saved', 'Check your connection and try again.');
+      }
+    });
 }
 function saveTheatreLeaderboardOrder(list){ THEATRE_LB_EDIT_SEQ++; DB.theatreLeaderboardOrder = list; saveLocal(); pushTheatreLeaderboardOrder(); }
 function theatreLeaderboardDefaultOrder(shows){

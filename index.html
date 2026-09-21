@@ -1667,28 +1667,43 @@ body.kb-open .tabbar.on{display:none;}
 .plan-card{margin-bottom:10px;}
 .plan-card.plan-card-solo{padding-bottom:10px;}
 
-/* ---------- packing list ---------- */
+/* a plain text-input-plus-button add row: used by Polls' own "add another option" field, kept
+   under its original packing-list name since that's still what most callers here call it */
 .pack-add{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;}
 .pack-add input{flex:1 1 160px; min-width:0;}
 .pack-add select{flex:0 1 140px;}
-.pack-nudge{display:flex; align-items:center; gap:10px; border-left:3px solid var(--brand); border-radius:var(--radius-sm); background:var(--brand-tint); color:var(--brand-dark); padding:11px 14px; margin-bottom:16px; font-size:.82rem;}
-.pack-nudge .icon{flex-shrink:0;}
-.pack-progress{position:relative; overflow:hidden; border:1px solid var(--line); border-radius:999px; background:var(--bg); padding:5px 12px; margin-bottom:14px; font-size:.72rem; font-weight:700; color:var(--muted);}
-.pack-progress-bar{position:absolute; inset:0 auto 0 0; background:var(--brand-tint); transition:width .2s;}
-.pack-progress span{position:relative;}
-.pack-heading{margin:20px 0 10px; font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);}
-.pack-row{display:flex; align-items:center; gap:12px; padding:11px 2px; border-bottom:1px solid var(--line); min-height:48px;}
-.pack-row .iconbtn{flex-shrink:0; align-self:center;}
+/* a filled, checkmarked tick box - Tasks' own "mark as booked" checkbox, kept under its
+   original packing-list name since that's still what most callers here call it */
 .pack-check{flex-shrink:0; width:21px; height:21px; border:2px solid var(--line-strong); border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:.66rem; color:#fff; background:var(--paper);}
 .pack-check[role=checkbox]{cursor:pointer;}
 .pack-check[role=checkbox]:hover{border-color:var(--brand);}
 .pack-check[role=checkbox]:focus-visible{outline:none;}
 .pack-check.on{background:var(--brand); border-color:var(--brand);}
-.pack-text{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:2px;}
-.pack-label{font-size:.88rem; overflow-wrap:anywhere;}
-.pack-row.done .pack-label{text-decoration:line-through; color:var(--muted);}
-.pack-who{font-size:.7rem; color:var(--muted);}
-.pack-who.done{color:var(--brand-dark);}
+/* Tasks' own "Completed" section heading, above its own list of booked tasks */
+.pack-heading{margin:20px 0 10px; font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);}
+
+/* ---------- allergy card ---------- */
+/* one language at a time, full-size and legible - built to be handed to a waiter, not read by
+   you, so this favours big clear text over density. The language picker reuses the same
+   .chip.pick look Streaming Services already uses for a row of toggleable options. */
+.allergy-lang-picker{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px;}
+.allergy-lang-picker .flag{font-size:1.05rem; line-height:1;}
+.allergy-card{text-align:center;}
+.allergy-card-lang{font-family:var(--font-head); font-weight:700; font-size:1.25rem; margin-bottom:18px;}
+.allergy-section{border-radius:var(--radius); padding:18px; margin-bottom:14px; text-align:left;}
+.allergy-section-head{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+.allergy-section-emoji{font-size:1.6rem; line-height:1; flex-shrink:0;
+  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;}
+.allergy-section-title{font-family:var(--font-head); font-weight:700; font-size:1.05rem;}
+.allergy-section-body{font-size:.98rem; line-height:1.55;}
+/* strict/no-cross-contamination (coeliac) reads as a warning in the app's existing red;
+   trace-is-fine (dairy) stays in the app's own warm brand tint - a lighter touch than red
+   would wrongly suggest the same severity as the gluten section above it */
+.allergy-section.severe{background:#FCEBE9; border:1px solid #F3C7C1;}
+.allergy-section.severe .allergy-section-title{color:var(--rag-red);}
+.allergy-section.caution{background:var(--brand-tint); border:1px solid var(--line-strong);}
+.allergy-section.caution .allergy-section-title{color:var(--rag-yellow);}
+.allergy-thanks{margin-top:6px; color:var(--muted); font-style:italic; font-size:.9rem;}
 
 /* ---------- polls ---------- */
 .poll-card{margin-bottom:14px;}
@@ -1773,7 +1788,7 @@ body.kb-open .tabbar.on{display:none;}
      just shrinks on its own as the window narrows, right down to the sidebar breakpoint above)
      instead of stretching that same single column out full-width */
   .wrap[data-tab="plan"], .wrap[data-tab="tasks"], .wrap[data-tab="travel"],
-  .wrap[data-tab="stay"], .wrap[data-tab="mood"], .wrap[data-tab="pack"],
+  .wrap[data-tab="stay"], .wrap[data-tab="mood"], .wrap[data-tab="allergy"],
   .wrap[data-tab="polls"], .wrap[data-tab="money"], .wrap[data-tab="photos"],
   .wrap[data-tab="docs"], .wrap[data-tab="notes"], .wrap[data-tab="contacts"]
   {max-width:560px; margin:0 auto; padding:calc(14px + env(safe-area-inset-top)) 24px 96px;}
@@ -1850,8 +1865,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.6';
+const APP_VERSION = '2.85.7';
 const CHANGELOG = [
+  {version:'2.85.7', notes:[
+    "Replaced Packing with a new Allergy Card - a coeliac + dairy-intolerance statement (strictly no cross-contamination for gluten, a trace is fine for dairy) that writes itself in the language(s) of wherever the trip's countries actually are, English always included. A multi-country trip gets a language picker across the top; a trip with no countries yet gets a one-tap link to add some."
+  ]},
   {version:'2.85.6', notes:[
     "Removed Board Games entirely - the subtab, its BoardGameGeek-backed search/shelves, and the two Home dashboard widgets it had (the stat tile and Play Next) are all gone. Games is back to a straight PS5/PS4/Leaderboard split."
   ]},
@@ -3838,7 +3856,7 @@ function getTrip(id){ return DB.trips.find(t=>t.id===id); }
 function normalizeTrip(t){
   if(!t) return t;
   ['countries','flights','ferries','carHire','accommodations','documents','docLinks',
-   'itinerary','receipts','moodBoard','participants','editLog','polls','packing','tasks','locations','freeDays'].forEach(k=>{
+   'itinerary','receipts','moodBoard','participants','editLog','polls','tasks','locations','freeDays'].forEach(k=>{
     if(!Array.isArray(t[k])) t[k] = [];
   });
   t.notes = t.notes || {};
@@ -4614,9 +4632,9 @@ function confirmModal(title, body, confirmLabel, onYes){
 /* inline field validation, injects an error line under the field, clears on next input */
 function markErr(sel, msg){
   const inp = $(sel); if(!inp) return false;
-  /* an input that isn't wrapped in a .field (the packing add row) has nowhere to hang the
-     message, so it just gets the red outline and the cursor. Pressing Add on an empty box
-     doesn't warrant stopping you with a dialog. */
+  /* an input that isn't wrapped in a .field (a plain .pack-add row, like Polls' own "add
+     another option") has nowhere to hang the message, so it just gets the red outline and the
+     cursor. Pressing Add on an empty box doesn't warrant stopping you with a dialog. */
   const field = inp.closest('.field');
   if(!field){
     inp.classList.add('err');
@@ -10886,8 +10904,6 @@ const ICONS = {
   bus: fa('bus'),
   taxi: fa('taxi'),
   polls: fa('square-poll-vertical'),
-  pack: fa('suitcase-rolling'),
-  bell: fa('bell'),
   tasks: fa('thumbtack')
 };
 /* Emoji rather than icon-font glyphs for the big dashboard tiles: they bring their own
@@ -10896,7 +10912,7 @@ const ICONS = {
    The compact menu and in-button icons stay on Font Awesome, where a single-colour glyph
    lines up better at small sizes. */
 const TAB_EMOJI = {
-  edit:'✏️', plan:'🗺️', travel:'🚌', stay:'🏠', mood:'💡', pack:'🧳', tasks:'☑',
+  edit:'✏️', plan:'🗺️', travel:'🚌', stay:'🏠', mood:'💡', allergy:'🪪', tasks:'☑',
   polls:'📊', money:'💰', photos:'📸', contacts:'📞', docs:'📎', notes:'📝'
 };
 function tileIcon(k){
@@ -10954,7 +10970,7 @@ const TABS = [
   ['travel','Travel'],
   ['stay','Accommodation'],
   ['mood','Ideas'],
-  ['pack','Packing'],
+  ['allergy','Allergy Card'],
   ['polls','Polls'],
   ['money','Money'],
   ['photos','Photos'],
@@ -11265,7 +11281,7 @@ function renderTab(t){
   if(CUR_TAB==='contacts') el.innerHTML = tabContacts(t,ro);
   if(CUR_TAB==='notes')    el.innerHTML = tabNotes(t,ro);
   if(CUR_TAB==='polls')    el.innerHTML = tabPolls(t,ro);
-  if(CUR_TAB==='pack')     el.innerHTML = tabPack(t,ro);
+  if(CUR_TAB==='allergy')  el.innerHTML = tabAllergy(t);
   if(CUR_TAB==='tasks')    el.innerHTML = tabTasks(t,ro);
 }
 /* the section's primary action, shown next to the breadcrumb title */
@@ -11280,7 +11296,6 @@ function crumbAction(t){
     case 'contacts': return `<button class="btn sm primary" onclick="App.contactForm()">+ Add</button>`;
     case 'notes':  return `<button class="btn sm primary" onclick="App.noteForm(-1)">+ Add Note</button>`;
     case 'polls':  return `<button class="btn sm primary" onclick="App.pollForm()">+ New Poll</button>`;
-    case 'pack':   return `<button class="btn sm" onclick="App.packReminder()">${secEmoji('🔔')} Remind me</button>`;
     case 'stay':   return `<button class="btn sm primary" onclick="App.accomForm(-1)">+ Add</button>`;
     case 'tasks':  return `<button class="btn sm primary" onclick="App.taskForm(-1)">+ Add Task</button>`;
     default:       return '';
@@ -11376,7 +11391,7 @@ function tabHome(t, ro){
     ['mood','Ideas', nPins ? nPins+' Pinned' : 'Nothing Pinned Yet', !nPins],
     ['travel','Travel', travParts.join(', ') || 'Nothing Booked Yet', !travParts.length],
     ['stay','Accommodation', staySum, !accoms.length],
-    ['pack','Packing', packSummaryLine(t), !(t.packing||[]).length || !!packStats(t).left],
+    ['allergy','Allergy Card', allergySummaryLine(t), !(t.countries||[]).length],
     ['polls','Polls', pollSummaryLine(t), !(t.polls||[]).length],
     ['money','Money', moneySum, !nRec],
     ['photos','Photos', album ? album+' Linked' : 'No Shared Album Yet', !album],
@@ -11399,8 +11414,7 @@ function tabHome(t, ro){
    so those rows aren't made clickable */
 const LOG_SECTION_TAB = {
   Itinerary:'plan', Travel:'travel', Accommodation:'stay', Ideas:'mood', Money:'money',
-  Photos:'photos', Contacts:'contacts', Documents:'docs', Notes:'notes', Polls:'polls',
-  Packing:'pack'
+  Photos:'photos', Contacts:'contacts', Documents:'docs', Notes:'notes', Polls:'polls'
 };
 function tabLog(t){
   const log = (t.editLog||[]).slice().sort((a,b)=>b.when-a.when);
@@ -11420,121 +11434,426 @@ function tabLog(t){
     <h2 style="margin-top:36px">Activity</h2>
     ${log.length ? log.map(row).join('') : `<div class="empty">No changes logged yet.</div>`}`;
 }
-/* ================= TAB: packing (shared checklist + calendar reminder) ================= */
-/* One shared list, one shared tick per item - there's no "who's still got things to pack"
-   split since it's just the one person using this. */
-const PACK_STARTERS = [
-  'Passport','Travel insurance','Phone charger','Adapter plug','Toothbrush','Sun cream',
-  'Medication','Cards and cash','Headphones','Reusable water bottle'
-];
-function packStats(t){
-  const items = t.packing||[];
-  const done = items.filter(it=>it.done).length;
-  return { total: items.length, done, left: items.length-done };
-}
-function packSummaryLine(t){
-  const s = packStats(t);
-  if(!s.total) return 'Nothing Listed Yet';
-  if(!s.left) return `All Packed (${s.done} of ${s.total})`;
-  return `${s.left} Still To Pack`;
-}
-/* how many days until the trip starts, or null once it's begun, used for the nudge */
-function packDaysToGo(t){
-  if(!t.startDate) return null;
-  const day = 86400000, today = new Date(); today.setHours(0,0,0,0);
-  const s = new Date(t.startDate+'T00:00:00');
-  const n = Math.round((s-today)/day);
-  return n >= 0 ? n : null;
-}
-function packNudgeHTML(t){
-  const s = packStats(t);
-  const n = packDaysToGo(t);
-  if(n===null || !s.left) return '';
-  if(n > 14) return '';   // no point nagging months out
-  const when = n===0 ? 'You leave today' : n===1 ? 'You leave tomorrow' : `${n} days to go`;
-  return `<div class="pack-nudge">${ICONS.bell}<span><strong>${esc(when)}</strong> and you've still got ${s.left} thing${s.left===1?'':'s'} to pack.</span></div>`;
-}
-function packRowHTML(t, it, i, ro){
-  const ticked = !!it.done;
-  const canTick = !ro;
-  return `
-    <div class="pack-row${ticked?' done':''}">
-      <span class="pack-check${ticked?' on':''}" ${canTick?`role="checkbox" aria-checked="${ticked}" tabindex="0"
-        onclick="App.togglePack('${it.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.togglePack('${it.id}')}"`:''}
-        aria-label="${esc(it.text)}">${ticked?fa('check'):''}</span>
-      <span class="pack-text">
-        <span class="pack-label">${esc(it.text)}</span>
-      </span>
-      ${!ro?`<button class="iconbtn del" title="Remove" aria-label="Remove ${esc(it.text)}" onclick="App.delPack('${it.id}')">${ICONS.trash}</button>`:''}
-    </div>`;
-}
-function tabPack(t, ro){
-  const items = t.packing||[];
-  const s = packStats(t);
-  const addRow = ro ? '' : `
-    <div class="pack-add">
-      <input type="text" id="pk-new" placeholder="Add an item…" onkeydown="if(event.key==='Enter'){event.preventDefault();App.addPack()}">
-      <button class="btn" type="button" onclick="App.addPack()">+ Add</button>
-    </div>`;
-  if(!items.length){
-    return `${addRow}
-      <div class="empty">Nothing on the packing list yet.${!ro?`<br><br>
-        <button class="btn primary" onclick="App.addPackStarters()">Add the usual essentials</button>`:''}</div>`;
-  }
-  const todo = items.filter(it=>!it.done);
-  const done = items.filter(it=>it.done);
-  return `
-    ${packNudgeHTML(t)}
-    ${addRow}
-    <div class="pack-progress">
-      <div class="pack-progress-bar" style="width:${s.total?Math.round(s.done/s.total*100):0}%"></div>
-      <span>${s.done} of ${s.total} packed</span>
-    </div>
-    ${todo.map((it,i)=>packRowHTML(t,it,i,ro)).join('')}
-    ${done.length?`<h3 class="pack-heading">Packed</h3>${done.map((it,i)=>packRowHTML(t,it,i,ro)).join('')}`:''}`;
-}
-App.addPack = () => {
-  const t = getTrip(CUR_TRIP_ID); if(!t) return;
-  const el = $('#pk-new'); if(!el) return;
-  const text = (el.value||'').trim();
-  if(!text) return markErr('#pk-new','Type something to pack');
-  t.packing = t.packing||[];
-  t.packing.push({id:uid(), text, done:false});
-  logEdit('Packing','Packing item added');
-  save(); rerender();
-  const again = $('#pk-new'); if(again) again.focus();
+/* ================= TAB: allergy card (auto-translated by trip country) ================= */
+/* Coeliac disease and a dairy intolerance aren't the same kind of risk, so this card doesn't
+   treat "allergy" as one flat warning: gluten cross-contamination is genuinely dangerous for
+   coeliac disease (even a trace triggers it), while a trace of dairy or a shared surface is
+   fine - just not a dish that's mainly dairy. Saying so explicitly, in two separate sections
+   with different visual weight, matters here - a kitchen reading "avoid dairy" as strictly as
+   "avoid gluten" might needlessly turn away food that's actually fine, and one reading it the
+   other way round is the genuinely risky mistake.
+
+   Fully derived from the trip's own countries (t.countries, already tracked for Places) - no
+   list to keep or field to fill in, the same way a trip's flags/currency already follow from
+   its countries. Nothing here is written back to the trip, so there's nothing to sync, log or
+   carry through a shared link either. */
+
+/* Country -> the language(s) actually worth a card in, not a full linguistic census: 1-3 of
+   whichever language(s) a restaurant in that country is realistically staffed in. A country
+   left out of this map (a small territory, or one whose main language isn't in ALLERGY_TEXT
+   below) just falls back to English in allergyLangsFor - always safer than guessing at a
+   translation this app can't vouch for. Central Asia's own national languages (Kazakh, Kyrgyz,
+   Tajik, Turkmen, Uzbek) point at Russian rather than each one individually for the same
+   reason - still genuinely useful there, and one this app can translate with real confidence. */
+const COUNTRY_LANGUAGES = {
+  AD:['ca'], AE:['ar','en'], AF:['fa'], AG:['en'], AI:['en'], AL:['sq'], AM:['hy'], AO:['pt'],
+  AR:['es'], AT:['de'], AU:['en'], AW:['nl'], AZ:['az'], BA:['bs'], BB:['en'], BD:['bn'],
+  BE:['nl','fr'], BF:['fr'], BG:['bg'], BH:['ar'], BI:['fr'], BJ:['fr'], BM:['en'], BN:['ms'],
+  BO:['es'], BR:['pt'], BS:['en'], BW:['en'], BY:['ru'], BZ:['en'], CA:['en','fr'], CD:['fr'],
+  CF:['fr'], CG:['fr'], CH:['de','fr','it'], CI:['fr'], CK:['en'], CL:['es'], CM:['fr','en'],
+  CN:['zh'], CO:['es'], CR:['es'], CU:['es'], CV:['pt'], CW:['nl'], CY:['el'], CZ:['cs'],
+  DE:['de'], DJ:['fr','ar'], DK:['da'], DM:['en'], DO:['es'], DZ:['ar','fr'], EC:['es'],
+  EE:['et'], EG:['ar'], ES:['es'], ET:['am'], FI:['fi'], FJ:['en'], FK:['en'], FM:['en'],
+  FR:['fr'], GA:['fr'], GD:['en'], GE:['ka'], GG:['en'], GH:['en'], GI:['en'], GL:['da'],
+  GM:['en'], GN:['fr'], GQ:['es','fr'], GR:['el'], GT:['es'], GW:['pt'], GY:['en'], HK:['zh','en'],
+  HN:['es'], HR:['hr'], HT:['fr'], HU:['hu'], ID:['id'], IE:['en'], IL:['he'], IM:['en'],
+  IN:['hi','en'], IQ:['ar'], IR:['fa'], IS:['is'], IT:['it'], JE:['en'], JM:['en'], JO:['ar'],
+  JP:['ja'], KE:['sw','en'], KG:['ru'], KH:['km'], KI:['en'], KM:['fr','ar'], KN:['en'],
+  KP:['ko'], KR:['ko'], KW:['ar'], KY:['en'], KZ:['ru'], LA:['lo'], LB:['ar','fr'], LC:['en'],
+  LI:['de'], LK:['si','en'], LR:['en'], LS:['en'], LT:['lt'], LU:['fr','de'], LV:['lv'],
+  LY:['ar'], MA:['ar','fr'], MC:['fr'], MD:['ro'], ME:['sr'], MG:['fr'], MH:['en'], MK:['mk'],
+  ML:['fr'], MM:['my'], MN:['mn'], MO:['zh','pt'], MQ:['fr'], MR:['ar','fr'], MS:['en'],
+  MT:['mt','en'], MU:['fr','en'], MV:['en'], MW:['en'], MX:['es'], MY:['ms','en'], MZ:['pt'],
+  NA:['en'], NC:['fr'], NE:['fr'], NG:['en'], NI:['es'], NL:['nl'], NO:['no'], NP:['ne'],
+  NR:['en'], NU:['en'], NZ:['en'], OM:['ar'], PA:['es'], PE:['es'], PF:['fr'], PG:['en'],
+  PH:['tl','en'], PK:['ur','en'], PL:['pl'], PR:['es','en'], PT:['pt'], PW:['en'], PY:['es'],
+  QA:['ar'], RO:['ro'], RS:['sr'], RU:['ru'], RW:['fr','en'], SA:['ar'], SB:['en'], SC:['fr','en'],
+  SD:['ar'], SE:['sv'], SG:['en','zh'], SI:['sl'], SK:['sk'], SL:['en'], SM:['it'], SN:['fr'],
+  SO:['so'], SR:['nl'], SS:['en'], ST:['pt'], SV:['es'], SX:['nl','en'], SY:['ar'], SZ:['en'],
+  TC:['en'], TD:['fr','ar'], TG:['fr'], TH:['th'], TJ:['ru'], TL:['pt'], TM:['ru'], TN:['ar','fr'],
+  TO:['en'], TR:['tr'], TT:['en'], TV:['en'], TW:['zh'], TZ:['sw','en'], UA:['uk'], UG:['en'],
+  US:['en'], UY:['es'], UZ:['ru'], VA:['it'], VC:['en'], VE:['es'], VG:['en'], VI:['en'],
+  VN:['vi'], VU:['en','fr'], WS:['en'], YE:['ar'], ZA:['en'], ZM:['en'], ZW:['en'],
+  XE:['en'], XS:['en'], XW:['en'], XI:['en'],
 };
-App.addPackStarters = () => {
-  const t = getTrip(CUR_TRIP_ID); if(!t) return;
-  t.packing = t.packing||[];
-  const have = new Set(t.packing.map(it=>it.text.toLowerCase()));
-  PACK_STARTERS.forEach(text=>{ if(!have.has(text.toLowerCase())) t.packing.push({id:uid(), text, done:false}); });
-  logEdit('Packing','Starter packing list added');
-  save(); rerender(); toast('Essentials added, edit away');
+/* Coeliac disease (strictly no gluten, cross-contamination unsafe) and dairy intolerance (fine
+   in small amounts/cross-contamination, just not a dish mainly made of it), in plain, simple
+   wording chosen to be understood by non-native kitchen staff too - not idiomatic per market,
+   deliberately literal instead. `name` is the language's own native name, shown on its picker
+   chip. Bosnian/Croatian/Serbian and Indonesian/Malay are near-identical spoken languages, kept
+   as separate entries anyway (mostly identical text) so each still reads as its own script/
+   spelling convention rather than a stand-in for a neighbour's. */
+const ALLERGY_TEXT = {
+  en: {name:'English', title:'Food Allergy Card', coeliacTitle:'Coeliac Disease',
+    coeliacBody:"I cannot eat gluten — wheat, barley or rye — not even a trace. Cross-contamination makes me seriously ill. Please check ingredients and cooking surfaces.",
+    dairyTitle:'Dairy Intolerance',
+    dairyBody:"I avoid dairy — milk, butter, cheese, cream. A small amount or cross-contamination is fine, but please no dish made mainly of dairy.",
+    thanks:'Thank you for your help!'},
+  fr: {name:'Français', title:"Carte d'allergie alimentaire", coeliacTitle:'Maladie cœliaque',
+    coeliacBody:"Je ne peux pas manger de gluten — blé, orge ou seigle — même une trace. Une contamination croisée me rend gravement malade. Merci de vérifier les ingrédients et les surfaces de cuisson.",
+    dairyTitle:'Intolérance aux produits laitiers',
+    dairyBody:"J'évite les produits laitiers — lait, beurre, fromage, crème. Une petite quantité ou une contamination croisée ne pose pas de problème, mais merci d'éviter un plat principalement composé de produits laitiers.",
+    thanks:'Merci de votre aide !'},
+  es: {name:'Español', title:'Tarjeta de alergia alimentaria', coeliacTitle:'Enfermedad celíaca',
+    coeliacBody:"No puedo comer gluten — trigo, cebada o centeno — ni siquiera una traza. La contaminación cruzada me pone muy enfermo/a. Por favor, revise los ingredientes y las superficies de cocina.",
+    dairyTitle:'Intolerancia a los lácteos',
+    dairyBody:"Evito los lácteos — leche, mantequilla, queso, nata. Una pequeña cantidad o contaminación cruzada está bien, pero por favor evite un plato hecho principalmente con lácteos.",
+    thanks:'¡Gracias por su ayuda!'},
+  pt: {name:'Português', title:'Cartão de alergia alimentar', coeliacTitle:'Doença celíaca',
+    coeliacBody:"Não posso comer glúten — trigo, cevada ou centeio — nem mesmo um vestígio. A contaminação cruzada deixa-me gravemente doente. Por favor, verifique os ingredientes e as superfícies de cozinha.",
+    dairyTitle:'Intolerância a lacticínios',
+    dairyBody:"Evito lacticínios — leite, manteiga, queijo, nata. Uma pequena quantidade ou contaminação cruzada não é problema, mas por favor evite um prato feito principalmente com lacticínios.",
+    thanks:'Obrigado(a) pela sua ajuda!'},
+  de: {name:'Deutsch', title:'Allergiekarte', coeliacTitle:'Zöliakie',
+    coeliacBody:"Ich kann kein Gluten essen — Weizen, Gerste oder Roggen — nicht einmal eine Spur. Kreuzkontamination macht mich sehr krank. Bitte prüfen Sie die Zutaten und die Kochflächen.",
+    dairyTitle:'Milchunverträglichkeit',
+    dairyBody:"Ich vermeide Milchprodukte — Milch, Butter, Käse, Sahne. Eine kleine Menge oder Kreuzkontamination ist in Ordnung, aber bitte kein Gericht, das hauptsächlich aus Milchprodukten besteht.",
+    thanks:'Vielen Dank für Ihre Hilfe!'},
+  it: {name:'Italiano', title:'Carta delle allergie alimentari', coeliacTitle:'Malattia celiaca',
+    coeliacBody:"Non posso mangiare glutine — grano, orzo o segale — nemmeno una traccia. La contaminazione crociata mi fa stare molto male. Per favore controllate gli ingredienti e le superfici di cottura.",
+    dairyTitle:'Intolleranza ai latticini',
+    dairyBody:"Evito i latticini — latte, burro, formaggio, panna. Una piccola quantità o contaminazione crociata va bene, ma per favore evitate un piatto fatto principalmente con latticini.",
+    thanks:'Grazie per il vostro aiuto!'},
+  nl: {name:'Nederlands', title:'Voedselallergiekaart', coeliacTitle:'Coeliakie',
+    coeliacBody:"Ik kan geen gluten eten — tarwe, gerst of rogge — zelfs geen spoortje. Kruisbesmetting maakt me ernstig ziek. Controleer de ingrediënten en het kookoppervlak, alstublieft.",
+    dairyTitle:'Zuivelintolerantie',
+    dairyBody:"Ik vermijd zuivel — melk, boter, kaas, room. Een kleine hoeveelheid of kruisbesmetting is prima, maar vermijd alstublieft een gerecht dat vooral uit zuivel bestaat.",
+    thanks:'Bedankt voor uw hulp!'},
+  el: {name:'Ελληνικά', title:'Κάρτα τροφικής αλλεργίας', coeliacTitle:'Κοιλιοκάκη',
+    coeliacBody:"Δεν μπορώ να φάω γλουτένη — σιτάρι, κριθάρι ή σίκαλη — ούτε ίχνος. Η διασταυρούμενη επιμόλυνση με κάνει πολύ άρρωστο/η. Παρακαλώ ελέγξτε τα υλικά και τις επιφάνειες μαγειρέματος.",
+    dairyTitle:'Δυσανεξία στα γαλακτοκομικά',
+    dairyBody:"Αποφεύγω τα γαλακτοκομικά — γάλα, βούτυρο, τυρί, κρέμα. Μια μικρή ποσότητα ή διασταυρούμενη επιμόλυνση είναι εντάξει, αλλά παρακαλώ όχι πιάτο φτιαγμένο κυρίως από γαλακτοκομικά.",
+    thanks:'Ευχαριστώ για τη βοήθειά σας!'},
+  tr: {name:'Türkçe', title:'Gıda Alerjisi Kartı', coeliacTitle:'Çölyak Hastalığı',
+    coeliacBody:"Gluten yiyemem — buğday, arpa veya çavdar — eser miktarda bile. Çapraz bulaşma beni ciddi şekilde hasta eder. Lütfen malzemeleri ve pişirme yüzeylerini kontrol edin.",
+    dairyTitle:'Süt Ürünleri Hassasiyeti',
+    dairyBody:"Süt ürünlerinden kaçınırım — süt, tereyağı, peynir, krema. Az miktarda veya çapraz bulaşma sorun değil, ama lütfen ağırlıklı olarak süt ürünlerinden yapılmış bir yemek olmasın.",
+    thanks:'Yardımınız için teşekkür ederim!'},
+  ru: {name:'Русский', title:'Карточка пищевой аллергии', coeliacTitle:'Целиакия',
+    coeliacBody:"Я не могу есть глютен — пшеницу, ячмень или рожь — даже в следовых количествах. Перекрёстное загрязнение вызывает у меня серьёзное недомогание. Пожалуйста, проверьте ингредиенты и поверхности для готовки.",
+    dairyTitle:'Непереносимость молочных продуктов',
+    dairyBody:"Я избегаю молочных продуктов — молока, масла, сыра, сливок. Небольшое количество или перекрёстное загрязнение допустимо, но, пожалуйста, не блюдо, состоящее в основном из молочных продуктов.",
+    thanks:'Спасибо за помощь!'},
+  uk: {name:'Українська', title:'Картка харчової алергії', coeliacTitle:'Целіакія',
+    coeliacBody:"Я не можу їсти глютен — пшеницю, ячмінь або жито — навіть слід. Перехресне забруднення викликає у мене серйозне нездужання. Будь ласка, перевірте інгредієнти та поверхні для приготування.",
+    dairyTitle:'Непереносимість молочних продуктів',
+    dairyBody:"Я уникаю молочних продуктів — молока, масла, сиру, вершків. Невелика кількість або перехресне забруднення — це нормально, але, будь ласка, не страва, що складається переважно з молочних продуктів.",
+    thanks:'Дякую за вашу допомогу!'},
+  pl: {name:'Polski', title:'Karta alergii pokarmowej', coeliacTitle:'Celiakia',
+    coeliacBody:"Nie mogę jeść glutenu — pszenicy, jęczmienia ani żyta — nawet śladowej ilości. Zanieczyszczenie krzyżowe poważnie mnie rozchorowuje. Proszę sprawdzić składniki i powierzchnie do gotowania.",
+    dairyTitle:'Nietolerancja nabiału',
+    dairyBody:"Unikam nabiału — mleka, masła, sera, śmietany. Niewielka ilość lub zanieczyszczenie krzyżowe nie stanowi problemu, ale proszę o danie, które nie składa się głównie z nabiału.",
+    thanks:'Dziękuję za pomoc!'},
+  cs: {name:'Čeština', title:'Karta potravinové alergie', coeliacTitle:'Celiakie',
+    coeliacBody:"Nemohu jíst lepek — pšenici, ječmen ani žito — ani stopové množství. Křížová kontaminace mě vážně onemocní. Zkontrolujte prosím ingredience a plochy na vaření.",
+    dairyTitle:'Nesnášenlivost mléčných výrobků',
+    dairyBody:"Vyhýbám se mléčným výrobkům — mléku, máslu, sýru, smetaně. Malé množství nebo křížová kontaminace je v pořádku, ale prosím žádné jídlo tvořené hlavně mléčnými výrobky.",
+    thanks:'Děkuji za pomoc!'},
+  sk: {name:'Slovenčina', title:'Karta potravinovej alergie', coeliacTitle:'Celiakia',
+    coeliacBody:"Nemôžem jesť lepok — pšenicu, jačmeň ani raž — ani stopové množstvo. Krížová kontaminácia ma vážne rozchorie. Prosím, skontrolujte zloženie a plochy na varenie.",
+    dairyTitle:'Neznášanlivosť mliečnych výrobkov',
+    dairyBody:"Vyhýbam sa mliečnym výrobkom — mlieku, maslu, syru, smotane. Malé množstvo alebo krížová kontaminácia je v poriadku, ale prosím žiadne jedlo tvorené hlavne mliečnymi výrobkami.",
+    thanks:'Ďakujem za pomoc!'},
+  hu: {name:'Magyar', title:'Ételallergia-kártya', coeliacTitle:'Cöliákia',
+    coeliacBody:"Nem ehetek glutént — búzát, árpát vagy rozsot — még nyomokban sem. A keresztszennyeződés komolyan megbetegít. Kérem, ellenőrizze az összetevőket és a főzőfelületeket.",
+    dairyTitle:'Tejtermék-intolerancia',
+    dairyBody:"Kerülöm a tejtermékeket — tejet, vajat, sajtot, tejszínt. Kis mennyiség vagy keresztszennyeződés rendben van, de kérem, ne olyan ételt, ami főként tejtermékből készült.",
+    thanks:'Köszönöm a segítségét!'},
+  ro: {name:'Română', title:'Card de alergie alimentară', coeliacTitle:'Boala celiacă',
+    coeliacBody:"Nu pot mânca gluten — grâu, orz sau secară — nici măcar urme. Contaminarea încrucișată mă îmbolnăvește grav. Vă rog verificați ingredientele și suprafețele de gătit.",
+    dairyTitle:'Intoleranță la lactate',
+    dairyBody:"Evit lactatele — lapte, unt, brânză, smântână. O cantitate mică sau contaminarea încrucișată e în regulă, dar vă rog fără un fel de mâncare făcut în principal din lactate.",
+    thanks:'Mulțumesc pentru ajutor!'},
+  bg: {name:'Български', title:'Карта за хранителна алергия', coeliacTitle:'Целиакия',
+    coeliacBody:"Не мога да ям глутен — пшеница, ечемик или ръж — дори следа. Кръстосаното замърсяване ме разболява сериозно. Моля, проверете съставките и повърхностите за готвене.",
+    dairyTitle:'Непоносимост към млечни продукти',
+    dairyBody:"Избягвам млечни продукти — мляко, масло, сирене, сметана. Малко количество или кръстосано замърсяване е нормално, но моля без ястие, приготвено основно от млечни продукти.",
+    thanks:'Благодаря за помощта!'},
+  hr: {name:'Hrvatski', title:'Kartica prehrambene alergije', coeliacTitle:'Celijakija',
+    coeliacBody:"Ne smijem jesti gluten — pšenicu, ječam ili raž — čak ni u tragovima. Unakrsna kontaminacija me ozbiljno razboli. Molim provjerite sastojke i površine za kuhanje.",
+    dairyTitle:'Netolerancija na mliječne proizvode',
+    dairyBody:"Izbjegavam mliječne proizvode — mlijeko, maslac, sir, vrhnje. Mala količina ili unakrsna kontaminacija je u redu, ali molim bez jela koje je uglavnom od mliječnih proizvoda.",
+    thanks:'Hvala na pomoći!'},
+  bs: {name:'Bosanski', title:'Kartica prehrambene alergije', coeliacTitle:'Celijakija',
+    coeliacBody:"Ne smijem jesti gluten — pšenicu, ječam ili raž — čak ni u tragovima. Unakrsna kontaminacija me ozbiljno razboli. Molim provjerite sastojke i površine za kuhanje.",
+    dairyTitle:'Netolerancija na mliječne proizvode',
+    dairyBody:"Izbjegavam mliječne proizvode — mlijeko, maslac, sir, vrhnje. Mala količina ili unakrsna kontaminacija je u redu, ali molim bez jela koje je uglavnom od mliječnih proizvoda.",
+    thanks:'Hvala na pomoći!'},
+  sr: {name:'Srpski', title:'Kartica prehrambene alergije', coeliacTitle:'Celijakija',
+    coeliacBody:"Ne smem da jedem gluten — pšenicu, ječam ili raž — čak ni u tragovima. Unakrsna kontaminacija me ozbiljno razboli. Molim proverite sastojke i površine za kuvanje.",
+    dairyTitle:'Netolerancija na mlečne proizvode',
+    dairyBody:"Izbegavam mlečne proizvode — mleko, puter, sir, pavlaku. Mala količina ili unakrsna kontaminacija je u redu, ali molim bez jela koje je uglavnom od mlečnih proizvoda.",
+    thanks:'Hvala na pomoći!'},
+  sl: {name:'Slovenščina', title:'Kartica prehranske alergije', coeliacTitle:'Celiakija',
+    coeliacBody:"Ne smem jesti glutena — pšenice, ječmena ali rži — niti sledi. Navzkrižna kontaminacija me hudo razboli. Prosim, preverite sestavine in površine za kuhanje.",
+    dairyTitle:'Nestrpnost do mlečnih izdelkov',
+    dairyBody:"Izogibam se mlečnim izdelkom — mleku, maslu, siru, smetani. Majhna količina ali navzkrižna kontaminacija je v redu, vendar prosim brez jedi, ki je pretežno iz mlečnih izdelkov.",
+    thanks:'Hvala za pomoč!'},
+  mk: {name:'Македонски', title:'Картичка за прехранбена алергија', coeliacTitle:'Целијакија',
+    coeliacBody:"Не можам да јадам глутен — пченица, јачмен или ‘рж — дури ни трага. Вкрстеното загадување ме разболува сериозно. Ве молам проверете ги состојките и површините за готвење.",
+    dairyTitle:'Нетолеранција на млечни производи',
+    dairyBody:"Избегнувам млечни производи — млеко, путер, сирење, слатка павлака. Мала количина или вкрстено загадување е во ред, но ве молам без јадење направено главно од млечни производи.",
+    thanks:'Ви благодарам за помошта!'},
+  sq: {name:'Shqip', title:'Kartë alergjie ushqimore', coeliacTitle:'Sëmundja celiake',
+    coeliacBody:"Nuk mund të ha gluten — grurë, elb ose thekër — as edhe një gjurmë. Kontaminimi i kryqëzuar më sëmur seriozisht. Ju lutem kontrolloni përbërësit dhe sipërfaqet e gatimit.",
+    dairyTitle:'Intolerancë ndaj bulmetit',
+    dairyBody:"Shmang bulmetin — qumësht, gjalpë, djathë, krem. Një sasi e vogël ose kontaminim i kryqëzuar është në rregull, por ju lutem jo një gjellë e bërë kryesisht me bulmet.",
+    thanks:'Faleminderit për ndihmën!'},
+  sv: {name:'Svenska', title:'Matallergikort', coeliacTitle:'Celiaki',
+    coeliacBody:"Jag kan inte äta gluten — vete, korn eller råg — inte ens ett spår. Korskontaminering gör mig allvarligt sjuk. Kontrollera gärna ingredienserna och tillagningsytorna.",
+    dairyTitle:'Mjölkintolerans',
+    dairyBody:"Jag undviker mjölkprodukter — mjölk, smör, ost, grädde. En liten mängd eller korskontaminering är okej, men undvik gärna en rätt som mest består av mjölkprodukter.",
+    thanks:'Tack för din hjälp!'},
+  no: {name:'Norsk', title:'Matallergikort', coeliacTitle:'Cøliaki',
+    coeliacBody:"Jeg kan ikke spise gluten — hvete, bygg eller rug — ikke engang et spor. Krysskontaminering gjør meg alvorlig syk. Vennligst sjekk ingrediensene og kokeflatene.",
+    dairyTitle:'Melkeintoleranse',
+    dairyBody:"Jeg unngår melkeprodukter — melk, smør, ost, fløte. En liten mengde eller krysskontaminering er greit, men vennligst ingen rett laget hovedsakelig av melkeprodukter.",
+    thanks:'Takk for hjelpen!'},
+  da: {name:'Dansk', title:'Madallergikort', coeliacTitle:'Cøliaki',
+    coeliacBody:"Jeg kan ikke spise gluten — hvede, byg eller rug — ikke engang et spor. Krydskontaminering gør mig alvorligt syg. Tjek venligst ingredienserne og tilberedningsoverfladerne.",
+    dairyTitle:'Mælkeintolerance',
+    dairyBody:"Jeg undgår mælkeprodukter — mælk, smør, ost, fløde. En lille mængde eller krydskontaminering er fint, men undgå venligst en ret, der hovedsageligt består af mælkeprodukter.",
+    thanks:'Tak for hjælpen!'},
+  fi: {name:'Suomi', title:'Ruoka-allergiakortti', coeliacTitle:'Keliakia',
+    coeliacBody:"En voi syödä gluteenia — vehnää, ohraa tai ruista — en edes jälkeäkään. Ristikontaminaatio sairastuttaa minut vakavasti. Tarkistattehan ainesosat ja ruoanlaittopinnat.",
+    dairyTitle:'Maitoallergia/-intoleranssi',
+    dairyBody:"Vältän maitotuotteita — maitoa, voita, juustoa, kermaa. Pieni määrä tai ristikontaminaatio on ok, mutta ei kiitos ruokaa, joka on pääosin maitotuotteita.",
+    thanks:'Kiitos avustanne!'},
+  is: {name:'Íslenska', title:'Fæðuofnæmiskort', coeliacTitle:'Glútenóþol (Celiac-sjúkdómur)',
+    coeliacBody:"Ég get ekki borðað glúten — hveiti, bygg eða rúg — ekki einu sinni snefil. Krossmengun gerir mig alvarlega veika/n. Vinsamlegast athugið hráefnin og eldunarfletina.",
+    dairyTitle:'Mjólkuróþol',
+    dairyBody:"Ég forðast mjólkurvörur — mjólk, smjör, ost, rjóma. Lítið magn eða krossmengun er í lagi, en vinsamlegast enginn réttur sem er aðallega úr mjólkurvörum.",
+    thanks:'Takk fyrir hjálpina!'},
+  et: {name:'Eesti', title:'Toiduallergia kaart', coeliacTitle:'Tsöliaakia',
+    coeliacBody:"Ma ei tohi süüa gluteeni — nisu, otra ega rukist — isegi mitte jälgi. Ristsaastumine teeb mind tõsiselt haigeks. Palun kontrollige koostisosi ja toiduvalmistamispindu.",
+    dairyTitle:'Piimatalumatus',
+    dairyBody:"Väldin piimatooteid — piima, võid, juustu, koort. Väike kogus või ristsaastumine on sobiv, kuid palun mitte rooga, mis on peamiselt piimatooted.",
+    thanks:'Aitäh abi eest!'},
+  lv: {name:'Latviešu', title:'Pārtikas alerģijas karte', coeliacTitle:'Celiakija',
+    coeliacBody:"Es nevaru ēst lipekli — kviešus, miežus vai rudzus — pat ne pēdas daudzumā. Krustapiesārņojums mani nopietni sagāda. Lūdzu, pārbaudiet sastāvdaļas un gatavošanas virsmas.",
+    dairyTitle:'Piena produktu nepanesamība',
+    dairyBody:"Es izvairos no piena produktiem — piena, sviesta, siera, krējuma. Neliels daudzums vai krustapiesārņojums ir labi, bet, lūdzu, ne ēdiens, kas galvenokārt gatavots no piena produktiem.",
+    thanks:'Paldies par palīdzību!'},
+  lt: {name:'Lietuvių', title:'Maisto alergijos kortelė', coeliacTitle:'Celiakija',
+    coeliacBody:"Negaliu valgyti glitimo — kviečių, miežių ar rugių — net pėdsakų. Kryžminė tarša mane rimtai suserga. Prašome patikrinti sudedamąsias dalis ir gaminimo paviršius.",
+    dairyTitle:'Pieno produktų netoleravimas',
+    dairyBody:"Vengiu pieno produktų — pieno, sviesto, sūrio, grietinėlės. Nedidelis kiekis ar kryžminė tarša yra tinkami, bet, prašome, jokio patiekalo, pagaminto daugiausia iš pieno produktų.",
+    thanks:'Ačiū už pagalbą!'},
+  mt: {name:'Malti', title:"Karta ta' allerġija tal-ikel", coeliacTitle:'Marda Ċeljaka',
+    coeliacBody:"Ma nistax niekol glutina — qamħ, xgħir jew segala — lanqas traċċa. Kontaminazzjoni inkroċjata tagħmilni marid/a serjament. Jekk jogħġbok iċċekkja l-ingredjenti u l-uċuħ tat-tisjir.",
+    dairyTitle:'Intolleranza għall-Ħalib',
+    dairyBody:"Nevita l-prodotti tal-ħalib — ħalib, butir, ġobon, krema. Kwantità żgħira jew kontaminazzjoni inkroċjata hija OK, iżda jekk jogħġbok l-ebda platt magħmul l-aktar minn prodotti tal-ħalib.",
+    thanks:"Grazzi tal-għajnuna!"},
+  ca: {name:'Català', title:"Targeta d'al·lèrgia alimentària", coeliacTitle:'Malaltia celíaca',
+    coeliacBody:"No puc menjar gluten — blat, ordi o sègol — ni tan sols un rastre. La contaminació creuada em fa emmalaltir greument. Si us plau, comproveu els ingredients i les superfícies de cuina.",
+    dairyTitle:'Intolerància als lactis',
+    dairyBody:"Evito els lactis — llet, mantega, formatge, nata. Una petita quantitat o contaminació creuada està bé, però si us plau, no un plat fet principalment amb lactis.",
+    thanks:'Gràcies per la vostra ajuda!'},
+  ja: {name:'日本語', title:'食物アレルギーカード', coeliacTitle:'セリアック病',
+    coeliacBody:'グルテン（小麦・大麦・ライ麦）は少量でも食べられません。相互汚染があると重い症状が出ます。材料と調理器具の確認をお願いします。',
+    dairyTitle:'乳製品不耐症',
+    dairyBody:'乳製品（牛乳・バター・チーズ・生クリーム）は避けています。少量や相互汚染は問題ありませんが、乳製品が主な料理は避けてください。',
+    thanks:'ご協力ありがとうございます！'},
+  zh: {name:'中文', title:'食物过敏卡', coeliacTitle:'乳糜泻（麸质不耐症）',
+    coeliacBody:'我不能吃含麸质的食物——小麦、大麦或黑麦——哪怕一点点也不行。交叉污染会让我严重不适。请检查食材和烹饪台面。',
+    dairyTitle:'乳糖/乳制品不耐受',
+    dairyBody:'我尽量不吃乳制品——牛奶、黄油、奶酪、奶油。少量或交叉污染没关系，但请不要以乳制品为主的菜。',
+    thanks:'谢谢您的帮助！'},
+  ko: {name:'한국어', title:'음식 알레르기 카드', coeliacTitle:'셀리악병',
+    coeliacBody:'저는 글루텐(밀, 보리, 호밀)을 전혀 먹을 수 없습니다. 교차 오염이 있으면 심하게 아픕니다. 재료와 조리 표면을 확인해 주세요.',
+    dairyTitle:'유제품 불내증',
+    dairyBody:'저는 유제품(우유, 버터, 치즈, 크림)을 피합니다. 소량이나 교차 오염은 괜찮지만, 유제품이 주가 되는 음식은 피해 주세요.',
+    thanks:'도와주셔서 감사합니다!'},
+  vi: {name:'Tiếng Việt', title:'Thẻ dị ứng thực phẩm', coeliacTitle:'Bệnh Celiac (không dung nạp gluten)',
+    coeliacBody:'Tôi không thể ăn gluten — lúa mì, lúa mạch hoặc lúa mạch đen — dù chỉ một chút. Nhiễm chéo khiến tôi bị bệnh nặng. Xin vui lòng kiểm tra thành phần và bề mặt nấu ăn.',
+    dairyTitle:'Không dung nạp sữa',
+    dairyBody:'Tôi tránh các sản phẩm từ sữa — sữa, bơ, phô mai, kem. Một lượng nhỏ hoặc nhiễm chéo thì ổn, nhưng xin đừng món ăn chủ yếu làm từ sữa.',
+    thanks:'Cảm ơn sự giúp đỡ của bạn!'},
+  th: {name:'ไทย', title:'บัตรแพ้อาหาร', coeliacTitle:'โรคเซลิแอค (แพ้กลูเตน)',
+    coeliacBody:'ฉันกินกลูเตนไม่ได้เลย — ข้าวสาลี ข้าวบาร์เลย์ หรือข้าวไรย์ — แม้แต่เพียงเล็กน้อย การปนเปื้อนข้ามทำให้ฉันป่วยหนัก กรุณาตรวจสอบส่วนผสมและพื้นผิวที่ใช้ปรุงอาหาร',
+    dairyTitle:'แพ้ผลิตภัณฑ์นม',
+    dairyBody:'ฉันหลีกเลี่ยงผลิตภัณฑ์จากนม — นม เนย ชีส ครีม ปริมาณเล็กน้อยหรือการปนเปื้อนข้ามไม่เป็นไร แต่กรุณาอย่าเป็นเมนูที่ทำจากผลิตภัณฑ์นมเป็นหลัก',
+    thanks:'ขอบคุณสำหรับความช่วยเหลือ!'},
+  km: {name:'ខ្មែរ', title:'កាតអាឡែស៊ីអាហារ', coeliacTitle:'ជំងឺសេលីអាក (មិនទ្រាំគ្លុយតែន)',
+    coeliacBody:'ខ្ញុំមិនអាចញ៉ាំគ្លុយតែនបានទេ — ស្រូវសាលី ស្រូវបាឡេ ឬស្រូវសៀគ្វី — សូម្បីតែបរិមាណតិចតួច។ ការចម្លងឆ្លងធ្វើឲ្យខ្ញុំឈឺធ្ងន់ធ្ងរ។ សូមពិនិត្យគ្រឿងផ្សំ និងផ្ទៃចម្អិនអាហារ។',
+    dairyTitle:'មិនទ្រាំផលិតផលទឹកដោះគោ',
+    dairyBody:'ខ្ញុំចៀសវាងផលិតផលទឹកដោះគោ — ទឹកដោះគោ ប៊័រ ឈីស ក្រែម។ បរិមាណតិចតួច ឬការចម្លងឆ្លងគឺមិនអីទេ ប៉ុន្តែសូមកុំយកម្ហូបដែលធ្វើពីទឹកដោះគោជាចម្បង។',
+    thanks:'សូមអរគុណសម្រាប់ជំនួយ!'},
+  lo: {name:'ລາວ', title:'ບັດແພ້ອາຫານ', coeliacTitle:'ພະຍາດເຊລີແອັກ (ແພ້ກລູແຕນ)',
+    coeliacBody:'ຂ້ອຍກິນກລູແຕນບໍ່ໄດ້ — ເຂົ້າສາລີ, ເຂົ້າບາເລ, ຫຼືເຂົ້າໄຣ — ເຖິງແມ່ນວ່າພຽງເລັກນ້ອຍ. ການປົນເປື້ອນຂ້າມເຮັດໃຫ້ຂ້ອຍປ່ວຍໜັກ. ກະລຸນາກວດສ່ວນປະກອບ ແລະ ພື້ນຜິວປຸງແຕ່ງອາຫານ.',
+    dairyTitle:'ບໍ່ທົນຕໍ່ຜະລິດຕະພັນນົມ',
+    dairyBody:'ຂ້ອຍຫຼີກລ້ຽງຜະລິດຕະພັນນົມ — ນົມ, ເນີຍ, ເນີຍແຂງ, ຄີມ. ຈຳນວນໜ້ອຍ ຫຼື ການປົນເປື້ອນຂ້າມແມ່ນບໍ່ເປັນຫຍັງ ແຕ່ກະລຸນາຫຼີກລ້ຽງອາຫານທີ່ເຮັດຈາກຜະລິດຕະພັນນົມເປັນຫຼັກ.',
+    thanks:'ຂອບໃຈສຳລັບຄວາມຊ່ວຍເຫຼືອ!'},
+  my: {name:'မြန်မာ', title:'အစားအစာဓာတ်မတည့်မှု ကတ်', coeliacTitle:'ဆီလီယက်ရောဂါ (ဂလူတင်မတည့်ခြင်း)',
+    coeliacBody:'ဂလူတင် — ဂျုံ၊ မုယော သို့မဟုတ် ရိုင်း — အနည်းငယ်ကိုပင် စားလို့မရပါ။ ရောနှောညစ်ညမ်းမှုက ပြင်းပြင်းထန်ထန် ဖျားနာစေပါသည်။ ပါဝင်ပစ္စည်းများနှင့် ချက်ပြုတ်မှုမျက်နှာပြင်များကို စစ်ဆေးပေးပါ။',
+    dairyTitle:'နို့ထွက်ပစ္စည်းမတည့်ခြင်း',
+    dairyBody:'နို့ထွက်ပစ္စည်း — နို့၊ ထောပတ်၊ ဒိန်ခဲ၊ ခရင်မ် — ကို ရှောင်ပါသည်။ အနည်းငယ် သို့မဟုတ် ရောနှောညစ်ညမ်းမှုသည် ပြဿနာမရှိပါ၊ သို့သော် နို့ထွက်ပစ္စည်းအဓိကထားပြုလုပ်သော အစားအစာကို ရှောင်ပေးပါ။',
+    thanks:'အကူအညီအတွက် ကျေးဇူးတင်ပါသည်!'},
+  id: {name:'Bahasa Indonesia', title:'Kartu Alergi Makanan', coeliacTitle:'Penyakit Celiac',
+    coeliacBody:'Saya tidak bisa makan gluten — gandum, barli, atau gandum hitam — bahkan sedikit pun. Kontaminasi silang membuat saya sakit parah. Mohon periksa bahan-bahan dan permukaan memasak.',
+    dairyTitle:'Intoleransi Susu',
+    dairyBody:'Saya menghindari produk susu — susu, mentega, keju, krim. Sedikit jumlah atau kontaminasi silang tidak masalah, tapi mohon jangan hidangan yang sebagian besar terbuat dari produk susu.',
+    thanks:'Terima kasih atas bantuannya!'},
+  ms: {name:'Bahasa Melayu', title:'Kad Alahan Makanan', coeliacTitle:'Penyakit Seliak',
+    coeliacBody:'Saya tidak boleh makan gluten — gandum, barli, atau rai — walaupun sedikit. Pencemaran silang menyebabkan saya sakit teruk. Sila periksa bahan-bahan dan permukaan memasak.',
+    dairyTitle:'Intoleransi Tenusu',
+    dairyBody:'Saya mengelakkan tenusu — susu, mentega, keju, krim. Sedikit jumlah atau pencemaran silang tidak mengapa, tetapi sila jangan hidangan yang kebanyakannya diperbuat daripada tenusu.',
+    thanks:'Terima kasih atas bantuan anda!'},
+  tl: {name:'Tagalog', title:'Card ng Allergy sa Pagkain', coeliacTitle:'Sakit na Celiac',
+    coeliacBody:'Hindi ako makakakain ng gluten — trigo, barley, o rye — kahit bahagya lang. Ang cross-contamination ay nagpapasakit sa akin nang husto. Pakisuri ang mga sangkap at ang mga ibabaw na ginagamit sa pagluluto.',
+    dairyTitle:'Hindi Pagtanggap sa Dairy',
+    dairyBody:'Iniiwasan ko ang dairy — gatas, mantikilya, keso, cream. Okay lang ang maliit na halaga o cross-contamination, pero pakiusap huwag ang ulam na pangunahing gawa sa dairy.',
+    thanks:'Salamat sa iyong tulong!'},
+  hi: {name:'हिन्दी', title:'खाद्य एलर्जी कार्ड', coeliacTitle:'सीलिएक रोग',
+    coeliacBody:'मैं ग्लूटेन नहीं खा सकता/सकती — गेहूं, जौ या राई — एक कतरा भी नहीं। क्रॉस-कंटैमिनेशन से मैं गंभीर रूप से बीमार हो जाता/जाती हूं। कृपया सामग्री और खाना बनाने की सतहों की जांच करें।',
+    dairyTitle:'डेयरी असहिष्णुता',
+    dairyBody:'मैं डेयरी से बचता/बचती हूं — दूध, मक्खन, पनीर, क्रीम। थोड़ी मात्रा या क्रॉस-कंटैमिनेशन ठीक है, लेकिन कृपया मुख्य रूप से डेयरी से बना व्यंजन न दें।',
+    thanks:'आपकी मदद के लिए धन्यवाद!'},
+  bn: {name:'বাংলা', title:'খাদ্য অ্যালার্জি কার্ড', coeliacTitle:'সিলিয়াক রোগ',
+    coeliacBody:'আমি গ্লুটেন খেতে পারি না — গম, বার্লি বা রাই — এমনকি সামান্য পরিমাণেও না। ক্রস-কন্টামিনেশন আমাকে গুরুতরভাবে অসুস্থ করে তোলে। অনুগ্রহ করে উপকরণ এবং রান্নার পৃষ্ঠ পরীক্ষা করুন।',
+    dairyTitle:'দুগ্ধজাত খাবারে অসহিষ্ণুতা',
+    dairyBody:'আমি দুগ্ধজাত খাবার এড়িয়ে চলি — দুধ, মাখন, পনির, ক্রিম। অল্প পরিমাণ বা ক্রস-কন্টামিনেশন ঠিক আছে, তবে অনুগ্রহ করে প্রধানত দুগ্ধজাত খাবার দিয়ে তৈরি কোনো পদ দেবেন না।',
+    thanks:'আপনার সাহায্যের জন্য ধন্যবাদ!'},
+  ur: {name:'اردو', title:'فوڈ الرجی کارڈ', coeliacTitle:'سیلیک بیماری',
+    coeliacBody:'میں گلوٹین نہیں کھا سکتا/سکتی — گندم، جو، یا رائی — ذرا سی مقدار بھی نہیں۔ کراس کنٹیمینیشن مجھے شدید بیمار کر دیتی ہے۔ براہ کرم اجزاء اور پکانے کی سطحوں کو چیک کریں۔',
+    dairyTitle:'ڈیری عدم برداشت',
+    dairyBody:'میں ڈیری سے پرہیز کرتا/کرتی ہوں — دودھ، مکھن، پنیر، کریم۔ تھوڑی مقدار یا کراس کنٹیمینیشن ٹھیک ہے، لیکن براہ کرم ایسا کھانا نہ دیں جو زیادہ تر ڈیری سے بنا ہو۔',
+    thanks:'آپ کی مدد کے لیے شکریہ!'},
+  ne: {name:'नेपाली', title:'खाद्य एलर्जी कार्ड', coeliacTitle:'सिलिएक रोग',
+    coeliacBody:'म ग्लुटेन खान सक्दिन — गहुँ, जौ वा राई — थोरै मात्रामा पनि होइन। क्रस-कन्टामिनेसनले मलाई गम्भीर रूपमा बिरामी बनाउँछ। कृपया सामग्री र पकाउने सतहहरू जाँच गर्नुहोस्।',
+    dairyTitle:'डेयरी असहिष्णुता',
+    dairyBody:'म डेयरीबाट टाढा रहन्छु — दूध, मक्खन, चिज, क्रिम। थोरै मात्रा वा क्रस-कन्टामिनेसन ठीक छ, तर कृपया मुख्यतया डेयरीबाट बनेको परिकार नदिनुहोस्।',
+    thanks:'तपाईंको मद्दतका लागि धन्यवाद!'},
+  si: {name:'සිංහල', title:'ආහාර අසාත්මිකතා කාඩ්පත', coeliacTitle:'සීලියැක් රෝගය',
+    coeliacBody:'මට ග්ලූටන් — තිරිඟු, බාර්ලි හෝ රයි — කිසිසේත් අනුභව කළ නොහැක. හරස් දූෂණය මාව බරපතල ලෙස අසනීප කරයි. කරුණාකර අමුද්‍රව්‍ය සහ පිසීමේ මතුපිට පරීක්ෂා කරන්න.',
+    dairyTitle:'කිරි නිෂ්පාදන නොඉවසීම',
+    dairyBody:'මම කිරි නිෂ්පාදන — කිරි, බටර්, චීස්, ක්‍රීම් — වළක්වා ගනිමි. සුළු ප්‍රමාණයක් හෝ හරස් දූෂණයක් කමක් නැත, නමුත් කරුණාකර ප්‍රධාන වශයෙන් කිරි නිෂ්පාදනවලින් සාදන ලද ආහාරයක් නොදෙන්න.',
+    thanks:'ඔබේ උපකාරයට ස්තුතියි!'},
+  fa: {name:'فارسی', title:'کارت آلرژی غذایی', coeliacTitle:'بیماری سلیاک',
+    coeliacBody:'من نمی‌توانم گلوتن بخورم — گندم، جو یا چاودار — حتی به مقدار بسیار کم. آلودگی متقابل باعث بیماری شدید من می‌شود. لطفاً مواد اولیه و سطوح پخت‌وپز را بررسی کنید.',
+    dairyTitle:'عدم تحمل لبنیات',
+    dairyBody:'من از لبنیات پرهیز می‌کنم — شیر، کره، پنیر، خامه. مقدار کم یا آلودگی متقابل مشکلی ندارد، اما لطفاً غذایی که عمدتاً از لبنیات تهیه شده باشد ندهید.',
+    thanks:'از کمک شما متشکرم!'},
+  ar: {name:'العربية', title:'بطاقة حساسية الطعام', coeliacTitle:'مرض السيلياك',
+    coeliacBody:'لا يمكنني تناول الغلوتين — القمح أو الشعير أو الجاودار — حتى بكمية ضئيلة جدًا. التلوث المتبادل يجعلني مريضًا/مريضة بشدة. يرجى التحقق من المكونات وأسطح الطهي.',
+    dairyTitle:'عدم تحمل منتجات الألبان',
+    dairyBody:'أتجنب منتجات الألبان — الحليب والزبدة والجبن والقشدة. كمية صغيرة أو تلوث متبادل أمر مقبول، لكن يرجى تجنب طبق مصنوع أساسًا من منتجات الألبان.',
+    thanks:'شكرًا لمساعدتكم!'},
+  he: {name:'עברית', title:'כרטיס אלרגיה למזון', coeliacTitle:'מחלת צליאק',
+    coeliacBody:'אני לא יכול/ה לאכול גלוטן — חיטה, שעורה או שיפון — אפילו לא שמץ. זיהום צולב גורם לי להיות חולה מאוד. אנא בדקו את הרכיבים ואת משטחי הבישול.',
+    dairyTitle:'אי-סבילות למוצרי חלב',
+    dairyBody:'אני נמנע/ת ממוצרי חלב — חלב, חמאה, גבינה, שמנת. כמות קטנה או זיהום צולב זה בסדר, אבל בבקשה לא מנה שעשויה בעיקר ממוצרי חלב.',
+    thanks:'תודה על העזרה!'},
+  sw: {name:'Kiswahili', title:'Kadi ya Mzio wa Chakula', coeliacTitle:'Ugonjwa wa Celiac',
+    coeliacBody:'Siwezi kula gluteni — ngano, shayiri, au rai — hata kiasi kidogo. Uchafuzi wa mtambuka hunifanya niugue vibaya. Tafadhali angalia viungo na sehemu za kupikia.',
+    dairyTitle:'Kutovumilia Maziwa',
+    dairyBody:'Ninaepuka bidhaa za maziwa — maziwa, siagi, jibini, krimu. Kiasi kidogo au uchafuzi wa mtambuka si tatizo, lakini tafadhali si sahani iliyotengenezwa hasa kwa bidhaa za maziwa.',
+    thanks:'Asante kwa msaada wako!'},
+  am: {name:'አማርኛ', title:'የምግብ አለርጂ ካርድ', coeliacTitle:'ሴልያክ በሽታ',
+    coeliacBody:'ግሉተን — ስንዴ፣ ገብስ ወይም አጃ — መብላት አልችልም፣ ትንሽ እንኳ አይሆንም። መስቀል-ብክለት በጣም እንዳምመኝ ያደርገኛል። እባክዎ ግብዓቶቹን እና የማብሰያ ወለሎችን ይመልከቱ።',
+    dairyTitle:'የወተት ተዋጽኦ አለመቻቻል',
+    dairyBody:'የወተት ተዋጽኦዎችን አስወግዳለሁ — ወተት፣ ቅቤ፣ አይብ፣ ክሬም። ትንሽ መጠን ወይም መስቀል-ብክለት ችግር የለውም፣ ነገር ግን በዋነኝነት ከወተት ተዋጽኦ የተሰራ ምግብ እባክዎ አይስጡኝ።',
+    thanks:'ስለ እርዳታዎ አመሰግናለሁ!'},
+  ka: {name:'ქართული', title:'საკვები ალერგიის ბარათი', coeliacTitle:'ცელიაკია',
+    coeliacBody:'ვერ ვჭამ გლუტენს — ხორბალს, ქერს ან ჭვავს — მცირე კვალიც კი. ჯვარედინი დაბინძურება მაავადებს სერიოზულად. გთხოვთ, შეამოწმოთ ინგრედიენტები და მომზადების ზედაპირები.',
+    dairyTitle:'რძის პროდუქტების აუტანლობა',
+    dairyBody:'ვერიდები რძის პროდუქტებს — რძეს, კარაქს, ყველს, ნაღებს. მცირე რაოდენობა ან ჯვარედინი დაბინძურება დასაშვებია, მაგრამ გთხოვთ, არა კერძი, რომელიც ძირითადად რძის პროდუქტებისგანაა დამზადებული.',
+    thanks:'მადლობა დახმარებისთვის!'},
+  hy: {name:'Հայերեն', title:'Սննդային ալերգիայի քարտ', coeliacTitle:'Ցելիակիա',
+    coeliacBody:'Ես չեմ կարող գլյուտեն ուտել — ցորեն, գարի կամ տարեկան — նույնիսկ հետք։ Խաչաձեւ աղտոտումն ինձ լրջորեն հիվանդացնում է։ Խնդրում եմ ստուգեք բաղադրիչները և եփման մակերեսները։',
+    dairyTitle:'Կաթնամթերքի անհանդուրժողականություն',
+    dairyBody:'Ես խուսափում եմ կաթնամթերքից — կաթ, կարագ, պանիր, սերուցք։ Փոքր քանակությունը կամ խաչաձեւ աղտոտումը լավ է, բայց խնդրում եմ ոչ ուտեստ, որը հիմնականում կաթնամթերքից է։',
+    thanks:'Շնորհակալություն օգնության համար!'},
+  az: {name:'Azərbaycanca', title:'Qida Allergiyası Kartı', coeliacTitle:'Çöliakiya Xəstəliyi',
+    coeliacBody:'Mən qlüten yeyə bilmirəm — buğda, arpa və ya çovdar — hətta iz miqdarında da yox. Çarpaz çirklənmə məni ciddi xəstələndirir. Zəhmət olmasa tərkib hissələrini və bişirmə səthlərini yoxlayın.',
+    dairyTitle:'Süd Məhsullarına Dözümsüzlük',
+    dairyBody:'Mən süd məhsullarından çəkinirəm — süd, kərə yağı, pendir, qaymaq. Az miqdar və ya çarpaz çirklənmə problem deyil, lakin zəhmət olmasa əsasən süd məhsullarından hazırlanmış yemək verməyin.',
+    thanks:'Köməyiniz üçün təşəkkür edirəm!'},
+  mn: {name:'Монгол', title:'Хүнсний харшлын карт', coeliacTitle:'Целиак өвчин',
+    coeliacBody:'Би глютен — улаан буудай, арвай, эсвэл хөх тариа — идэж болохгүй, бага зэрэг ч гэсэн. Хөндлөн бохирдол намайг хүндээр өвчлүүлдэг. Орц найрлага, хоол хийх гадаргууг шалгана уу.',
+    dairyTitle:'Сүүн бүтээгдэхүүн үл тэвчих',
+    dairyBody:'Би сүүн бүтээгдэхүүнээс зайлсхийдэг — сүү, цөцгийн тос, бяслаг, цөцгий. Бага хэмжээ эсвэл хөндлөн бохирдол асуудалгүй, гэхдээ голчлон сүүн бүтээгдэхүүнээс хийсэн хоол бүү өгнө үү.',
+    thanks:'Тусламжид тань баярлалаа!'},
+  so: {name:'Soomaali', title:'Kaarka Xasaasiyadda Cuntada', coeliacTitle:'Cudurka Celiac',
+    coeliacBody:'Ma cuni karo gluten — sarreen, shaciir, ama rye — xitaa tiro yar. Wasakheynta iskudhafka ah ayaa iga dhigaysa mid aad u xanuunsan. Fadlan hubi walxaha lagu daray iyo dusha lagu kariyo.',
+    dairyTitle:"Dulqaad-la'aanta Caanaha",
+    dairyBody:'Waan ka fogaadaa caanaha — caano, subag, farmaajo, kareem. Xoogaa yar ama wasakheynta iskudhafka ah waa okay, laakiin fadlan ha bixin cunto ugu badnaan laga sameeyay caanaha.',
+    thanks:'Waad ku mahadsan tahay caawimadaada!'},
 };
-App.togglePack = itemId => {
-  const t = getTrip(CUR_TRIP_ID); if(!t) return;
-  const it = (t.packing||[]).find(x=>x.id===itemId); if(!it) return;
-  it.done = !it.done;
-  save(); rerender();
-};
-App.delPack = itemId => {
-  const t = getTrip(CUR_TRIP_ID); if(!t) return;
-  const tripId = t.id;
-  const i = (t.packing||[]).findIndex(x=>x.id===itemId); if(i<0) return;
-  const removed = t.packing[i];
-  t.packing.splice(i,1);
-  logEdit('Packing','Packing item removed'); save(); rerender();
-  toast('Item removed', ()=>{
-    const t2 = getTrip(tripId); if(!t2) return;
-    t2.packing = t2.packing||[];
-    t2.packing.splice(Math.min(i,t2.packing.length),0,removed);
-    logEdit('Packing','Packing item restored'); save(); rerender();
+/* the flag(s) contributing this language to the trip, so a chip showing "Français" also
+   carries whichever of the trip's own countries actually speak it (🇫🇷 and/or 🇧🇪, say) rather
+   than guessing at one "the" flag for a language spoken well beyond any single country */
+function allergyLangFlags(t, langCode){
+  return (t.countries||[])
+    .filter(c => (COUNTRY_LANGUAGES[c]||['en']).includes(langCode))
+    .map(c => (countryByCode(c)||{}).flag).filter(Boolean);
+}
+/* every language actually worth a card for this trip: English always leads (the language most
+   likely to be understood anywhere, and the fallback for a country whose own language isn't in
+   ALLERGY_TEXT above), followed by each of the trip's countries' own language(s) in the order
+   the countries were added, deduplicated so e.g. Switzerland's own three don't repeat a
+   language a country added earlier already covers */
+function allergyLangsFor(t){
+  const out = ['en'];
+  (t.countries||[]).forEach(c=>{
+    (COUNTRY_LANGUAGES[c]||['en']).forEach(l=>{
+      if(ALLERGY_TEXT[l] && !out.includes(l)) out.push(l);
+    });
   });
-};
-function packUnpackedFor(t){
-  return (t.packing||[]).filter(it=>!it.done);
+  return out;
 }
+function allergySummaryLine(t){
+  return (t.countries||[]).length ? 'Card Ready' : 'Add Countries First';
+}
+let CUR_ALLERGY_LANG = null;
+function tabAllergy(t){
+  if(!(t.countries||[]).length){
+    return `<div class="empty">Add this trip's countries and your allergy card writes itself in the right languages.<br><br>
+      <button class="btn primary" onclick="App.tripForm()">Add Countries</button></div>`;
+  }
+  const langs = allergyLangsFor(t);
+  if(!langs.includes(CUR_ALLERGY_LANG)) CUR_ALLERGY_LANG = langs[0];
+  const chip = l => {
+    const flags = allergyLangFlags(t, l).join('');
+    return `<button class="chip pick${l===CUR_ALLERGY_LANG?' on':''}" onclick="App.allergyLang('${l}')">${flags?`<span class="flag">${flags}</span>`:''}${esc(ALLERGY_TEXT[l].name)}</button>`;
+  };
+  const tr = ALLERGY_TEXT[CUR_ALLERGY_LANG];
+  return `
+    <div class="allergy-lang-picker">${langs.map(chip).join('')}</div>
+    <div class="card allergy-card">
+      <div class="allergy-card-lang">${esc(tr.title)}</div>
+      <div class="allergy-section severe">
+        <div class="allergy-section-head">
+          <span class="allergy-section-emoji" aria-hidden="true">🌾🚫</span>
+          <span class="allergy-section-title">${esc(tr.coeliacTitle)}</span>
+        </div>
+        <div class="allergy-section-body">${esc(tr.coeliacBody)}</div>
+      </div>
+      <div class="allergy-section caution">
+        <div class="allergy-section-head">
+          <span class="allergy-section-emoji" aria-hidden="true">🥛</span>
+          <span class="allergy-section-title">${esc(tr.dairyTitle)}</span>
+        </div>
+        <div class="allergy-section-body">${esc(tr.dairyBody)}</div>
+      </div>
+      <div class="allergy-thanks">${esc(tr.thanks)}</div>
+    </div>`;
+}
+App.allergyLang = l => {
+  CUR_ALLERGY_LANG = l;
+  const t = getTrip(CUR_TRIP_ID); if(!t) return;
+  renderTab(t);
+};
 
 /* ================= TAB: tasks (placeholders for things still to book) ================= */
 /* Freeform, unlike the accommodation/flight gaps: those are worked out from dates you've
@@ -11761,66 +12080,6 @@ App.delTask = i => {
     // Tasks instead of wherever the tap happened to come from
     save(); closeModal(); CUR_TAB='tasks'; rerender();
   });
-};
-
-/* A calendar event imports cleanly everywhere (iOS, Android, desktop) and actually fires an
-   alert, which is what "remind me" needs to mean for a static site with no server to push
-   from. VTODO would map more neatly onto a reminders app but is widely ignored on import. */
-function icsEscape(s){
-  return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
-}
-function icsStamp(d){
-  return d.getUTCFullYear()+String(d.getUTCMonth()+1).padStart(2,'0')+String(d.getUTCDate()).padStart(2,'0')
-    +'T'+String(d.getUTCHours()).padStart(2,'0')+String(d.getUTCMinutes()).padStart(2,'0')+'00Z';
-}
-/* RFC 5545 wants content lines folded at 75 octets, with continuations starting with a
-   space. A long packing list blows past that easily, and stricter importers reject the
-   file outright rather than just wrapping it themselves. */
-function icsFold(line){
-  const bytes = new TextEncoder().encode(line);
-  if(bytes.length <= 75) return line;
-  const out = [];
-  let cur = '', curLen = 0, limit = 75;
-  for(const ch of line){                       // iterate by code point, never split one
-    const n = new TextEncoder().encode(ch).length;
-    if(curLen + n > limit){ out.push(cur); cur = ' '; curLen = 1; limit = 75; }
-    cur += ch; curLen += n;
-  }
-  if(cur) out.push(cur);
-  return out.join('\r\n');
-}
-App.packReminder = () => {
-  const t = getTrip(CUR_TRIP_ID); if(!t) return;
-  if(!t.startDate) return noteModal('No Start Date', "Add a start date to the trip first, so there's a day to remind you on.");
-  const left = packUnpackedFor(t);
-  // the evening before you travel, local time, which is when packing actually happens
-  const start = new Date(t.startDate+'T00:00:00');
-  start.setDate(start.getDate()-1);
-  start.setHours(19,0,0,0);
-  const end = new Date(start.getTime() + 30*60000);
-  const body = left.length
-    ? 'Still to pack:\n' + left.map(it=>'- '+it.text).join('\n')
-    : 'Everything on the list is already ticked off. Nice.';
-  const ics = [
-    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//My Trips//Packing//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
-    'BEGIN:VEVENT',
-    'UID:pack-'+t.id+'-'+Date.now()+'@cals-trippin',
-    'DTSTAMP:'+icsStamp(new Date()),
-    'DTSTART:'+icsStamp(start),
-    'DTEND:'+icsStamp(end),
-    'SUMMARY:'+icsEscape('Pack for '+t.name),
-    'DESCRIPTION:'+icsEscape(body),
-    'BEGIN:VALARM','TRIGGER:PT0S','ACTION:DISPLAY','DESCRIPTION:'+icsEscape('Pack for '+t.name),'END:VALARM',
-    'END:VEVENT','END:VCALENDAR'
-  ].map(icsFold).join('\r\n');
-  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `pack-for-${(t.name||'trip').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}.ics`;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url), 1000);
-  toast('Reminder saved, open it to add it to your calendar');
 };
 
 /* ================= TAB: polls (single-tally voting) ================= */
@@ -14767,6 +15026,32 @@ App.saveFlight = i => {
   logEdit('Travel', (i>=0?'Travel edited: ':'Travel added: ')+label);
   save(); closeModal(); rerender(); toast('Flight saved');
 };
+/* A calendar event imports cleanly everywhere (iOS, Android, desktop) and actually fires an
+   alert, which is what a flight reminder needs to mean for a static site with no server to
+   push from. VTODO would map more neatly onto a reminders app but is widely ignored on import. */
+function icsEscape(s){
+  return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+}
+function icsStamp(d){
+  return d.getUTCFullYear()+String(d.getUTCMonth()+1).padStart(2,'0')+String(d.getUTCDate()).padStart(2,'0')
+    +'T'+String(d.getUTCHours()).padStart(2,'0')+String(d.getUTCMinutes()).padStart(2,'0')+'00Z';
+}
+/* RFC 5545 wants content lines folded at 75 octets, with continuations starting with a space -
+   a flight's own DESCRIPTION line (seats, bags, booking ref) blows past that easily, and
+   stricter importers reject the file outright rather than just wrapping it themselves. */
+function icsFold(line){
+  const bytes = new TextEncoder().encode(line);
+  if(bytes.length <= 75) return line;
+  const out = [];
+  let cur = '', curLen = 0, limit = 75;
+  for(const ch of line){                       // iterate by code point, never split one
+    const n = new TextEncoder().encode(ch).length;
+    if(curLen + n > limit){ out.push(cur); cur = ' '; curLen = 1; limit = 75; }
+    cur += ch; curLen += n;
+  }
+  if(cur) out.push(cur);
+  return out.join('\r\n');
+}
 /* exports the flight straight out of the open form's own fields, not the saved record - so it
    still works for a brand new flight, and reflects an edit not yet saved. Departs/Arrives are
    each the local clock time at their own airport, not the device's - a naive same-zone diff

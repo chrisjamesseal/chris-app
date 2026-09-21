@@ -1908,8 +1908,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.18';
+const APP_VERSION = '2.85.19';
 const CHANGELOG = [
+  {version:'2.85.19', notes:[
+    "A flight's duration connector reads \"3 Hours to Corfu\" now instead of just \"3 Hours\" - the same \"duration to destination\" phrasing an unbooked travel leg's own connector already used."
+  ]},
   {version:'2.85.18', notes:[
     "Fixed a \"Writing a summary…\" flash appearing for a split second on a day's first open - it always showed while an AI summary was requested, even for a device without the AI feature configured at all, where the request fails near-instantly and it was nothing but a pointless flicker. A day's own cards fill that space silently now until a summary actually arrives, if one ever does."
   ]},
@@ -12729,10 +12732,14 @@ function exactDurationWords(mins){
 /* the connector row itself, sat between two cards in a day's timeline - a leg's own stored
    duration (durationH/M) wins when it has one, since that's a fact rather than a guess;
    otherwise it's worked out from the two clock times either side, when both are known. Returns
-   '' when there's nothing to show rather than ever guessing at a number with nothing behind it. */
-function planConnectorHTML(mins, iconHTML){
+   '' when there's nothing to show rather than ever guessing at a number with nothing behind it.
+   dest, when given, reads the same "3 Hours to Corfu" way an unbooked travel leg's own
+   duration line already does (see travelCard's "way to X" line just below) - named rather than
+   left as a bare duration, since more than one flight in the same day otherwise all read alike. */
+function planConnectorHTML(mins, iconHTML, dest){
   const label = hoursWordLabel(mins);
-  return label ? `<div class="plan-connector">${iconHTML}${esc(label)}</div>` : '';
+  if(!label) return '';
+  return `<div class="plan-connector">${iconHTML}${esc(label)}${dest?` to ${esc(dest)}`:''}</div>`;
 }
 function itineraryItemLabel(s){
   if(s.kind==='travel') return (s.from||s.to) ? `${s.from||'?'} → ${s.to||'?'}` : 'a travel leg';
@@ -12998,7 +13005,7 @@ function planDaysHTML(t, ro, filterKeys){
     <div class="plan-auto${!ro?' plan-click':''}" ${clickAttrs(`App.flightForm(${s.fi})`)}>
       ${itinFlightCardHTML(s)}
     </div>
-    ${planConnectorHTML(dur, ICONS.flight)}
+    ${planConnectorHTML(dur, ICONS.flight, toName)}
     ${s.f.to?`<div class="plan-arrive-pill${!ro?' plan-click':''}" ${clickAttrs(`App.flightForm(${s.fi})`)}>${s.f.arrTime?`<span class="plan-arrive-time">${esc(s.f.arrTime)} -</span> `:''}${arriveFlag?arriveFlag+' ':''}Arrive in ${esc(toName)}</div>`:''}`;
   };
   const autoFerryCard = s => `

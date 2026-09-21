@@ -53,7 +53,7 @@
      app shows, so the same colour always means the same thing wherever it shows up */
   --rag-red:#FF3B30; --rag-yellow:#FF9F0A; --rag-green:#34C759;
   --danger-tint:#FFEBE9; --danger-tint-hover:#FFDAD6; --danger-dark:#D70015;
-  --radius:20px; --radius-sm:14px;
+  --radius:4px; --radius-sm:4px;
   --page-top:12px; /* the gap above every page title, on top of .wrap's own top padding */
   --shadow:0 1px 2px rgba(28,28,30,.04), 0 10px 26px rgba(28,28,30,.09);
   --shadow-lift:0 18px 40px rgba(28,28,30,.18);
@@ -134,12 +134,12 @@ a{color:var(--brand-dark);}
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
   font:inherit; font-weight:600; font-size:.88rem;
-  border:1px solid var(--line-strong); background:var(--paper); color:var(--ink);
+  border:1px solid var(--brand-tint); background:var(--brand-tint); color:var(--brand-dark);
   padding:10px 18px; cursor:pointer; text-decoration:none;
   border-radius:999px; transition:background .12s,color .12s,border-color .12s,box-shadow .12s;
   user-select:none;
 }
-.btn:hover{border-color:var(--brand); color:var(--brand-dark); background:var(--brand-ghost);}
+.btn:hover{border-color:var(--brand); color:#fff; background:var(--brand);}
 .btn.primary{background:var(--brand); border-color:var(--brand); color:#fff;}
 .btn.primary:hover{background:var(--brand-dark); border-color:var(--brand-dark); color:#fff;}
 .btn.sm{padding:6px 13px; font-size:.78rem;}
@@ -833,7 +833,7 @@ a{color:var(--brand-dark);}
 /* var(--bg) used to sit here - the same page background colour showing through the card, so
    close to the card's own var(--paper) that this "secondary" button barely read as a button at
    all (and looked inconsistent shot to shot as a result, despite being one fixed colour) */
-.itin-action-btn{width:100%; background:var(--line); color:var(--ink); border:none; border-radius:var(--radius);
+.itin-action-btn{width:100%; background:var(--brand-tint); color:var(--brand-dark); border:none; border-radius:var(--radius);
   padding:10px 12px; font-weight:700; font-size:.85rem; text-align:center; display:flex; align-items:center;
   justify-content:center; gap:8px; cursor:pointer;}
 /* the icon's own margin-right (meant for an inline, non-flex context) doubled up with this

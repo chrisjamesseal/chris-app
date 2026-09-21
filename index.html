@@ -1742,19 +1742,20 @@ body.kb-open .tabbar.on{display:none;}
 .allergy-section.caution{background:var(--brand-tint); border:1px solid var(--line-strong);}
 .allergy-section.caution .allergy-section-title{color:var(--rag-yellow);}
 .allergy-thanks{margin-top:6px; color:var(--muted); font-style:italic; font-size:.9rem;}
-/* Phrases' own 2-column card grid - the local phrase leads, a phonetic respelling sits under it
-   so it can actually be said aloud, and its English meaning sits smallest at the bottom so a
-   phrase read back wrong is still recognisable by its translation */
+/* Phrases' own 2-column card grid - the English meaning leads (what you're actually looking for),
+   the local-language word/phrase follows right under it, and its pronunciation sits at the foot
+   of the card paired with the speak button, since both are "how do I actually say this" and
+   belong together on the same row */
 .phrase-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
 .phrase-card{border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--paper); box-shadow:var(--shadow); padding:12px; display:flex; flex-direction:column; gap:3px;}
-.phrase-card-head{display:flex; align-items:flex-start; justify-content:space-between; gap:6px;}
 .phrase-local{font-family:var(--font-head); font-weight:700; font-size:1rem; color:var(--ink);}
+.phrase-native{font-family:var(--font-head); font-weight:700; font-size:.92rem; color:var(--ink); margin-top:1px;}
+.phrase-pron-row{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:2px;}
 .phrase-pron{color:var(--brand-dark); font-size:.82rem; font-style:italic;}
-.phrase-en{color:var(--muted); font-size:.78rem;}
-/* an icon-only tap target, not App's usual .iconbtn - sits inline with the phrase's own text
-   baseline rather than that class's fixed square footprint, and needs no hover colour of its
-   own since it's already just an emoji */
-.phrase-speak{border:none; background:none; cursor:pointer; padding:0 0 0 6px; line-height:1;
+/* an icon-only tap target, not App's usual .iconbtn - sits right-aligned on the pronunciation's
+   own row rather than that class's fixed square footprint, and needs no hover colour of its own
+   since it's already just an emoji */
+.phrase-speak{border:none; background:none; cursor:pointer; padding:0; line-height:1;
   font-size:1rem; flex-shrink:0;}
 /* full-bleed, no radius of its own - .plan-card-photo clips it back to the card's own rounded
    corners via overflow instead, so it reads as one continuous edge rather than a photo with a
@@ -1903,8 +1904,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.13';
+const APP_VERSION = '2.85.14';
 const CHANGELOG = [
+  {version:'2.85.14', notes:[
+    "Phrases: each card now leads with the English meaning, then the word/phrase in that language, then its pronunciation with the 🔊 button right beside it - reads better as \"what I want to say\" first, \"how to say it\" second."
+  ]},
   {version:'2.85.13', notes:[
     "Itinerary route map: the sea now shows the app's own background gradient instead of the map tiles' own light blue (its border stays). Only applies where the map renders its full vector style - the plain fallback tiles still show their own colours.",
     "Phrases: language chips read in English now (\"Greek\" instead of \"Ελληνικά\") - the Allergy Card's own picker is unchanged. Every phrase also gets a 🔊 button that reads it aloud in that language, using the browser's own text-to-speech - how many of the rarer languages actually have a voice installed depends on the device.",
@@ -12137,15 +12141,25 @@ function tabPhrases(t){
   const pron = PHRASES_PRON[CUR_TRIP_LANG];
   const isEn = CUR_TRIP_LANG === 'en';
   const canSpeak = 'speechSynthesis' in window;
-  const cards = list.map((phrase,i) => `
+  const cards = list.map((phrase,i) => {
+    const speakBtn = canSpeak ? `<button class="phrase-speak" aria-label="Say this out loud" data-phrase="${esc(phrase)}" data-lang="${esc(CUR_TRIP_LANG)}" onclick="App.speakPhrase(this)">🔊</button>` : '';
+    if(isEn){
+      return `
     <div class="phrase-card">
-      <div class="phrase-card-head">
-        <span class="phrase-local">${esc(phrase)}</span>
-        ${canSpeak ? `<button class="phrase-speak" aria-label="Say this out loud" data-phrase="${esc(phrase)}" data-lang="${esc(CUR_TRIP_LANG)}" onclick="App.speakPhrase(this)">🔊</button>` : ''}
+      <span class="phrase-local">${esc(PHRASES_EN[i])}</span>
+      ${speakBtn ? `<div class="phrase-pron-row"><span></span>${speakBtn}</div>` : ''}
+    </div>`;
+    }
+    return `
+    <div class="phrase-card">
+      <span class="phrase-local">${esc(PHRASES_EN[i])}</span>
+      <span class="phrase-native">${esc(phrase)}</span>
+      <div class="phrase-pron-row">
+        ${pron ? `<span class="phrase-pron">${esc(pron[i])}</span>` : '<span></span>'}
+        ${speakBtn}
       </div>
-      ${!isEn && pron ? `<span class="phrase-pron">${esc(pron[i])}</span>` : ''}
-      ${!isEn ? `<span class="phrase-en">${esc(PHRASES_EN[i])}</span>` : ''}
-    </div>`).join('');
+    </div>`;
+  }).join('');
   return `
     ${langPickerHTML(t, langs, true)}
     <div class="phrase-grid">${cards}</div>`;

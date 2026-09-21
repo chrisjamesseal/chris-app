@@ -713,7 +713,7 @@ a{color:var(--brand-dark);}
 /* just breathing room under the title once open, no divider of its own - .route-item's own
    bottom border already closes off the whole day at the end of its content, so a second line
    right under the title as well read as one too many */
-.route-head-row.open{padding-bottom:12px;}
+.route-head-row.open{padding-bottom:6px;}
 /* shrinks to whatever width is left beside the chevron (flex-shrink:0 below) rather than forcing
    the row wider than the card - a long "Travel to X" title truncates with an ellipsis (see
    .route-head-title) instead of running off the edge, with the chevron itself staying put on
@@ -1909,10 +1909,17 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.15';
+const APP_VERSION = '2.85.16';
 const CHANGELOG = [
-  {version:'2.85.15', notes:[
+  {version:'2.85.16', notes:[
     "Every full-screen form's sticky Back button bar now matches the page's own gradient wash instead of a flat white strip sitting on top of it."
+  ]},
+  {version:'2.85.15', notes:[
+    "Itinerary: a plain stop's Google Maps button sits a bit further from its title now, matching the same 12px gap the Accommodation card's own Google Maps button already used - the old 4px read as too tight once the title carried an emoji and wrapped to more than a single line.",
+    "Allergy Card's English title reads \"My Food Allergies\" now instead of \"Food Allergy Card\".",
+    "Fixed the route map's sea not actually turning transparent last time - one of the two fill layers Voyager draws for water (\"water_shadow\", a second colour underneath the main one for a bevelled-edge look) had its id typed wrong and was silently skipped, so it kept covering the sea in its own colour even with the main fill layer already cleared.",
+    "Itinerary: halved the gap under a day's title now that the divider line under it is gone, so it doesn't look like extra space was left behind on purpose.",
+    "Itinerary: a day with an outstanding task on it shows its own title in red, the same red the task itself already shows in once you open the day - visible before you've even opened it."
   ]},
   {version:'2.85.14', notes:[
     "Phrases: each card now leads with the English meaning, then the word/phrase in that language, then its pronunciation with the 🔊 button right beside it - reads better as \"what I want to say\" first, \"how to say it\" second."
@@ -11610,7 +11617,7 @@ const COUNTRY_LANGUAGES = {
    spoken languages, kept as separate entries anyway (mostly identical text) so each still reads
    as its own script/spelling convention rather than a stand-in for a neighbour's. */
 const ALLERGY_TEXT = {
-  en: {name:'English', title:'Food Allergy Card', coeliacTitle:'Coeliac Disease',
+  en: {name:'English', title:'My Food Allergies', coeliacTitle:'Coeliac Disease',
     coeliacBullets:['No gluten at all: wheat, barley, or rye. Not even a trace.','Cross-contamination makes me seriously ill. Please check ingredients and cooking surfaces.'],
     dairyTitle:'Dairy Intolerance',
     dairyBullets:['I avoid dairy: milk, butter, cheese, cream.','A small amount or cross-contamination is fine. Just no dish made mainly of dairy.'],
@@ -13165,7 +13172,7 @@ function planDaysHTML(t, ro, filterKeys){
     // heading above it reads - but is dropped when it just repeats the name (a stop called
     // "Jet Ski" at a place called "Jet Ski" shouldn't say it twice).
     const head = `
-      <div class="section-head" style="margin-bottom:${hasBelow?'4px':'0'}">
+      <div class="section-head" style="margin-bottom:${hasBelow?'12px':'0'}">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0">
           ${time?`<span class="itin-time">${esc(time)}</span>`:''}
           <h3 class="plan-stop-title${s.asTask?' text-undecided':''}">${stopIconHTML(s)} ${esc(s.name)}${s.location && s.location.trim().toLowerCase()!==(s.name||'').trim().toLowerCase() ? ' · '+esc(s.location) : ''}</h3>
@@ -13568,13 +13575,19 @@ const CARTO_MINZOOM_OVERRIDES = {place_city_r6:6, place_city_r5:6, place_city_do
   place_city_dot_r4:3, place_town:6, place_villages:8, place_capital_dot_z7:5, place_state:3};
 /* the sea/ocean/lake fill layers, made fully transparent so the map's own gradient wash (see
    .route-map/.dash-trip-map, both set to the same --bg-wash the rest of the app uses) shows
-   through instead of Voyager's baked-in light blue - a couple of extra candidate ids beyond the
-   plain "water" one since the exact set varies slightly by CARTO's own style version, each one
-   safe to miss (see the same getLayer guard tuneCartoLabels already uses above). Opacity, not a
-   flat colour, since it survives regardless of whatever colour expression the layer already
-   has. Only covers this GL vector path - the plain raster-tile fallback bakes water colour into
-   the image itself, nothing to override there. */
-const CARTO_WATER_LAYERS = ['water', 'water-shadow', 'waterway'];
+   through instead of Voyager's baked-in light blue - ids checked against the style's own JSON
+   (github.com/CartoDB/basemap-styles/blob/master/mapboxgl/voyager.json), same as
+   CARTO_LATIN_LABEL_LAYERS above. "water" is the sea/lake fill itself; "water_shadow" is a
+   second, separately-coloured fill Voyager draws underneath it for a bevelled-edge look (an
+   underscore, not a hyphen - the one id here that isn't a guess but was actually checked and
+   still got typed wrong the first time, which is exactly why the sea kept showing its old
+   colour: the top fill was already transparent, this second one just kept covering it up
+   wherever "water" left off) - both need clearing or the shadow alone still reads as solid sea.
+   "waterway" is rivers/streams (a line, not a fill). Opacity, not a flat colour, since it
+   survives regardless of whatever colour expression the layer already has. Only covers this GL
+   vector path - the plain raster-tile fallback bakes water colour into the image itself,
+   nothing to override there. */
+const CARTO_WATER_LAYERS = ['water', 'water_shadow', 'waterway'];
 function tuneCartoLabels(glMap){
   CARTO_LATIN_LABEL_LAYERS.forEach(id => {
     if(!glMap.getLayer(id)) return;
@@ -13952,13 +13965,17 @@ function tabPlan(t, ro){
     // faded while collapsed, same as a completed task - reopening it to look back over the
     // day shouldn't read as greyed-out, so the fade only applies when it's shut
     const isPast = k && !rough && k < todayKey && !isOpen;
+    // a day carrying an outstanding task (see planDayGroups' own fold-in above) gets the same
+    // red as the task itself on its own accordion title - flags it before you've even opened
+    // the day to see what's still undone
+    const hasOpenTask = dayItems.some(x => x.kind === 'task');
     return `
     <div class="route-item${isPast?' day-past':''}">
       <div class="route-body plan-click" role="button" tabindex="0" onclick="${toggleFn}" onkeydown="if(event.key==='Enter'||event.key===' '){${toggleFn}}">
         <div class="route-head-row${isOpen?' open':''}">
           <div style="min-width:0">
             ${dateLine?`<div class="muted small route-date-line">${esc(dateLine)}${rough?'':`<span class="wx-slot route-head-wx" data-wx-date="${esc(k)}"></span>`}</div>`:''}
-            <strong class="route-head-title">${headingHTML}${k===todayKey?`<span class="plan-day-badges"><span class="status-pill now">Today</span></span>`:''}</strong>
+            <strong class="route-head-title${hasOpenTask?' text-undecided':''}">${headingHTML}${k===todayKey?`<span class="plan-day-badges"><span class="status-pill now">Today</span></span>`:''}</strong>
           </div>
           <span class="route-chevron${isOpen?' open':''}" aria-hidden="true">${fa('chevron-down')}</span>
         </div>

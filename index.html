@@ -552,7 +552,7 @@ a{color:var(--brand-dark);}
    panes (some z-indexed well above the modal's 100) stay contained and don't paint over a modal
    opened while the map is on screen - same fix as .route-map-wrap. Covers both the Next Trip
    dashboard preview and the Location form's #loc-map-preview, which share this class. */
-.dash-trip-map{height:110px; background:var(--bg); position:relative; z-index:0;}
+.dash-trip-map{height:110px; background:var(--bg-wash); background-attachment:fixed; position:relative; z-index:0;}
 
 /* ---------- plants (vegetable growing tracker) ---------- */
 /* still tight enough to hold a lot of vegetables at once and read as a glanceable board, not a
@@ -710,10 +710,10 @@ a{color:var(--brand-dark);}
 /* the accordion header row - name/dates on the left, edit icon + chevron on the right, all on
    one line until it has to wrap */
 .route-head-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
-/* only when the accordion's actually open - .route-item already carries its own bottom border
-   to separate one day from the next, so a collapsed day (nothing between that border and this
-   one) would otherwise show as a doubled-up line instead of the day's usual single divider */
-.route-head-row.open{padding-bottom:12px; border-bottom:1px solid var(--line);}
+/* just breathing room under the title once open, no divider of its own - .route-item's own
+   bottom border already closes off the whole day at the end of its content, so a second line
+   right under the title as well read as one too many */
+.route-head-row.open{padding-bottom:12px;}
 /* shrinks to whatever width is left beside the chevron (flex-shrink:0 below) rather than forcing
    the row wider than the card - a long "Travel to X" title truncates with an ellipsis (see
    .route-head-title) instead of running off the edge, with the chevron itself staying put on
@@ -875,7 +875,7 @@ a{color:var(--brand-dark);}
    establishes a stacking context. */
 .route-map-wrap{border-radius:var(--radius); overflow:hidden; margin-bottom:18px; border:1px solid var(--line);
   position:relative; z-index:0;}
-.route-map{height:220px; background:var(--paper);}
+.route-map{height:220px; background:var(--bg-wash); background-attachment:fixed;}
 /* a see-through fill (rgba, not a plain opacity on the whole pin) so the map label underneath -
    often the very place name the pin marks - still reads through it, while the number itself and
    its white outline stay fully solid and legible; rgba mirrors --brand's own colour */
@@ -1041,7 +1041,11 @@ a{color:var(--brand-dark);}
 /* ---------- breadcrumb back to overview ---------- */
 .crumb{display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin:var(--page-top) 0 18px;}
 .crumb-here{display:inline-flex; align-items:center; gap:6px; font-family:var(--font-head); font-weight:800; font-size:1.5rem; letter-spacing:-.02em; color:var(--ink); min-width:0;}
-.crumb-backbtn{display:inline-flex; align-items:center; justify-content:center; background:none; border:none; cursor:pointer; padding:4px; margin-left:-4px; border-radius:50%; color:var(--brand); flex-shrink:0;}
+/* a fixed equal width/height, not padding around the chevron's own (narrower-than-tall) glyph
+   box, so border-radius:50% actually renders a circle instead of an ellipse */
+.crumb-backbtn{display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px;
+  background:none; border:none; cursor:pointer; margin-left:-8px; border-radius:50%; color:var(--brand); flex-shrink:0;}
+.crumb-backbtn .icon{font-size:1.05rem;}
 .crumb-backbtn:hover{background:var(--brand-ghost);}
 .crumb-here .icon{font-size:1.5rem; color:var(--brand); flex-shrink:0;}
 /* the Home page's own wordmark (see WORDMARK_PNG) - swaps the plain "Home" text for the app's
@@ -1743,9 +1747,15 @@ body.kb-open .tabbar.on{display:none;}
    phrase read back wrong is still recognisable by its translation */
 .phrase-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
 .phrase-card{border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--paper); box-shadow:var(--shadow); padding:12px; display:flex; flex-direction:column; gap:3px;}
+.phrase-card-head{display:flex; align-items:flex-start; justify-content:space-between; gap:6px;}
 .phrase-local{font-family:var(--font-head); font-weight:700; font-size:1rem; color:var(--ink);}
 .phrase-pron{color:var(--brand-dark); font-size:.82rem; font-style:italic;}
 .phrase-en{color:var(--muted); font-size:.78rem;}
+/* an icon-only tap target, not App's usual .iconbtn - sits inline with the phrase's own text
+   baseline rather than that class's fixed square footprint, and needs no hover colour of its
+   own since it's already just an emoji */
+.phrase-speak{border:none; background:none; cursor:pointer; padding:0 0 0 6px; line-height:1;
+  font-size:1rem; flex-shrink:0;}
 /* full-bleed, no radius of its own - .plan-card-photo clips it back to the card's own rounded
    corners via overflow instead, so it reads as one continuous edge rather than a photo with a
    frame around it */
@@ -1893,10 +1903,13 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.12';
+const APP_VERSION = '2.85.13';
 const CHANGELOG = [
-  {version:'2.85.12', notes:[
-    "New look across the whole app: frosted-glass cards and bars, a cooler blue palette, and your device's own system font, for a more modern feel. No features changed, just the styling."
+  {version:'2.85.13', notes:[
+    "Itinerary route map: the sea now shows the app's own background gradient instead of the map tiles' own light blue (its border stays). Only applies where the map renders its full vector style - the plain fallback tiles still show their own colours.",
+    "Phrases: language chips read in English now (\"Greek\" instead of \"Ελληνικά\") - the Allergy Card's own picker is unchanged. Every phrase also gets a 🔊 button that reads it aloud in that language, using the browser's own text-to-speech - how many of the rarer languages actually have a voice installed depends on the device.",
+    "Back buttons (the small circular chevron next to a page's title) are properly circular now, and a bit bigger.",
+    "Itinerary: opening a day's accordion no longer shows an extra divider line directly under its title - just the one line at the very bottom marking where that day ends."
   ]},
   {version:'2.85.11', notes:[
     "Phrases: added a phonetic pronunciation to every phrase, laid the list out as a 2-column card grid, and dropped English from its own language picker (the Allergy Card keeps English as its safety-net language)."
@@ -12036,12 +12049,34 @@ function tripLangsFor(t){
   return out;
 }
 let CUR_TRIP_LANG = null;
-/* the language-picker row itself - a chip per language, flag(s) plus native name, the selected
-   one highlighted. Used identically by both tabAllergy and tabPhrases below. */
-function langPickerHTML(t, langs){
+/* English names for the picker's own English-reading variant (Phrases - see langPickerHTML's
+   englishNames argument): the native name (ALLERGY_TEXT[l].name) is what a menu or sign in that
+   language would actually say, right for the Allergy Card since that's what's being handed over,
+   but the English name is what you yourself are scanning for when picking a language to hear
+   pronounced. */
+const LANG_NAMES_EN = {
+  en:'English', fr:'French', es:'Spanish', pt:'Portuguese', de:'German', it:'Italian',
+  nl:'Dutch', el:'Greek', tr:'Turkish', ru:'Russian', uk:'Ukrainian', pl:'Polish', cs:'Czech',
+  sk:'Slovak', hu:'Hungarian', ro:'Romanian', bg:'Bulgarian', hr:'Croatian', bs:'Bosnian',
+  sr:'Serbian', sl:'Slovenian', mk:'Macedonian', sq:'Albanian', sv:'Swedish', no:'Norwegian',
+  da:'Danish', fi:'Finnish', is:'Icelandic', et:'Estonian', lv:'Latvian', lt:'Lithuanian',
+  mt:'Maltese', ca:'Catalan', ja:'Japanese', zh:'Chinese', ko:'Korean', vi:'Vietnamese',
+  th:'Thai', km:'Khmer', lo:'Lao', my:'Burmese', id:'Indonesian', ms:'Malay', tl:'Filipino',
+  hi:'Hindi', bn:'Bengali', ur:'Urdu', ne:'Nepali', si:'Sinhala', fa:'Persian', ar:'Arabic',
+  he:'Hebrew', sw:'Swahili', am:'Amharic', ka:'Georgian', hy:'Armenian', az:'Azerbaijani',
+  mn:'Mongolian', so:'Somali',
+};
+/* the language-picker row itself - a chip per language, flag(s) plus the language's own name,
+   the selected one highlighted. Used by both tabAllergy and tabPhrases below; englishNames
+   switches the label from that language's own native name (the Allergy Card's default, since
+   what's on the chip doesn't matter to the waiter it's handed to, only the card's own content
+   does) to its English name (Phrases' own use - "Greek" is what you're scanning the row for,
+   not "Ελληνικά"). */
+function langPickerHTML(t, langs, englishNames){
   const chip = l => {
     const flags = tripLangFlags(t, l).join('');
-    return `<button class="chip pick${l===CUR_TRIP_LANG?' on':''}" onclick="App.setTripLang('${l}')">${flags?`<span class="flag">${flags}</span>`:''}${esc(ALLERGY_TEXT[l].name)}</button>`;
+    const label = englishNames ? (LANG_NAMES_EN[l] || ALLERGY_TEXT[l].name) : ALLERGY_TEXT[l].name;
+    return `<button class="chip pick${l===CUR_TRIP_LANG?' on':''}" onclick="App.setTripLang('${l}')">${flags?`<span class="flag">${flags}</span>`:''}${esc(label)}</button>`;
   };
   return `<div class="lang-picker">${langs.map(chip).join('')}</div>`;
 }
@@ -12101,16 +12136,48 @@ function tabPhrases(t){
   const list = PHRASES_TEXT[CUR_TRIP_LANG] || PHRASES_EN;
   const pron = PHRASES_PRON[CUR_TRIP_LANG];
   const isEn = CUR_TRIP_LANG === 'en';
+  const canSpeak = 'speechSynthesis' in window;
   const cards = list.map((phrase,i) => `
     <div class="phrase-card">
-      <span class="phrase-local">${esc(phrase)}</span>
+      <div class="phrase-card-head">
+        <span class="phrase-local">${esc(phrase)}</span>
+        ${canSpeak ? `<button class="phrase-speak" aria-label="Say this out loud" data-phrase="${esc(phrase)}" data-lang="${esc(CUR_TRIP_LANG)}" onclick="App.speakPhrase(this)">🔊</button>` : ''}
+      </div>
       ${!isEn && pron ? `<span class="phrase-pron">${esc(pron[i])}</span>` : ''}
       ${!isEn ? `<span class="phrase-en">${esc(PHRASES_EN[i])}</span>` : ''}
     </div>`).join('');
   return `
-    ${langPickerHTML(t, langs)}
+    ${langPickerHTML(t, langs, true)}
     <div class="phrase-grid">${cards}</div>`;
 }
+/* BCP-47 locale tags for SpeechSynthesisUtterance.lang, one sensible default region per
+   language (the same code PHRASES_TEXT/COUNTRY_LANGUAGES already use). Whether a phrase
+   actually gets read aloud from here depends entirely on voices the visitor's own browser/OS
+   ships - well covered on most phones for the major European/Asian languages, patchier for
+   smaller ones (Khmer, Lao, Georgian, Armenian, Azerbaijani, Mongolian, Somali...); nothing to
+   configure for that, it's just what's installed on the device asking. */
+const LANG_SPEECH_LOCALE = {
+  en:'en-GB', fr:'fr-FR', es:'es-ES', pt:'pt-PT', de:'de-DE', it:'it-IT', nl:'nl-NL',
+  el:'el-GR', tr:'tr-TR', ru:'ru-RU', uk:'uk-UA', pl:'pl-PL', cs:'cs-CZ', sk:'sk-SK',
+  hu:'hu-HU', ro:'ro-RO', bg:'bg-BG', hr:'hr-HR', bs:'bs-BA', sr:'sr-RS', sl:'sl-SI',
+  mk:'mk-MK', sq:'sq-AL', sv:'sv-SE', no:'nb-NO', da:'da-DK', fi:'fi-FI', is:'is-IS',
+  et:'et-EE', lv:'lv-LV', lt:'lt-LT', mt:'mt-MT', ca:'ca-ES', ja:'ja-JP', zh:'zh-CN',
+  ko:'ko-KR', vi:'vi-VN', th:'th-TH', km:'km-KH', lo:'lo-LA', my:'my-MM', id:'id-ID',
+  ms:'ms-MY', tl:'fil-PH', hi:'hi-IN', bn:'bn-IN', ur:'ur-PK', ne:'ne-NP', si:'si-LK',
+  fa:'fa-IR', ar:'ar-SA', he:'he-IL', sw:'sw-KE', am:'am-ET', ka:'ka-GE', hy:'hy-AM',
+  az:'az-AZ', mn:'mn-MN', so:'so-SO',
+};
+App.speakPhrase = (btn) => {
+  if(!('speechSynthesis' in window)) return;
+  const text = btn.dataset.phrase, lang = btn.dataset.lang;
+  if(!text) return;
+  try{
+    window.speechSynthesis.cancel();   // a second tap replaces the last one instead of queuing
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = LANG_SPEECH_LOCALE[lang] || lang;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+};
 App.setTripLang = l => {
   CUR_TRIP_LANG = l;
   const t = getTrip(CUR_TRIP_ID); if(!t) return;
@@ -13477,6 +13544,15 @@ const CARTO_LATIN_LABEL_LAYERS = ['place_hamlet','place_suburbs','place_villages
    levels surfaces them sooner, without changing what shows once you are zoomed in on a stop. */
 const CARTO_MINZOOM_OVERRIDES = {place_city_r6:6, place_city_r5:6, place_city_dot_r7:4,
   place_city_dot_r4:3, place_town:6, place_villages:8, place_capital_dot_z7:5, place_state:3};
+/* the sea/ocean/lake fill layers, made fully transparent so the map's own gradient wash (see
+   .route-map/.dash-trip-map, both set to the same --bg-wash the rest of the app uses) shows
+   through instead of Voyager's baked-in light blue - a couple of extra candidate ids beyond the
+   plain "water" one since the exact set varies slightly by CARTO's own style version, each one
+   safe to miss (see the same getLayer guard tuneCartoLabels already uses above). Opacity, not a
+   flat colour, since it survives regardless of whatever colour expression the layer already
+   has. Only covers this GL vector path - the plain raster-tile fallback bakes water colour into
+   the image itself, nothing to override there. */
+const CARTO_WATER_LAYERS = ['water', 'water-shadow', 'waterway'];
 function tuneCartoLabels(glMap){
   CARTO_LATIN_LABEL_LAYERS.forEach(id => {
     if(!glMap.getLayer(id)) return;
@@ -13485,6 +13561,11 @@ function tuneCartoLabels(glMap){
   Object.entries(CARTO_MINZOOM_OVERRIDES).forEach(([id,minzoom]) => {
     if(!glMap.getLayer(id)) return;
     try{ glMap.setLayerZoomRange(id, minzoom, 24); }catch(e){}
+  });
+  CARTO_WATER_LAYERS.forEach(id => {
+    if(!glMap.getLayer(id)) return;
+    const type = glMap.getLayer(id).type;
+    try{ glMap.setPaintProperty(id, type+'-opacity', 0); }catch(e){}
   });
 }
 /* the actual base layer every route map adds - MapLibre GL's vector rendering (via the

@@ -1041,9 +1041,15 @@ a{color:var(--brand-dark);}
 .crumb{display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin:var(--page-top) 0 18px;}
 .crumb-here{display:inline-flex; align-items:center; gap:6px; font-family:var(--font-head); font-weight:800; font-size:1.5rem; letter-spacing:-.02em; color:var(--ink); min-width:0;}
 /* a fixed equal width/height, not padding around the chevron's own (narrower-than-tall) glyph
-   box, so border-radius:50% actually renders a circle instead of an ellipse */
+   box, so border-radius:50% actually renders a circle instead of an ellipse. A real background
+   circle at rest now too (same paper+shadow chip look .dash-watchnext-fav's own circle already
+   uses elsewhere), not just on :hover - mobile Safari can leave a tapped element's :hover state
+   looking "stuck" after navigating, which made the circle seem to show up inconsistently from
+   page to page when it was hover-only; showing it all the time removes that inconsistency
+   outright instead of chasing the stuck-hover quirk itself. */
 .crumb-backbtn{display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px;
-  background:none; border:none; cursor:pointer; margin-left:-8px; border-radius:50%; color:var(--brand); flex-shrink:0;}
+  background:var(--paper); box-shadow:var(--shadow); border:none; cursor:pointer; margin-left:-4px;
+  border-radius:50%; color:var(--brand); flex-shrink:0;}
 .crumb-backbtn .icon{font-size:1.05rem;}
 .crumb-backbtn:hover{background:var(--brand-ghost);}
 .crumb-here .icon{font-size:1.5rem; color:var(--brand); flex-shrink:0;}
@@ -1908,8 +1914,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.20';
+const APP_VERSION = '2.85.21';
 const CHANGELOG = [
+  {version:'2.85.21', notes:[
+    "Back buttons now always show their circle background instead of only on hover - a tap on mobile can leave a button's hover state looking \"stuck\" after navigating, which made the circle seem to appear inconsistently page to page. Showing it all the time removes the inconsistency outright."
+  ]},
   {version:'2.85.20', notes:[
     "Allergy Card's language chips read in English now too (\"Greek\", \"Albanian\"), matching Phrases' own picker - English stays first as the safety-net language, unchanged."
   ]},

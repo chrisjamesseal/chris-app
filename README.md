@@ -57,12 +57,16 @@ The app works out of the box **on a single device** with no setup. To get everyo
        "filmLeaderboardOrder": { ".read": true, ".write": true },
        "theatre": { ".read": true, ".write": true },
        "theatreWatchlist": { ".read": true, ".write": true },
-       "plants": { ".read": true, ".write": true }
+       "theatreLeaderboardOrder": { ".read": true, ".write": true },
+       "plants": { ".read": true, ".write": true },
+       "gameRatings": { ".read": true, ".write": true },
+       "gameLeaderboardOrder": { ".read": true, ".write": true },
+       "gameWishlist": { ".read": true, ".write": true }
      }
    }
    ```
 
-   Note the `trips` node needs its own top-level `.read: true`, Realtime Database rules don't cascade upward from `trips/$id` to `trips`, and the app needs to read the *whole* `trips` node at once to list every trip on the "Your Trips" page. Without it, the app silently falls back to only showing trips this particular browser already knows about (looks like "no trips saved"). The same non-cascading rule applies to `places` (the shared Places I've Been checklist), `gigs` (the Gigs log), `films` (the Films log), `filmsWatchlist` (the Films tab's Watchlist), `filmLeaderboardOrder` (the Films tab's Leaderboard - a manual re-rank silently won't stick without it) and `plants` (the Plants tracker): without their own rule, anything ticked, logged or added stays stuck on the device that did it instead of syncing to the group - and the app will show a "Not Saved" error on write until the rule's added.
+   Note the `trips` node needs its own top-level `.read: true`, Realtime Database rules don't cascade upward from `trips/$id` to `trips`, and the app needs to read the *whole* `trips` node at once to list every trip on the "Your Trips" page. Without it, the app silently falls back to only showing trips this particular browser already knows about (looks like "no trips saved"). The same non-cascading rule applies to `places` (the shared Places I've Been checklist), `gigs` (the Gigs log), `films` (the Films log), `filmsWatchlist` (the Films tab's Watchlist), `filmLeaderboardOrder` (the Films tab's Leaderboard), `theatreLeaderboardOrder` (the Theatre tab's Leaderboard), `plants` (the Plants tracker), `gameRatings` (every game you've rated), `gameLeaderboardOrder` (the Games tab's Leaderboard) and `gameWishlist` (the Games tab's Play List/Wishlist): without their own rule, anything ticked, logged, rated or reordered stays stuck on the device that did it instead of syncing to the group, and is only ever as safe as that one browser's storage - clear site data, switch devices, or reconnect after that storage is gone, and it's unrecoverable. The app shows a "Not Saved" error naming the missing rule the next time it tries to write to a path that isn't covered, so it's worth adding all of these up front rather than only once something's noticed missing.
 
 That's it, the app now shows every trip that exists (not just ones this browser made), and share buttons hand out `…/#/trip/<id>` links that stay the same forever and sync everyone's edits. Without a config, the app quietly falls back to single-device mode, a fixed local PIN, and the Share button produces a portable snapshot link instead.
 

@@ -900,7 +900,6 @@ a{color:var(--brand-dark);}
 .ai-summary{background:var(--brand-ghost); border:1px solid var(--brand-tint); border-radius:var(--radius);
   padding:12px 14px; margin-bottom:16px;}
 .ai-summary p{margin:0; font-size:.92rem; line-height:1.45; color:var(--ink);}
-.ai-summary-loading{color:var(--muted); font-size:.88rem; display:flex; align-items:center; gap:7px;}
 .ai-summary-refresh{background:none; border:none; padding:6px 0 0; margin:0; color:var(--muted); font-size:.78rem;
   display:flex; align-items:center; gap:5px; cursor:pointer;}
 .ai-summary-refresh:hover{color:var(--brand-dark);}
@@ -1909,8 +1908,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.17';
+const APP_VERSION = '2.85.18';
 const CHANGELOG = [
+  {version:'2.85.18', notes:[
+    "Fixed a \"Writing a summary…\" flash appearing for a split second on a day's first open - it always showed while an AI summary was requested, even for a device without the AI feature configured at all, where the request fails near-instantly and it was nothing but a pointless flicker. A day's own cards fill that space silently now until a summary actually arrives, if one ever does."
+  ]},
   {version:'2.85.17', notes:[
     "Route map's sea colour, actually fixed this time: turned out Voyager's own style paints an opaque cream layer under every polygon on the map, which is what was showing through once the water layers themselves went transparent - not the page behind the map. Recoloured the sea to the app's own background tone directly instead, sidestepping that entirely."
   ]},
@@ -13888,8 +13890,14 @@ function aiSummaryHTML(t, key, ro){
       ${ro?'':`<button type="button" class="ai-summary-refresh" onclick="App.aiRegenSummary('${key}')">${fa('rotate-right')} Regenerate</button>`}
     </div>`;
   }
-  if(ro || AI_SUMMARY_FAILED.has(key)) return '';
-  return `<div class="ai-summary ai-summary-loading">${fa('sparkles')} Writing a summary…</div>`;
+  /* no "Writing a summary…" placeholder while a request is in flight - this used to show one
+     unconditionally on a day's very first open (initAiSummaries only kicks the request off
+     after this render, so there's no way to know yet whether it'll even resolve), then vanish
+     the instant the request settled, which for an unconfigured worker (503s near-instantly) was
+     nothing but a pointless flash of text on every first-time-per-reload day open. A day's own
+     cards already fill this space while nothing's arrived yet, silently, same as the worker's
+     own quiet-503 design intent already promises. */
+  return '';
 }
 /* the day key hides inside the accordion's own openKey ('day:'+(k||'any')) rather than being
    passed around separately - this undoes that, back to the '' Anytime falls out of a day key. */

@@ -1702,12 +1702,14 @@ body.kb-open .tabbar.on{display:none;}
 .allergy-section.caution{background:var(--brand-tint); border:1px solid var(--line-strong);}
 .allergy-section.caution .allergy-section-title{color:var(--rag-yellow);}
 .allergy-thanks{margin-top:6px; color:var(--muted); font-style:italic; font-size:.9rem;}
-/* Phrases' own rows - the local phrase leads, its English meaning sits smaller alongside it so
-   a phrase read back wrong is still recognisable by its translation */
-.phrase-row{display:flex; align-items:baseline; justify-content:space-between; gap:14px; padding:12px 0; border-bottom:1px solid var(--line);}
-.phrase-row:last-child{border-bottom:none;}
+/* Phrases' own 2-column card grid - the local phrase leads, a phonetic respelling sits under it
+   so it can actually be said aloud, and its English meaning sits smallest at the bottom so a
+   phrase read back wrong is still recognisable by its translation */
+.phrase-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.phrase-card{border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--paper); box-shadow:var(--shadow); padding:12px; display:flex; flex-direction:column; gap:3px;}
 .phrase-local{font-family:var(--font-head); font-weight:700; font-size:1rem; color:var(--ink);}
-.phrase-en{color:var(--muted); font-size:.8rem; flex-shrink:0; text-align:right;}
+.phrase-pron{color:var(--brand-dark); font-size:.82rem; font-style:italic;}
+.phrase-en{color:var(--muted); font-size:.78rem;}
 /* full-bleed, no radius of its own - .plan-card-photo clips it back to the card's own rounded
    corners via overflow instead, so it reads as one continuous edge rather than a photo with a
    frame around it */
@@ -1854,8 +1856,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.10';
+const APP_VERSION = '2.85.11';
 const CHANGELOG = [
+  {version:'2.85.11', notes:[
+    "Phrases: added a phonetic pronunciation to every phrase, laid the list out as a 2-column card grid, and dropped English from its own language picker (the Allergy Card keeps English as its safety-net language)."
+  ]},
   {version:'2.85.10', notes:[
     "Fixed a bug where a game's rating, the Games Leaderboard's order, the Games Wishlist and the Theatre Leaderboard's order could silently fail to back up to the cloud (the README's Firebase rules setup was missing all four) - only ever as safe as one browser's storage, so clearing site data or switching devices could lose them for good. Add the four new rules from the README to fix it for existing setups. A save that still fails now tells you why instead of failing silently."
   ]},
@@ -11901,6 +11906,71 @@ const PHRASES_TEXT = {
   mn: ['Сайн байна уу','Хүсье','Баярлалаа','Тийм','Үгүй','Уучлаарай','Та англиар ярьдаг уу?','Ариун цэврийн өрөө хаана байдаг вэ?','Тооцоог өгнө үү','Баяртай'],
   so: ['Salaan','Fadlan','Mahadsanid','Haa','Maya','Iga raalli ahow','Ma ku hadashaa Ingiriisi?','Musqusha xaggee buu ku yaallaa?','Qaansheegta fadlan','Nabadgelyo'],
 };
+/* Plain English-reader phonetic respelling (not IPA) for each of the 10 phrases above, in the
+   same order - stressed syllable in caps, hyphens between syllables. No entry for English
+   itself, since an English speaker doesn't need help pronouncing English. Approximate by
+   design, same spirit as the translations themselves: enough to be understood, not a
+   linguistics reference. */
+const PHRASES_PRON = {
+  fr: ['bohn-ZHOOR','seel voo PLEH','mehr-SEE','WEE','NOHN','ex-koo-zay MWAH','par-lay-voo ahn-GLEH','oo sohn lay twah-LET','lah-dee-syohn seel voo PLEH','oh ruh-VWAHR'],
+  es: ['OH-lah','por fah-VOR','GRAH-syahs','SEE','NOH','dees-KOOL-peh','AH-blah een-GLESS','DOHN-deh es-TAH el BAH-nyoh','lah KWEN-tah por fah-VOR','ah-DYOHS'],
+  pt: ['oh-LAH','por fah-VOR','oh-bree-GAH-doo','SEEM','NOW','kohn lee-SEN-sah','FAH-lah een-GLESH','OHN-deh eh ah KAH-zah deh BAH-nyoo','ah KOHN-tah por fah-VOR','ah-DEH-oosh'],
+  de: ['hah-LOH','BIT-uh','DAHN-kuh','YAH','NINE','ent-SHOOL-dee-goong','SHPREH-khen zee ENG-lish','voh ist dee twah-LET-uh','dee REKH-noong BIT-uh','owf VEE-der-zayn'],
+  it: ['CHOW','pair fah-VOH-reh','GRAHT-syeh','SEE','NOH','mee SKOO-zee','PAR-lah een-GLEH-zeh','doh-VEH eel BAH-nyoh','eel KOHN-toh pair fah-VOH-reh','ah-ree-veh-DAIR-chee'],
+  nl: ['hah-LOH','ahls-too-BLEEFT','dahnk oo','YAH','NAY','par-DOHN','SPRAYKT oo ENG-uhls','vahr is het twah-LET','duh RAY-kuh-ning ahls-too-BLEEFT','tot ZEENS'],
+  el: ['YAH sahs','pah-rah-kah-LOH','ef-khah-ree-STOH','NEH','OH-hee','meh seen-khoh-REE-teh','mee-LAH-teh ahn-glee-KAH','poo EE-neh ee too-ah-LEH-tah','tohn loh-gahr-yahz-MOH pah-rah-kah-LOH','ahn-DEE-oh'],
+  tr: ['MEHR-hah-bah','LEWT-fen','teh-shek-KEWR eh-deh-reem','eh-VET','HAH-yuhr','ahf-feh-DAIR-see-neez','een-gee-leez-JEH bee-lee-yor moo-soo-NOOZ','too-vah-LET NEH-reh-deh','heh-SAHP LEWT-fen','HOSH-chah kah-LUHN'],
+  ru: ['ZDRAHST-vooy-tyeh','pah-ZHAHL-stah','spah-SEE-bah','DAH','NYET','eez-vee-NEE-tyeh','vih gah-vah-REE-tyeh pah ahn-GLEE-skee','GDYEH too-ah-LYET','SHYOT pah-ZHAHL-stah','dah svee-DAH-nee-yah'],
+  uk: ['vee-TAH-yoo','bood LAHS-kah','DYAH-koo-yoo','TAHK','NEE','peh-reh-PROH-shoo-yoo','vih rohz-mohv-LYAH-yeh-teh ahn-HLEEY-skoh-yoo','deh too-ah-LET','rah-HOO-nohk bood LAHS-kah','doh poh-BAH-chen-nyah'],
+  pl: ['jen DOH-brih','PROH-sheh','jen-KOO-yeh','TAHK','NYEH','psheh-PRAH-shahm','chih MOO-vee pahn/PAH-nee poh ahn-GYEL-skoo','gjeh yest toh-ah-LEH-tah','rah-HOO-nek PROH-sheh','doh vee-DZEH-nyah'],
+  cs: ['DOH-bree den','PROH-seem','DYEH-koo-yee','AH-noh','NEH','PROH-min-yteh','MLOO-vee-teh ahn-glits-kee','g-deh yeh toh-ah-LEH-tah','OO-chet PROH-seem','nah s-HLEH-dah-noh'],
+  sk: ['DOH-bree deny','PROH-seem','DYAH-koo-yem','AH-noh','NYEH','PREH-pahch-teh','hoh-voh-REE-teh poh ahn-glits-kee','g-deh yeh toh-ah-LEH-tah','OO-chet PROH-seem','doh-vee-DEH-nyah'],
+  hu: ['YOH NAH-pot','KAY-rem','KUR-sur-nurm','EE-gen','NEM','EL-nay-zaysht','BEH-sail AHN-goh-lool','HOL vahn ah MOSH-doh','ah SAHM-laht KAY-rem','VEES-laht'],
+  ro: ['BOO-nuh ZEE-wah','vuh ROHG','mool-tsoo-MESK','DAH','NOO','skoo-ZAH-tsee muh','vor-BEETS en-GLEH-zuh','OON-deh YES-teh toh-ah-LEH-tah','NOH-tah deh PLAH-tuh vuh ROHG','lah reh-veh-DEH-reh'],
+  bg: ['zdrah-VAY-teh','MOH-lyah','blah-goh-dah-RYAH','DAH','NEH','eez-vee-NEH-teh','goh-VOH-ree-teh lee ahn-GLEEY-skee','kuh-DEH eh toh-ah-LET-nah-tah','SMET-kah-tah MOH-lyah','doh-VEEZH-dah-neh'],
+  hr: ['DOH-bar dahn','MOH-leem','HVAH-lah','DAH','NEH','oh-PROH-stee-teh','goh-VOH-ree-teh lee EN-gles-kee','g-dyeh yeh toh-AH-let','RAH-choon MOH-leem','doh-vee-JEN-yah'],
+  bs: ['DOH-bar dahn','MOH-leem','HVAH-lah','DAH','NEH','eez-VEE-nee-teh','dah lee goh-VOH-ree-teh EN-gles-kee','g-dyeh yeh toh-AH-let','RAH-choon MOH-leem','doh-vee-JEN-yah'],
+  sr: ['DOH-bar dahn','MOH-leem','HVAH-lah','DAH','NEH','eez-VEE-nee-teh','dah lee goh-VOH-ree-teh EN-gles-kee','g-deh yeh toh-AH-let','RAH-choon MOH-leem','doh-vee-JEN-yah'],
+  sl: ['DOH-ber dahn','PROH-seem','HVAH-lah','DAH','NEH','oh-PROH-stee-teh','goh-VOH-ree-teh ahn-GLESH-koh','k-YEH yeh strah-NEESH-cheh','RAH-choon PROH-seem','nahs-VEED-en-yeh'],
+  mk: ['DOH-bar den','MOH-lahm','blah-goh-DAH-rahm','DAH','NEH','eez-vee-NEH-teh','ZBOH-roo-vah-teh lee ahn-GLEE-skee','KAH-deh eh toh-ah-LEH-tot','SMET-kah-tah MOH-lahm','doh-vee-DOO-vahn-yeh'],
+  sq: ['mee-ruh-DEE-tah','yoo LOO-tem','fah-leh-meen-DEH-reet','POH','YOH','muh FAHL-nee','ah FLEES-nee ahn-GLEESHT','koo UHSH-tuh too-ah-LEH-tee','fah-TOO-ruhn yoo LOO-tem','mee-roo-pahf-SHEEM'],
+  sv: ['HAY','SNEL-lah','TAHK','YAH','NAY','oor-SHEK-tah may','TAH-lar doo ENG-el-skah','vahr air toh-ah-LET-en','NOH-tahn TAHK','hay DOH'],
+  no: ['HAY','vair soh SNIL','TAHK','YAH','NAY','OON-shool may','SNAH-ker doo ENG-elsk','voor air toh-ah-LET-eh','RY-ning-en TAHK','hah DEH'],
+  da: ['HYE','vair VEN-lee','TAK','YAH','NYE','OHN-skool my','TAH-ler doo ENG-elsk','voor air toy-LET-eth','RYE-ning-en TAK','fah-VEL'],
+  fi: ['HAY','OH-leh HEW-vah','KEE-tohs','KEWL-lah','AY','AHN-tayk-see','POO-hoot-teh-koh eng-LAHN-tee-ah','MEES-sah ohn VES-sah','LAHS-koo KEE-tohs','NAH-keh-meen'],
+  is: ['hahl-LOH','VIN-sahm-leh-gahst','TAHK','YOW','NAY','AHF-sah-kith','TAH-lahr thoo EN-skoo','kvahr air KLOH-set-tith','RAYK-ning-in TAHK','BLESS'],
+  et: ['TEH-reh','PAH-loon','EYE-tah','YAH','AY','VAH-bahn-dah-geh','kahs RY-gee-teh IN-glee-seh kaylt','koos ohn too-ah-LET','AR-veh PAH-loon','NAH-geh-meest'],
+  lv: ['SVAY-kee','LOO-dzoo','PAHL-dyehs','YAH','NEH','aht-VYE-noh-yeht','vye yoos ROO-nah-yaht AHN-glee-skee','koor eer too-ah-LEH-teh','RAY-kyee-noo LOO-dzoo','ooz REH-dzeh-shah-nohs'],
+  lt: ['SVAY-kee','PRAH-show','AH-choo','TAI-p','NEH','aht-see-PRAH-show','ar KAHL-bah-teh ahn-GLEESH-kai','koor ee-RAH too-ah-LEH-tahs','SAHS-kai-tuh PRAH-show','VEE-soh GEH-roh'],
+  mt: ['BOHN-joo','yek YOHJ-bohk','GRAHT-see','EE-vah','LEH','skoo-ZAH-nee','tit-KEL-lem bleen-GLEEZ','fayn hoo tor-TOY-leet','eel-KONT yek YOHJ-bohk','SAH-hhah'],
+  ca: ['OH-lah','see oos PLOW','GRAH-syuhs','SEE','NOH','per-DOH-nee','PAR-lah ahn-GLES','ohn ehs el lah-VAH-boo','el KOHM-teh see oos PLOW','ah-DEH-oo'],
+  ja: ['kohn-nee-chee-WAH','oh-neh-GAI shee-MAHS','ah-ree-gah-TOH','HAI','EE-eh','soo-mee-mah-SEN','AY-goh oh hah-nah-seh-mahs KAH','TOY-reh wah DOH-koh dess KAH','oh-KAI-keh oh oh-neh-GAI shee-MAHS','sah-yoh-NAH-rah'],
+  zh: ['NEE-how','CHING','SYEH-syeh','SHUH','BOO-shuh','DAH-row EE-syah','NEE hway SHWOH ying-YOO mah','SHEE-show-jyen dzai NAH-lee','CHING MY-dahn','DZAI-jyen'],
+  ko: ['ahn-nyawng-hah-SEH-yoh','boo-tahk-HAHM-nee-dah','gahm-sah-HAHM-nee-dah','NEH','ah-nee-YOH','shil-lyeh-HAHM-nee-dah','yawng-oh hahl jool ah-SEH-yoh','hwah-jahng-shee-ree oh-dee-EH-yoh','gyeh-sahn-saw joo-SEH-yoh','ahn-nyawng-hee gah-SEH-yoh'],
+  vi: ['sin CHOW','lahm UHN','gahm UHN','VUHNG','KOHNG','sin LOY','bahn kaw noy tyeng ahn kohng','nyah veh shin uh dow','chaw toy hwah duhn','tahm byet'],
+  th: ['sah-wah-DEE','gah-ROO-nah','kop KOON','CHAI','MAI','kor TOHT','koon POOT pah-SAH ahng-GRIT dai MAI','HONG nahm YOO tee NAI','GEP ngern DOO-ay','lah GAWN'],
+  km: ['soo-ah s-DAY','SOHM','AH-koh(n)','BAHT / CHAH','TEH','sohm TOHS','dtae neh-AK nee-YAY-ay pee-AH-sah ahng-gleh BAHN teh','bahn-TOHP took nu-ay-NAH','sohm KEET LOO-ee','lee-AH hao-ee'],
+  lo: ['sah-BAI-dee','gah-loo-NAH','kawp JIGH','MAN','BAW','kaw TOHT','jow VOW pah-SAH ahng-GIT dai BAW','HAWNG nahm yoo SAI','kaw bai BIN DEH','lah GAWN'],
+  my: ['ming-gah-lah-BAH','CHAY-zoo PYOO-thway','CHAY-zoo tin BAH-day','HOH-keh','mah-HOH-boo','tuh-SAYT lowk','in-guh-LAKE zuh-GAH pyaw DAT lah','AIN-thah beh HMAH-leh','beh shin PAY bah','bye BYE'],
+  id: ['HAH-loh','TOH-lohng','teh-REE-mah KAH-see','YAH','TEE-dahk','per-MEE-see','AH-pah-kah AHN-dah BEE-sah ber-bah-HAH-sah ING-grees','dee MAH-nah TOY-let','TOH-lohng BON-nyah','seh-LAH-maht TING-gahl'],
+  ms: ['HEH-loh','TOH-lohng','teh-REE-mah KAH-see','YAH','TEE-dahk','MAH-ahf','BOH-leh-kah AHN-dah ber-TOO-toor bah-HAH-sah ING-geh-rees','dee MAH-nah TAHN-dahs','BEEL TOH-lohng','seh-LAH-maht TING-gahl'],
+  tl: ['koo-MOOS-tah','pah-kee-OO-sahp','sah-LAH-maht','OH-oh','hin-DEE','pah-oo-mahn-HEEN','nahg-sah-sah-LEE-tah kah bah nahng eeng-LES','nah-SAH-ahn ahng BAHN-yoh','ahng bill pah-kee-OO-sahp','pah-AH-lahm'],
+  hi: ['nah-mahs-TAY','KRIP-yah','dhun-yuh-VAHD','HAHN','nuh-HEEN','MAHF KEE-jee-yeh','kyah aap ahn-GRAY-zee BOHL-teh hain','show-CHAH-lay kuh-HAHN hai','bill DEE-jee-yeh','ahl-vee-DAH'],
+  bn: ['HYAH-loh','DOH-yah KOH-reh','DHON-noh-bahd','HYAN','NAH','DOOK-khee-toh','AHP-nee kee ing-REH-jee BOL-teh PAH-ren','TOY-let koh-THAY','bill din DOH-yah KOH-reh','bee-DAY'],
+  ur: ['HEH-loh','buh-RAH-eh KUH-rum','shook-REE-yah','jee HAHN','nuh-HEEN','MAHF KEE-jee-yeh','kyah aap ahn-GREH-zee BOHL-teh hain','BATH-room kuh-HAHN hai','bill DEE-jee-yeh','khoo-DAH HAH-fiz'],
+  ne: ['nah-mahs-TAY','KRIP-yah','dhun-yuh-BAHD','HOH','HOH-in','MAHF gar-noo-HOHS','keh tuh-PIE ahn-GREH-jee bohl-noo-HOON-chah','show-CHAH-luh-yuh kuh-HAH chah','bill dee-noo-HOHS','nuh-mus-KAHR'],
+  si: ['ah-yoo-BOH-wahn','kah-roo-NAH-kah-rah','stoo-tee-YEE','OH','NAH-hah','sah-MAH-wen-nah','OH-bah ing-GREE-see kuh-THAH KAH-ruh-nuh-wah-dah','wah-see-KEE-lee-yah KOH-heh-dah','bill EH-kah kah-roo-NAH-kah-rah','ah-yoo-BOH-wahn'],
+  fa: ['sah-LAHM','lot-FAHN','moh-teh-shah-keh-RAHM','bah-LEH','NAH','beh-bahk-SHEED','in-gee-LEE-see sohb-BAHT mee-koh-NEED','dast-shoo-EE koh-JAHST','soo-raht heh-SAHB lot-FAHN','khoh-dah-HAH-fez'],
+  ar: ['MAR-hah-bahn','min FAHD-lik','SHOOK-rahn','NAH-ahm','LAH','ahf-WAHN','hahl tah-tah-HAHD-dahth al-in-jee-lee-ZEE-yah','AY-nah al-hahm-MAHM','al-fah-TOO-rah min FAHD-lik','MAH-ah as-sah-LAH-mah'],
+  he: ['shah-LOHM','beh-vah-kah-SHAH','toh-DAH','KEN','LOH','slee-KHAH','hah-EEM ah-TAH meh-dah-BEHR ahn-GLEET','AY-foh hah-sheh-roo-TEEM','hah-khesh-BOHN beh-vah-kah-SHAH','leh-heet-rah-OHT'],
+  sw: ['hoo-JAHM-boh','tah-fah-DHAH-lee','ah-SAHN-teh','n-DEE-yoh','hah-PAH-nah','sah-mah-HAH-nee','oo-nah-zoon-GOON-zah kee-in-geh-REH-zah','CHOH kee-koh WAH-pee','BEE-lee tah-fah-DHAH-lee','kwah-HEH-ree'],
+  am: ['seh-LAHM','eh-BAHK-woh','ah-meh-seg-nah-LEH-hoo','AH-woh','EYE','yee-KIR-tah','in-glee-ZEEN-yah YEE-chee-lah-loo','meh-tseh-DAH-jah BEH-too yet noo','hee-SAH-boon eh-BAHK-woh','DEH-nah HOON'],
+  ka: ['gah-mar-JOH-bah','too shay-DZLEH-bah','mahd-LOH-bah','KEE','AH-rah','boh-DEE-shee','een-glee-soo-RAHD lah-pah-RAH-kobt','SAHD AH-rees too-ah-LEH-tee','ahn-gah-REE-shee too shay-DZLEH-bah','nahkh-VAHM-dees'],
+  hy: ['bah-REV','khun-DROOM yem','shnor-hah-kah-loo-TYOON','eye-OH','VOHCH','neh-roh-hoo-TYOON','dook ahn-gleh-REN khoh-SOOM yek','vor-TEGH eh zoo-gah-RAH-nuh','hah-SHEE-vuh khun-DROOM yem','tseh-teh-soo-TYOON'],
+  az: ['sah-LAHM','zeh-MET ol-MAH-sah','teh-sheh-KEWR eh-DEE-rem','BEH-lee','KHEYR','bah-uhsh-lah-YUHN','in-gee-lees-JEH dah-nuh-shuhr-suh-nuhz','too-ah-LET hah-rah-dah-duhr','heh-sah-BUH zeh-MET ol-MAH-sah','SAH oh-loon'],
+  mn: ['SIGH-n BYE-nah OO','KHOO-syeh','bah-YAR-lah-lah','TEEM','oo-GOO-ee','OOCH-lah-rye','tah AHNG-lee-ar YAH-ree-dag oo','AH-ree-oon TSEV-reen oo-ROO KHAH-nah BYE-dag veh','TOH-tsohg OOG-nuh oo','bah-yar-TIE'],
+  so: ['sah-LAHN','FAHD-lahn','mah-had-SAH-nid','HAH','MAH-yah','EE-gah RAH-lee AH-how','mah koo hah-dah-SHAH in-gee-REE-see','moos-KOO-shah HAH-geh boo koo YAHL-lah','KAHN-sheeg-tah FAHD-lahn','nah-bahd-GEL-yoh'],
+};
 /* the flag(s) contributing this language to the trip, so a chip showing "Français" also
    carries whichever of the trip's own countries actually speak it (🇫🇷 and/or 🇧🇪, say) rather
    than guessing at one "the" flag for a language spoken well beyond any single country */
@@ -11975,21 +12045,31 @@ function tabAllergy(t){
 /* ================= TAB: phrases (top 10 travel phrases, per trip language) ================= */
 /* A fixed reference list, not something you add to or edit - same "nothing to fill in, just
    pick a language" shape as the Allergy Card, sharing its own CUR_TRIP_LANG and language list
-   rather than asking twice which language you want. Each phrase keeps its English meaning
-   alongside it, so it's still useful even if the local phrase gets read back wrong. */
+   rather than asking twice which language you want. Each phrase keeps its English meaning and a
+   phonetic pronunciation alongside it, so it's still useful even if the local phrase gets read
+   back wrong. English itself is dropped from the picker here (unlike the Allergy Card, where it
+   stays as the safety-net language) - there's no point translating English into English, so it
+   only reappears as a fallback for a trip whose countries don't otherwise speak anything else. */
+function phraseLangsFor(t){
+  const langs = tripLangsFor(t).filter(l => l !== 'en');
+  return langs.length ? langs : ['en'];
+}
 function tabPhrases(t){
   if(!(t.countries||[]).length) return tripLangEmptyHTML('the top phrases for each language appear');
-  const langs = tripLangsFor(t);
+  const langs = phraseLangsFor(t);
   if(!langs.includes(CUR_TRIP_LANG)) CUR_TRIP_LANG = langs[0];
   const list = PHRASES_TEXT[CUR_TRIP_LANG] || PHRASES_EN;
-  const rows = list.map((phrase,i) => `
-    <div class="phrase-row">
+  const pron = PHRASES_PRON[CUR_TRIP_LANG];
+  const isEn = CUR_TRIP_LANG === 'en';
+  const cards = list.map((phrase,i) => `
+    <div class="phrase-card">
       <span class="phrase-local">${esc(phrase)}</span>
-      ${CUR_TRIP_LANG!=='en'?`<span class="phrase-en">${esc(PHRASES_EN[i])}</span>`:''}
+      ${!isEn && pron ? `<span class="phrase-pron">${esc(pron[i])}</span>` : ''}
+      ${!isEn ? `<span class="phrase-en">${esc(PHRASES_EN[i])}</span>` : ''}
     </div>`).join('');
   return `
     ${langPickerHTML(t, langs)}
-    <div class="card">${rows}</div>`;
+    <div class="phrase-grid">${cards}</div>`;
 }
 App.setTripLang = l => {
   CUR_TRIP_LANG = l;

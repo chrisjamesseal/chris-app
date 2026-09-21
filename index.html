@@ -1242,7 +1242,12 @@ input[list]::-webkit-calendar-picker-indicator, input[list]::-webkit-list-button
   background:var(--bg-wash);}
 .modal-bg.push{animation:pushIn .22s ease-out;}
 @keyframes pushIn{from{transform:translateX(7vw); opacity:0;} to{transform:none; opacity:1;}}
-.screen-top{max-width:592px; margin:0 auto; padding:10px 12px; position:sticky; top:0; background:var(--bg); z-index:3;}
+/* the sticky back-button bar every full-screen form shares - background matches the page's own
+   gradient wash (.modal-bg, same fixed attachment) rather than the old flat --bg, so it reads
+   as part of the page instead of a solid white strip sitting on top of it; still needs a real
+   background of its own (not transparent) since it's sticky over scrolling content below it. */
+.screen-top{max-width:592px; margin:0 auto; padding:10px 12px; position:sticky; top:0;
+  background:var(--bg-wash); background-attachment:fixed; z-index:3;}
 .screen-back{
   display:inline-flex; align-items:center; gap:5px; font:inherit; font-weight:600; font-size:.9rem;
   color:var(--brand-dark); background:none; border:none; cursor:pointer; padding:7px 14px 7px 8px; border-radius:999px;
@@ -1904,8 +1909,11 @@ let CARTO_API_KEY = '';
 const APP_PIN = '1197';
 
 /* bump the version and add an entry (newest first) whenever a user-facing change ships */
-const APP_VERSION = '2.85.14';
+const APP_VERSION = '2.85.15';
 const CHANGELOG = [
+  {version:'2.85.15', notes:[
+    "Every full-screen form's sticky Back button bar now matches the page's own gradient wash instead of a flat white strip sitting on top of it."
+  ]},
   {version:'2.85.14', notes:[
     "Phrases: each card now leads with the English meaning, then the word/phrase in that language, then its pronunciation with the 🔊 button right beside it - reads better as \"what I want to say\" first, \"how to say it\" second."
   ]},

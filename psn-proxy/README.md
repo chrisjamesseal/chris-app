@@ -8,8 +8,8 @@
 > checklist and Songs tab, `/letterboxd-diary` for Films' Letterboxd sync, `/ai-stop-summary` for
 > the Itinerary's AI-written stop summaries, `/ai-day-ideas` for its "Suggest Ideas" button on an
 > empty day, and `/branch-earnings` for Home's Made Today/This
-> Week card. Deploying this once turns all of them on. (Board Games and the Games tab's Wishlist aren't here - see "Connect BoardGameGeek" and
-> "Connect RAWG" below for where those actually live and their own one-time setup.)
+> Week card. Deploying this once turns all of them on. (The Games tab's Wishlist isn't here - see
+> "Connect RAWG" below for where it actually lives and its own one-time setup.)
 
 The Games tab shows your PlayStation trophy progress. PlayStation has no official public API,
 and the unofficial one needs an auth step a browser can't make itself (it has to send a
@@ -79,28 +79,12 @@ The Games tab walks you through this, but in short:
 If a game you're mid-playthrough on doesn't show up, or Connect fails outright, see
 "If it breaks" below before assuming something's wrong with your account.
 
-## Connect BoardGameGeek (for Board Games)
-
-Board Games talks to [BoardGameGeek](https://boardgamegeek.com/wiki/page/BGG_XML_API2)'s XML
-API through `api/board-games.js`, a Vercel Edge Function that ships and deploys with the app
-itself (same repo, same `git push`, no separate deploy step) - but BGG now requires every
-request to carry a registered application's token, so it does need one piece of setup:
-
-1. Register at [boardgamegeek.com/using_the_xml_api](https://boardgamegeek.com/using_the_xml_api)
-   to get a free application token (a `Authorization: Bearer <token>` header BGG asks every XML
-   API caller to send now, not something specific to this app).
-2. Set it as an environment variable on the Vercel project (**not** in `api/board-games.js` or
-   anywhere else in this repo, the same reasoning as Spotify's credentials below - it's tied to
-   your own BGG account): Vercel dashboard → your project → Settings → Environment Variables →
-   add `BGG_API_TOKEN` with the token as its value → redeploy (or just push again) for it to
-   take effect.
-
 ## Connect RAWG (for the Games Wishlist)
 
 The Games tab's Wishlist - search for a new or upcoming game (GTA VI, say) and save it to a
-list - talks to [RAWG](https://rawg.io/apidocs) through `api/game-search.js`, another Vercel
-Edge Function alongside `api/board-games.js` (same repo, same `git push`, no separate deploy).
-RAWG's free tier just needs a key, no OAuth dance:
+list - talks to [RAWG](https://rawg.io/apidocs) through `api/game-search.js`, a Vercel Edge
+Function that ships and deploys with the app itself (same repo, same `git push`, no separate
+deploy). RAWG's free tier just needs a key, no OAuth dance:
 
 1. Sign up at [rawg.io/apidocs](https://rawg.io/apidocs) for a free API key (no credit card).
 2. Set it as an environment variable on the Vercel project (**not** in `api/game-search.js` or
@@ -108,8 +92,8 @@ RAWG's free tier just needs a key, no OAuth dance:
    Vercel dashboard → your project → Settings → Environment Variables → add `RAWG_API_KEY` with
    the key as its value → redeploy (or just push again) for it to take effect.
 
-The Wishlist itself (which games you've saved) stays on-device in `localStorage`, the same way
-Board Games' Want to Play/Played marks do - no account, nothing synced.
+The Wishlist itself (which games you've saved) stays on-device in `localStorage` - no account,
+nothing synced.
 
 ## Connect TMDb (for film search and UK streaming availability)
 
@@ -119,8 +103,8 @@ instead, so you don't have to remember exact spelling or release years. The same
 backfills posters after a Letterboxd CSV import (that export has no poster field at all) and
 after a Letterboxd sync that comes back missing one. It talks to
 [TMDb](https://www.themoviedb.org/documentation/api) through `api/film-search.js`, another
-Vercel Edge Function alongside `api/board-games.js` and `api/game-search.js` (same repo, same
-`git push`, no separate deploy). TMDb's free tier just needs a key, no OAuth dance:
+Vercel Edge Function alongside `api/game-search.js` (same repo, same `git push`, no separate
+deploy). TMDb's free tier just needs a key, no OAuth dance:
 
 1. Sign up at [themoviedb.org](https://www.themoviedb.org/signup) and request a free API key at
    [Settings → API](https://www.themoviedb.org/settings/api) (the "API Key (v3 auth)" one, not
@@ -297,15 +281,9 @@ so if it's still happening the feed is doing something `inlineRuns`' second pass
 recognise (an unusual tag name, or a genuinely malformed encoding) - check that article's raw feed
 XML against what the function expects.
 
-Board Games lives in `api/board-games.js`, not this Worker (see that file's top comment for why
-it moved). If it says "isn't configured", the Vercel project is missing (or has a stale)
-`BGG_API_TOKEN` environment variable - see "Connect BoardGameGeek" above. A raw "BoardGameGeek
-returned 401" instead means the token itself is bad or expired - re-check it against BGG's own
-registration page. That endpoint caches for six hours (an hour for searches).
-
-The Wishlist lives in `api/game-search.js`, same setup as Board Games: if it says "isn't
-configured", the Vercel project is missing (or has a stale) `RAWG_API_KEY` environment variable
-- see "Connect RAWG" above.
+The Wishlist lives in `api/game-search.js`, not this Worker. If it says "isn't configured", the
+Vercel project is missing (or has a stale) `RAWG_API_KEY` environment variable - see "Connect
+RAWG" above.
 
 If Music's artist search says "Spotify isn't connected yet", the worker is missing (or has a
 stale) `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET` secret - see "Connect Spotify" above. If
@@ -329,8 +307,8 @@ names - check `worker.js`'s `parseLetterboxdItems` against a fresh `letterboxd.c
 username>/rss/` response if entries start coming through blank or missing ratings.
 
 Film search in the Log Film and Watchlist forms lives in `api/film-search.js`, same setup as
-Board Games and the Wishlist: if it says "isn't set up" (the title field still works as a plain
-text box either way), the Vercel project is missing (or has a stale) `TMDB_API_KEY` environment
+the Wishlist: if it says "isn't set up" (the title field still works as a plain text box
+either way), the Vercel project is missing (or has a stale) `TMDB_API_KEY` environment
 variable - see "Connect TMDb" above. The same missing key is why a CSV import's "finding
 posters…" step silently finds none - nothing breaks, the films just stay posterless the way they
 came in from the CSV.

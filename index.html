@@ -11155,9 +11155,16 @@ function renderTrip(t){
   // describes, instead of reading ROUTE_OPEN before anything's been defaulted into it
   const planDayKeys = CUR_TAB==='plan' && !ro ? planDayGroups(t).keys : [];
   if(planDayKeys.length) routeOpenAllDaysByDefault(t, planDayKeys);
+  // the same route map the Itinerary tab shows above its own stop list (see routeMapHTML/
+  // initRouteMap) - repeated here above the trip name too, since a trip's shape at a glance is
+  // useful right where you land on the trip, not just once you're already on Itinerary. Itinerary
+  // keeps its own copy for now rather than this one replacing it.
+  const overviewMapHTML = (CUR_TAB==='home' && mapRouteStops(t).length > 0)
+    ? `<div class="route-map-wrap"><div id="route-map" class="route-map"></div></div>` : '';
   $('#app').innerHTML = `
+    ${overviewMapHTML}
     ${CUR_TAB==='home' ? `
-    <div class="page-head" style="margin-bottom:22px">
+    <div class="page-head" style="margin-bottom:22px; ${overviewMapHTML?'padding-top:0':''}">
       <div class="trip-title-row">
         <div class="trip-title-main">
           <button class="crumb-backbtn" onclick="App.goHome()" aria-label="Back to all trips">${ICONS.back}</button>
@@ -11192,6 +11199,7 @@ function renderTrip(t){
     </div></div>`:''}`;
   $('#app').classList.toggle('has-sticky-add', CUR_TAB==='plan' && !ro);
   renderTab(t);
+  if(overviewMapHTML) initRouteMap(t);
 }
 /* Edit Trip screen: name, dates, countries and people (trip settings) */
 App.tripForm = () => {

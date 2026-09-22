@@ -972,6 +972,10 @@ a{color:var(--brand-dark);}
 /* ---------- gigs (live music) ---------- */
 .gig-list{display:flex; flex-direction:column; gap:10px;}
 .gig-people-filter{margin-bottom:14px;}
+/* Songs' own range picker (All Time/Last 6 Months/Last 4 Weeks) had no bottom margin at all,
+   sitting flush against the song list below unlike every other page's own filter field - same
+   14px gap as .field/.gig-people-filter above. */
+.songs-range-sel{margin-bottom:14px;}
 .gig-card{padding:14px; margin-bottom:0; cursor:pointer;}
 .gig-top{display:flex; gap:12px; align-items:center;}
 .gig-cover{width:56px; height:56px; flex-shrink:0; border-radius:50%; object-fit:cover;

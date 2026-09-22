@@ -174,7 +174,9 @@ a{color:var(--brand-dark);}
 }
 .iconbtn.pin .icon{font-size:1.05rem;}
 .iconbtn.pin:hover{color:var(--brand-dark); background:var(--brand-ghost);}
-.iconbtn.pin.on{color:var(--brand); background:var(--brand-ghost);}
+/* colour alone marks the pinned state now, no lingering background box - matches .del, which
+   never keeps one either, so the two sit consistently plain side by side in the same row */
+.iconbtn.pin.on{color:var(--brand);}
 .iconbtn:disabled{opacity:.3; cursor:default;}
 .iconbtn:disabled:hover{background:none; color:var(--muted);}
 .icon{line-height:1;}
@@ -767,9 +769,11 @@ a{color:var(--brand-dark);}
    branch), which was always unboxed and stays that way; nothing extra needed here to exempt
    it. */
 .route-days .card.plan-card{background:#fff; padding-top:9px;}
-/* tighter internal padding on the plain stop/travel/task cards (half the card's usual 18px);
-   photo cards keep their full-bleed image edges, so they're excluded */
-.route-days .card.plan-card:not(.plan-card-photo){padding:9px;}
+/* internal padding on the plain stop/travel/task cards - doubled from the original 9px so it
+   reads as a real card, not a cramped one, next to the accommodation card's own equally-doubled
+   padding just below (.flight-strip.itin-flight); photo cards keep their full-bleed image edges,
+   so they're excluded */
+.route-days .card.plan-card:not(.plan-card-photo){padding:18px;}
 /* a not-yet-booked flight/ferry/car/stay/travel leg inside a day's own detail keeps its box
    (same reasoning as .gap-card just above - it's a prompt to go fill something in, not a card
    already saying what it is), but reads with the page's own muted/paper tones instead of red:
@@ -801,10 +805,10 @@ a{color:var(--brand-dark);}
    background actually beats .flight-strip's plain-card var(--paper) one - same specificity,
    single class each, otherwise leaves it to source order, which .flight-strip happened to win,
    quietly downgrading every one of these cards to --paper instead of white. */
-/* left/right padding matches .plan-card-photo's own section-head gutter (18px) - these two
-   card types sit stacked on the same page and used to read as inconsistently indented against
-   each other */
-.flight-strip.itin-flight{background:#fff; border-radius:var(--radius); padding:8px 18px 12px;}
+/* uniform on all four sides now (was 8px/18px/12px top/sides/bottom, visibly uneven next to the
+   stop card's own equally-padded box just above or below it) - doubled from the stop card's own
+   9px base to read as a real card rather than a cramped one */
+.flight-strip.itin-flight{background:#fff; border-radius:var(--radius); padding:18px;}
 .itin-flight .flight-head{padding:0 0 10px;}
 .route-days .itin-flight{margin-bottom:20px;}
 /* time, logo and route title sit together on the left as one group - without a seats chip to

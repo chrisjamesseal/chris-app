@@ -3801,6 +3801,22 @@ function fmtRange(a,b){
 /* kept as its own name because the trip header used to want something more compact; it now
    reads exactly like every other range */
 const fmtRangeLong = fmtRange;
+/* "Wed 23 Sep 2026" - a Location's own date range on the Itinerary page (see weekdayRangeLabel)
+   wants the day of week on both ends and a short month, unlike fmtRange's long-form single-year
+   style, so this doesn't try to share fmtDate/rangeParts's "year said once" compression - each
+   end is short enough to just say in full. */
+function fmtDateWeekday(d){
+  if(!d) return '';
+  const dt = new Date(d+'T00:00:00');
+  return dt.toLocaleDateString(undefined, {weekday:'short'})+' '+dt.getDate()+' '
+    +dt.toLocaleDateString(undefined, {month:'short'})+' '+dt.getFullYear();
+}
+function fmtRangeWeekday(a,b){
+  if(!a && !b) return 'Dates TBC';
+  if(!a || !b) return a ? 'From '+fmtDateWeekday(a) : 'Until '+fmtDateWeekday(b);
+  if(a===b) return fmtDateWeekday(a);
+  return fmtDateWeekday(a)+' - '+fmtDateWeekday(b);
+}
 /* months/weeks/days breakdown for the "to go" countdown, e.g. "1 month 2 weeks to go" */
 function daysToGoPhrase(n){
   if(n===0) return 'starts today';
@@ -14393,6 +14409,13 @@ function locationsSummaryHTML(t, ro, nested){
   const rangeLabel = loc => rough
     ? `Day ${loc.fromDay}${loc.toDay && loc.toDay!==loc.fromDay ? '–'+loc.toDay : ''}`
     : fmtRange(loc.fromDate, loc.toDate || loc.fromDate);
+  // the Itinerary page's own version of the same range - leads with the day of week on each end
+  // ("Wed 23 Sep 2026 - Sun 27 Sep 2026") rather than fmtRange's "23 September - 27 September
+  // 2026", since knowing you land on a Wednesday is more useful here than in Edit Trip's own
+  // compact chip row, which keeps the plain rangeLabel above
+  const weekdayRangeLabel = loc => rough
+    ? rangeLabel(loc)
+    : fmtRangeWeekday(loc.fromDate, loc.toDate || loc.fromDate);
   // earliest first - the order they were added in isn't necessarily the order they fall in
   const sorted = locs.map((loc,i) => ({loc,i}))
     .sort((a,b) => (rough ? a.loc.fromDay-b.loc.fromDay : (a.loc.fromDate||'').localeCompare(b.loc.fromDate||'')));
@@ -14417,7 +14440,7 @@ function locationsSummaryHTML(t, ro, nested){
       <div class="loc-timeline-body">
         <button type="button" class="loc-timeline-edit" ${ro?'disabled':`onclick="App.locationForm(${i}, false)"`}>
           <strong>${esc(loc.name)}</strong>
-          <span class="muted">${esc(rangeLabel(loc))}</span>
+          <span class="muted">${esc(weekdayRangeLabel(loc))}</span>
         </button>
         ${locActivitiesHTML(t, loc)}
       </div>

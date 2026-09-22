@@ -220,13 +220,14 @@ a{color:var(--brand-dark);}
 .trip-card:hover{transform:translateY(-2px); box-shadow:var(--shadow-lift); border-color:var(--brand);}
 .trip-card.archived{opacity:.55; filter:grayscale(1);}
 .trip-card-body{flex:1; min-width:0;}
-/* the square map preview beside a trip card's own text - fixed size regardless of how tall the
-   text column ends up (a big group's names can run to two lines), same boxed border/radius
-   treatment as the wide Next Trip dashboard preview (.dash-trip-map-wrap), just square instead
-   of wide and sat beside the text rather than above it. */
-.trip-card-map-wrap{flex-shrink:0; align-self:center; width:84px; height:84px;
+/* the square map preview beside a trip card's own text - stretched to match whichever sibling
+   ends up taller (the text column, if a big group's names run to two lines) rather than a fixed
+   size, staying square throughout via aspect-ratio. Same boxed border/radius treatment as the
+   wide Next Trip dashboard preview (.dash-trip-map-wrap), just square and sat beside the text
+   rather than above it. */
+.trip-card-map-wrap{flex-shrink:0; align-self:stretch; aspect-ratio:1/1; width:auto;
   border-radius:var(--radius); overflow:hidden; border:1px solid var(--line);}
-.trip-card-map-wrap .dash-trip-map{width:84px; height:84px;}
+.trip-card-map-wrap .dash-trip-map{width:100%; height:100%;}
 .trip-card h3{font-size:1.2rem; margin-bottom:2px;}
 /* The front door: four cards, two by two, under the title, hugging their content rather than
    stretching to fill the screen. Grid rows already equalize the height of cards that sit
@@ -13757,9 +13758,12 @@ function tuneCartoLabels(glMap){
    maplibre-gl-leaflet bridge, so the rest of this file keeps using plain Leaflet markers/lines/
    fitBounds untouched) when it's loaded, falling back to the old plain raster tiles otherwise
    (CartoDB's tile CDN being unreachable, or the CDN serving MapLibre GL itself being down) - a
-   watermarked-but-working map beats a blank one. */
-function addCartoLayer(map){
-  if(typeof L.maplibreGL !== 'function'){
+   watermarked-but-working map beats a blank one. forceRaster skips GL outright - several small
+   glance-sized previews (initDashTripMaps) can end up creating their own WebGL context each,
+   all in the same tick, which some phones' browsers silently fail at past their own concurrent
+   context limit; plain raster tiles have no such ceiling and look the same at this size anyway. */
+function addCartoLayer(map, forceRaster){
+  if(forceRaster || typeof L.maplibreGL !== 'function'){
     return L.tileLayer(cartoTileUrl(), { maxZoom: 20, subdomains: 'abcd' }).addTo(map);
   }
   const gl = L.maplibreGL({style: cartoVectorStyleUrl(), attributionControl:false}).addTo(map);
@@ -13994,7 +13998,7 @@ function initDashTripMaps(){
     if(!numbered.length) return;
     const map = L.map(el, {scrollWheelZoom:false, dragging:false, zoomControl:false,
       attributionControl:false, doubleClickZoom:false, boxZoom:false, keyboard:false, tap:false}).setView([20,0], 2);
-    addCartoLayer(map);
+    addCartoLayer(map, true);
     let layers = [];
     const redraw = (pins, settled) => {
       layers.forEach(l=>map.removeLayer(l)); layers = [];

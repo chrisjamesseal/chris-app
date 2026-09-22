@@ -13649,6 +13649,14 @@ function tuneCartoLabels(glMap){
     const type = glMap.getLayer(id).type;   // "fill" (water/water_shadow) or "line" (waterway)
     try{ glMap.setPaintProperty(id, type+'-color', bg); }catch(e){}
   });
+  /* Voyager's "background" layer is the map canvas's own opaque base fill - a flat, near-white
+     cream (#fbf8f3) that every land polygon (landuse, parks...) sits on, so it's the actual land
+     colour on this basemap rather than a separate tint. Darkened a shade so land reads with a
+     bit more definition against the route line and pins instead of nearly blending into the
+     page's own light background. */
+  if(glMap.getLayer('background')){
+    try{ glMap.setPaintProperty('background', 'background-color', '#e4ddd0'); }catch(e){}
+  }
 }
 /* the actual base layer every route map adds - MapLibre GL's vector rendering (via the
    maplibre-gl-leaflet bridge, so the rest of this file keeps using plain Leaflet markers/lines/

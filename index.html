@@ -13899,14 +13899,16 @@ function tuneCartoLabels(glMap){
   /* Voyager's "background" layer is the map canvas's own opaque base fill - a flat rectangle
      under every polygon, land and sea alike, so it's the actual land colour on this basemap
      rather than a separate tint (see CARTO_WATER_LAYERS' own comment on why that also rules out
-     a transparent sea). A realistic soft green instead of Voyager's own dusty cream. */
+     a transparent sea). A soft cream, close to Voyager's own default dusty tone but a touch more
+     defined against the route line and pins - tried a green here instead at one point, reverted
+     after the fact, cream is the one that was actually wanted. */
   if(glMap.getLayer('background')){
     try{ glMap.setPaintProperty('background', 'background-opacity', 1); }catch(e){}
-    try{ glMap.setPaintProperty('background', 'background-color', '#BFDDA4'); }catch(e){}
+    try{ glMap.setPaintProperty('background', 'background-color', '#e4ddd0'); }catch(e){}
   }
   CARTO_LAND_LAYERS.forEach(id => {
     if(!glMap.getLayer(id)) return;
-    try{ glMap.setPaintProperty(id, 'fill-color', '#BFDDA4'); }catch(e){}
+    try{ glMap.setPaintProperty(id, 'fill-color', '#e4ddd0'); }catch(e){}
     try{ glMap.setPaintProperty(id, 'fill-opacity', 0.65); }catch(e){}
   });
 }

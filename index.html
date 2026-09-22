@@ -631,7 +631,7 @@ a{color:var(--brand-dark);}
    the word "Watered" read as a status either way, tappable or not, so leaving it tappable made an
    already-watered plant look like it still needed a tap. */
 .plant-water-action-btn{display:flex; flex-direction:row; align-items:center; justify-content:center;
-  gap:8px; width:100%; border:1px solid #2E86DE; border-radius:var(--radius-sm);
+  gap:8px; width:100%; border:1px solid #2E86DE; border-radius:999px;
   background:var(--paper); cursor:pointer; padding:11px 20px; font:inherit; font-weight:700;
   font-size:.8rem; color:var(--ink); white-space:nowrap;}
 /* "Mark as Planted" is longer than "Watered"/"Undo Watering" ever needed to be at the usual
@@ -680,7 +680,7 @@ a{color:var(--brand-dark);}
 /* styled as the mock's own bordered "Change Stage" button rather than a plain text link -
    opens into the full stage-picker list (plantStagePickerHTML) underneath it when tapped. */
 .plant-journey-change summary{display:flex; align-items:center; justify-content:center; width:100%;
-  height:36px; background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-sm);
+  height:36px; background:var(--paper); border:1px solid var(--line); border-radius:999px;
   color:var(--brand); font-weight:700; font-size:.8rem; cursor:pointer; list-style:none;}
 .plant-journey-change summary::-webkit-details-marker{display:none;}
 .plant-journey-change[open] summary{margin-bottom:8px;}

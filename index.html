@@ -8995,10 +8995,6 @@ function theatreCardHTML(t, i){
       <div class="theatre-poster-title">${esc(t.title||'Untitled')}</div>
       ${facts?`<div class="theatre-poster-venue muted small">${esc(facts)}</div>`:''}
       ${theatreStarsHTML(t.rating)}
-      <div class="btn-row" style="margin-top:8px">
-        <button class="iconbtn edit" aria-label="Edit show" title="Edit" onclick="event.stopPropagation();App.theatreForm(${i})">${ICONS.edit}</button>
-        <button class="iconbtn del" aria-label="Remove show" title="Remove" onclick="event.stopPropagation();App.delTheatre(${i})">${ICONS.trash}</button>
-      </div>
       ${t.notes?`<div class="small muted" style="margin-top:8px">${esc(t.notes)}</div>`:''}
     </div>`;
 }

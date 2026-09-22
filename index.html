@@ -874,6 +874,13 @@ a{color:var(--brand-dark);}
    Palaiokastritsa") - see planConnectorHTML/autoFlightCard/autoStayCard */
 .plan-connector{display:flex; align-items:center; justify-content:center; gap:6px; color:var(--ink);
   font-size:.9rem; margin:0 0 20px;}
+/* a plain travel leg (train/bus/taxi/drive - see routeStopHTML) uses this same .plan-connector
+   class but reads oddly next to a booked flight's own full-width card right below it on the same
+   day - centred, no background, only as wide as its own text. A slight background and full-width
+   padding give it the same footprint as the card beneath it without the heavier border/shadow a
+   real booking's card carries, so the two still read as different weights of information. */
+.plan-connector.plan-connector-leg{justify-content:flex-start; background:var(--paper);
+  border-radius:var(--radius); padding:11px 14px;}
 .plan-arrive-pill{background:#fff; border-radius:var(--radius); padding:11px 12px; margin:0 0 20px;
   font-weight:700; font-size:.9rem; color:var(--ink);}
 .plan-arrive-time{font-weight:400;}
@@ -13211,7 +13218,7 @@ function planDaysHTML(t, ro, filterKeys){
       // Tasks (see undecidedItemsHTML), read straight off this same leg rather than a second
       // record kept in sync with it
       return `
-      <div class="plan-connector${!ro?' plan-click':''}${s.asTask?' text-undecided':''}" ${clickAttrs(editFn)}>${timeBadge(s)?`<span class="small">${esc(timeBadge(s))} -</span> `:''}${mode.icon} ${line}${s.link?` ${travelLinkHTML(s.link)}`:''}</div>`;
+      <div class="plan-connector plan-connector-leg${!ro?' plan-click':''}${s.asTask?' text-undecided':''}" ${clickAttrs(editFn)}>${timeBadge(s)?`<span class="small">${esc(timeBadge(s))} -</span> `:''}${mode.icon} ${line}${s.link?` ${travelLinkHTML(s.link)}`:''}</div>`;
     }
     const place = s.from && s.to ? `${esc(s.from)} → ${esc(s.to)}` : s.to ? `To ${esc(s.to)}` : s.from ? `From ${esc(s.from)}` : '?';
     const title = place + (when?' - '+esc(when):'');

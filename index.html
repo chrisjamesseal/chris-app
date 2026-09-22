@@ -239,9 +239,11 @@ a{color:var(--brand-dark);}
   border-radius:var(--radius); overflow:hidden; border:1px solid var(--line);}
 .trip-card-map-wrap .dash-trip-map{width:100%; height:100%;}
 .trip-card h3{font-size:1.2rem; margin-bottom:2px;}
-/* Edit/Share/Delete Trip - three across instead of stacked full-width, since none of the three
-   labels need the extra room; .btn's own text wraps if a translation ever runs long. */
-.trip-actions-row{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:40px;}
+/* Edit/Share Trip - side by side instead of stacked full-width, since neither label needs the
+   extra room; .btn's own text wraps if a translation ever runs long. Delete Trip moved inside
+   the Edit Trip form itself (see App.tripForm), the same "Delete X" pattern every other edit
+   form already uses (Delete Gig, Delete Show...) - so it no longer needs a third column here. */
+.trip-actions-row{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:40px;}
 .trip-actions-row .btn{width:100%;}
 /* The front door: four cards, two by two, under the title, hugging their content rather than
    stretching to fill the screen. Grid rows already equalize the height of cards that sit
@@ -11344,7 +11346,6 @@ function renderTrip(t){
     <div class="trip-actions-row">
       <button class="btn" onclick="App.tripForm()">${ICONS.edit} Edit Trip</button>
       <button class="btn" onclick="App.share('${t.id}')">${ICONS.share} Share Trip</button>
-      <button class="btn danger" onclick="App.deleteTrip('${t.id}')">Delete Trip</button>
     </div>`:''}
     ${CUR_TAB==='home' && ro ? `
     <button class="btn" style="width:100%;margin-top:40px" onclick="App.share('${t.id}')">${ICONS.share} Share Trip</button>`:''}
@@ -11387,7 +11388,8 @@ App.tripForm = () => {
       <div class="chips" id="et-person-pills" style="margin-top:10px"></div>
       <p class="muted small" style="margin-top:6px">★ organiser</p>
     </div>
-    <div class="modal-actions"><button class="btn primary" style="width:100%" onclick="App.saveTrip()">Save</button></div>`);
+    <div class="modal-actions"><button class="btn primary" style="width:100%" onclick="App.saveTrip()">Save</button></div>
+    <button class="btn danger" style="width:100%;margin-top:10px" onclick="App.deleteTrip('${esc(t.id)}')">Delete Trip</button>`);
   drawETPills();
 };
 /* pills update in place so the name and date fields keep unsaved edits */

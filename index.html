@@ -174,7 +174,9 @@ a{color:var(--brand-dark);}
 }
 .iconbtn.pin .icon{font-size:1.05rem;}
 .iconbtn.pin:hover{color:var(--brand-dark); background:var(--brand-ghost);}
-.iconbtn.pin.on{color:var(--brand); background:var(--brand-ghost);}
+/* colour alone marks the pinned state now, no lingering background box - matches .del, which
+   never keeps one either, so the two sit consistently plain side by side in the same row */
+.iconbtn.pin.on{color:var(--brand);}
 .iconbtn:disabled{opacity:.3; cursor:default;}
 .iconbtn:disabled:hover{background:none; color:var(--muted);}
 .icon{line-height:1;}

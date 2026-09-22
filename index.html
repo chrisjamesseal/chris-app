@@ -14308,9 +14308,9 @@ App.aiRegenSummary = key => {
 function tabPlan(t, ro){
   const {groups, keys, rough, hasAny} = planDayGroups(t);
   if(hasAny) routeOpenAllDaysByDefault(t, keys);
-  // a trip with Locations set up but nothing else booked or planned yet still has a map and a
-  // Locations row worth showing (see mapHTML/locationsSummaryHTML below) - only a trip with
-  // truly nothing at all, Locations included, falls back to the plain empty state
+  // a trip with Locations set up but nothing else booked or planned yet still has a map worth
+  // showing (see mapHTML/hasNumbered below) - only a trip with truly nothing at all, Locations
+  // included, falls back to the plain empty state
   if(!hasAny && !(t.locations||[]).length){
     return `<div class="empty">Nothing planned yet.${!ro?`<br><br><span class="btn-row" style="justify-content:center">
       <button class="btn" onclick="App.tab('mood')">Browse Ideas</button>
@@ -14355,7 +14355,7 @@ function tabPlan(t, ro){
   const showMap = hasNumbered && PLAN_VIEW === 'map';
   const mapHTML = showMap ? `<div class="route-map-wrap"><div id="route-map" class="route-map"></div></div>` : '';
   const listHTML = showMap ? '' : `<div class="route-list">${keys.map(dayRow).join('')}</div>`;
-  return `${mapHTML}${locationsSummaryHTML(t, ro)}${listHTML}`;
+  return `${mapHTML}${listHTML}`;
 }
 /* the trip's own manually-defined Locations (App.locationForm) - a date range with a name and,
    optionally, a country for the flag, so a stretch with nothing else booked yet still names

@@ -246,8 +246,8 @@ a{color:var(--brand-dark);}
 .trip-actions-row{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:40px;}
 /* solid neutral fill instead of the default pale tint - Edit/Share are equal-weight page
    actions, so give them the same darker treatment as .btn.grey without picking one as primary */
-.trip-actions-row .btn{width:100%; background:#E5E5EA; border-color:#E5E5EA; color:var(--ink);}
-.trip-actions-row .btn:hover{background:#D8D8DE; border-color:#D8D8DE; color:var(--ink);}
+.trip-actions-row .btn{width:100%; background:#fff; border-color:var(--line); color:var(--ink);}
+.trip-actions-row .btn:hover{background:var(--bg); border-color:var(--line-strong); color:var(--ink);}
 /* The front door: four cards, two by two, under the title, hugging their content rather than
    stretching to fill the screen. Grid rows already equalize the height of cards that sit
    side by side, and since every card holds the same shape (emoji, number, label) both rows
@@ -11705,7 +11705,7 @@ App.addMenu = (key, rough) => {
     <div class="add-choice-list">
       <button type="button" class="add-choice" onclick="${hasDay?`closeModal();App.ideasForDay('${esc(key)}',${!!rough})`:`closeModal();App.tab('mood')`}">
         <span class="add-choice-emoji" aria-hidden="true">💡</span>
-        <span class="add-choice-body"><strong>Browse Ideas</strong></span>
+        <span class="add-choice-body"><strong>Add Idea</strong></span>
       </button>
       <button type="button" class="add-choice" onclick="${hasDay?`App.travelLegForm(-1, planWhenFor('${esc(key)}',${!!rough}))`:'App.travelLegForm(-1)'}">
         <span class="add-choice-emoji" aria-hidden="true">🚌</span>
@@ -14519,12 +14519,12 @@ function locItems(t, loc, allLocs){
     return itineraryTimeKey(a).localeCompare(itineraryTimeKey(b));
   });
 }
-/* "A, B and C" rather than a bare comma list - reads as a sentence fragment, not a raw dump of
+/* "A, B & C" rather than a bare comma list - reads as a sentence fragment, not a raw dump of
    field values, without needing an AI call to write it */
 function naturalJoin(items){
   if(items.length <= 1) return items.join('');
-  if(items.length === 2) return items[0]+' and '+items[1];
-  return items.slice(0,-1).join(', ')+' and '+items[items.length-1];
+  if(items.length === 2) return items[0]+' & '+items[1];
+  return items.slice(0,-1).join(', ')+' & '+items[items.length-1];
 }
 function locActivitiesHTML(t, loc, allLocs){
   const withEmoji = locItems(t, loc, allLocs)

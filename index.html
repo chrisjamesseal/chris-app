@@ -11455,7 +11455,7 @@ App.saveTrip = () => {
   const name = $('#et-name').value.trim();
   if(!name) return markErr('#et-name','Give the trip a name');
   const w = readWhenFields('et');
-  const wasRough = hasRoughWhen(t), oldStart = t.startDate;
+  const wasRough = hasRoughWhen(t), oldStart = t.startDate, oldEnd = t.endDate;
   t.name = name; t.startDate = w.startDate; t.endDate = w.endDate;
   /* switching to exact dates has to clear the rough idea, or hasRoughWhen would keep
      answering yes and the trip would show both */
@@ -11473,8 +11473,22 @@ App.saveTrip = () => {
     });
   }
   logEdit('Trip info','Trip details updated');
+  const datesChanged = t.startDate !== oldStart || t.endDate !== oldEnd;
   save(); closeModal(); rerender();
+  if(datesChanged) maybeCalendarUpdateReminder(t);
 };
+/* the app has no live link to a calendar you've already added events to - each Add to Calendar
+   button just hands over a one-off .ics file - so there's no way to actually update one of
+   those from here, only to say so. Only worth the interruption when there's something that
+   could actually be out of date (at least one accommodation/flight/ferry/car/stop/travel leg
+   already on the trip) and the dates that would affect them actually moved. */
+function maybeCalendarUpdateReminder(t){
+  const hasItems = (t.accommodations||[]).length || (t.flights||[]).length || (t.ferries||[]).length
+    || (t.carHire||[]).length || (t.itinerary||[]).length;
+  if(!hasItems) return;
+  noteModal('Update your calendar too?',
+    "This trip's dates changed. If you've already added any accommodation, travel or stops to your calendar, those files won't update on their own - reopen each one here and tap Add to Calendar again to re-download it with the new dates.");
+}
 /* ---- section nav: a slide-in overlay on mobile, a persistent sidebar on desktop,
    both render off the same item list so they can never drift out of sync ---- */
 function tripNavItems(t){
@@ -14617,6 +14631,7 @@ App.planForm = (i, prefill, moodIndex) => {
         <button class="btn primary" style="width:100%" onclick="App.savePlan(${i}, ${moodIndex!=null?moodIndex:'null'})">Save Stop</button>
         <button id="pl-complete-btn" class="btn primary" style="width:100%;${s.asTask?'':'display:none'}" onclick="App.savePlan(${i}, ${moodIndex!=null?moodIndex:'null'}, true)">Save &amp; Complete Task</button>
       </div>
+      ${!hasRoughWhen(t)?`<button class="btn" style="width:100%;margin-top:10px" onclick="App.stopCalendar(${i})">${secEmoji('📅')} Add to Calendar</button>`:''}
       ${i>=0?`<button class="btn danger" style="width:100%;margin-top:10px" onclick="App.deleteStopFromForm(${i})">Delete Stop</button>`:''}</div>`, {autofocus:false});
 };
 App.savePlan = (i, moodIndex, complete) => {
@@ -14641,6 +14656,28 @@ App.savePlan = (i, moodIndex, complete) => {
   PLAN_IMG = null; PLAN_STOP_CUSTOM_ICON = null;
   logEdit('Itinerary', (i>=0?'Stop edited: ':'Stop added: ')+name);
   save(); closeModal(); CUR_TAB='plan'; rerender(); toast('Stop saved');
+};
+/* exports straight out of the open form's own fields, same reasoning as flightCalendar - works
+   for a stop not yet saved too. Only offered at all on a dated trip (see the button's own
+   !hasRoughWhen check) - a "Day 3" stop on a still-rough trip has no real date to hang a
+   calendar event off. A period ("Morning"/"Afternoon"...) becomes its own rough clock time
+   (see PLAN_PERIODS), a specific time stays exact, and "All day" becomes a real all-day event. */
+App.stopCalendar = i => {
+  const t = getTrip(CUR_TRIP_ID); if(!t) return;
+  const name = $('#pl-name').value.trim();
+  if(!name) return markErr('#pl-name','Give the stop a place name first');
+  const date = $('#pl-date').value;
+  if(!date) return markErr('#pl-date','Add a date first');
+  const when = $('#pl-when').value;
+  const allDay = when==='allday';
+  const startTime = when==='time' ? $('#pl-hour').value+':'+$('#pl-min').value : (PLAN_PERIODS[when]||PLAN_PERIODS.morning)[1];
+  const start = new Date(date+'T'+(allDay?'00:00':startTime)+':00');
+  const end = allDay ? new Date(start.getTime()+24*3600000) : new Date(start.getTime()+3600000);
+  downloadIcsEvent({
+    uidPrefix:'stop', id: i>=0 && t.itinerary[i] ? t.itinerary[i].id : uid(),
+    summary: name, location: $('#pl-loc').value.trim(), description: $('#pl-notes').value.trim(),
+    start, end, allDay, alarmMinutesBefore: allDay?null:60, alarmText: name
+  });
 };
 App.travelWhenChange = () => {
   const wrap = $('#tv-time-wrap'); if(!wrap) return;
@@ -14759,6 +14796,7 @@ App.travelLegForm = (i, prefill) => {
         <button class="btn primary" style="width:100%" onclick="App.saveTravelLeg(${i})">${i>=0?'Save':'Add Travel'}</button>
         <button id="tv-complete-btn" class="btn primary" style="width:100%;${s.asTask?'':'display:none'}" onclick="App.saveTravelLeg(${i}, true)">Save &amp; Complete Task</button>
       </div>
+      ${!hasRoughWhen(t)?`<button class="btn" style="width:100%;margin-top:10px" onclick="App.travelCalendar(${i})">${secEmoji('📅')} Add to Calendar</button>`:''}
       ${i>=0?`<button class="btn danger" style="width:100%;margin-top:10px" onclick="App.deleteTravelFromForm(${i})">Delete Travel</button>`:''}
     </div>`, {autofocus:false});
 };
@@ -14795,6 +14833,31 @@ App.saveTravelLeg = (i, complete) => {
   TRAVEL_AUTO_LINK = null;
   logEdit('Itinerary', (i>=0?'Travel edited: ':'Travel added: ')+itineraryItemLabel(s));
   save(); closeModal(); CUR_TAB='plan'; rerender(); toast(i>=0?'Travel saved':'Travel added');
+};
+/* same reasoning as App.stopCalendar just above - exports the open form's own fields, only
+   offered on a dated trip. Duration (already a field here, unlike a Stop) drives the end time
+   instead of a flat guessed hour. */
+App.travelCalendar = i => {
+  const t = getTrip(CUR_TRIP_ID); if(!t) return;
+  const from = $('#tv-from').value.trim(), to = $('#tv-to').value.trim();
+  if(!from && !to) return markErr('#tv-from','Add at least a from or to location first');
+  const date = $('#tv-date').value;
+  if(!date) return markErr('#tv-date','Add a date first');
+  const when = $('#tv-when').value;
+  const allDay = when==='allday';
+  const startTime = when==='time' ? $('#tv-hour').value+':'+$('#tv-min').value : (PLAN_PERIODS[when]||PLAN_PERIODS.morning)[1];
+  const start = new Date(date+'T'+(allDay?'00:00':startTime)+':00');
+  const durMs = ((+$('#tv-dur-h').value||0)*60 + (+$('#tv-dur-m').value||0)) * 60000;
+  const end = allDay ? new Date(start.getTime()+24*3600000) : new Date(start.getTime()+(durMs||3600000));
+  const mode = $('#tv-mode').value;
+  const modeLabel = (TRAVEL_MODES[mode]||TRAVEL_MODES.undecided).label;
+  const route = from&&to ? `${from} → ${to}` : (from||to||'');
+  const summary = [modeLabel, route].filter(Boolean).join(': ');
+  downloadIcsEvent({
+    uidPrefix:'travel', id: i>=0 && t.itinerary[i] ? t.itinerary[i].id : uid(),
+    summary, location: route, description: $('#tv-notes').value.trim(),
+    start, end, allDay, alarmMinutesBefore: allDay?null:60, alarmText: summary
+  });
 };
 /* a manually-defined stretch of the trip ("Melbourne, Day 1-6") - not a booking, just a name
    and, optionally, a country for the flag, so dayPlaceInfo has something to fall back on for a
@@ -15582,7 +15645,7 @@ App.flightForm = i => {
     <div class="modal-actions">
       <button class="btn primary" style="width:100%" onclick="App.saveFlight(${i})">Save Flight</button>
       ${i>=0?`<button class="btn danger" style="width:100%;margin-top:10px" onclick="App.deleteFlightFromForm(${i})">Delete Flight</button>`:''}
-      <button class="btn" style="width:100%;margin-top:10px" onclick="App.flightCalendar(${i})">${secEmoji('📅')} Add to Apple Calendar</button>
+      <button class="btn" style="width:100%;margin-top:10px" onclick="App.flightCalendar(${i})">${secEmoji('📅')} Add to Calendar</button>
     </div>`, {autofocus:false});
 };
 App.saveFlight = i => {
@@ -15628,6 +15691,43 @@ function icsFold(line){
   }
   if(cur) out.push(cur);
   return out.join('\r\n');
+}
+/* shared by every other item's own "Add to Calendar" button (Accommodation, Travel legs,
+   Ferries, Car Hire, Stops - Flights already built its own VEVENT directly in flightCalendar
+   above, before this existed, so it's left as-is rather than risk it for a label-only ask).
+   Each caller just works out its own summary/location/description/start/end and hands them
+   over - this is only the plumbing (UID, DTSTAMP, VALARM, folding, the actual file download)
+   that would otherwise be copy-pasted five more times. */
+function downloadIcsEvent(o){
+  const lines = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//My Trips//Itinerary//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    'UID:'+o.uidPrefix+'-'+o.id+'-'+Date.now()+'@cals-trippin',
+    'DTSTAMP:'+icsStamp(new Date())
+  ];
+  if(o.allDay){
+    const ymd = d => d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+    lines.push('DTSTART;VALUE=DATE:'+ymd(o.start), 'DTEND;VALUE=DATE:'+ymd(o.end));
+  } else {
+    lines.push('DTSTART:'+icsStamp(o.start), 'DTEND:'+icsStamp(o.end));
+    if(o.alarmMinutesBefore != null){
+      lines.push('BEGIN:VALARM','TRIGGER:-PT'+o.alarmMinutesBefore+'M','ACTION:DISPLAY',
+        'DESCRIPTION:'+icsEscape(o.alarmText||o.summary),'END:VALARM');
+    }
+  }
+  lines.push('SUMMARY:'+icsEscape(o.summary));
+  if(o.location) lines.push('LOCATION:'+icsEscape(o.location));
+  if(o.description) lines.push('DESCRIPTION:'+icsEscape(o.description));
+  lines.push('END:VEVENT','END:VCALENDAR');
+  const ics = lines.map(icsFold).join('\r\n');
+  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${(o.summary||'event').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}.ics`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  toast('Open the file to add it to your calendar');
 }
 /* exports the flight straight out of the open form's own fields, not the saved record - so it
    still works for a brand new flight, and reflects an edit not yet saved. Departs/Arrives are
@@ -15732,7 +15832,10 @@ App.ferryForm = i => {
     <div class="field"><label class="label">Note</label><input id="fy-note" type="text" value="${esc(f.note||'')}" placeholder="Foot passenger? Vehicle?"></div>
     <div class="field"><label class="label">Link</label><input id="fy-link" type="url" value="${esc(f.link||'')}" placeholder="Booking confirmation, timetable…"></div>
     ${attachField()}
-    <div class="modal-actions"><button class="btn primary" style="width:100%" onclick="App.saveFerry(${i})">Save Ferry</button></div>`, {autofocus:false});
+    <div class="modal-actions">
+      <button class="btn primary" style="width:100%" onclick="App.saveFerry(${i})">Save Ferry</button>
+      <button class="btn" style="width:100%;margin-top:10px" onclick="App.ferryCalendar(${i})">${secEmoji('📅')} Add to Calendar</button>
+    </div>`, {autofocus:false});
 };
 App.saveFerry = i => {
   const t = getTrip(CUR_TRIP_ID); if(!t) return;
@@ -15748,6 +15851,32 @@ App.saveFerry = i => {
   FORM_DOC = null;
   logEdit('Travel',(i>=0?'Travel edited: ':'Travel added: ')+label);
   save(); closeModal(); CUR_TAB='travel'; rerender(); toast('Ferry saved');
+};
+App.ferryCalendar = i => {
+  const t = getTrip(CUR_TRIP_ID); if(!t) return;
+  const date = $('#fy-date').value;
+  if(!date) return markErr('#fy-date','Add a date first');
+  const operator = $('#fy-op').value.trim();
+  const from = $('#fy-from').value.trim(), to = $('#fy-to').value.trim();
+  const route = from&&to ? `${from} → ${to}` : (from||to||'');
+  const summary = [operator||'Ferry', route].filter(Boolean).join(': ');
+  const depTime = $('#fy-dep').value, arrTime = $('#fy-arr').value;
+  const ref = $('#fy-ref').value.trim(), note = $('#fy-note').value.trim();
+  const descLines = []; if(ref) descLines.push('Booking ref: '+ref); if(note) descLines.push(note);
+  let start, end, allDay = false;
+  if(depTime){
+    start = new Date(date+'T'+depTime+':00');
+    if(arrTime){ end = new Date(date+'T'+arrTime+':00'); if(end<=start) end.setDate(end.getDate()+1); }
+    else end = new Date(start.getTime()+2*3600000);
+  } else {
+    allDay = true;
+    start = new Date(date+'T00:00:00'); end = new Date(start.getTime()+24*3600000);
+  }
+  downloadIcsEvent({
+    uidPrefix:'ferry', id: i>=0 && t.ferries[i] ? t.ferries[i].id : uid(),
+    summary, location: route, description: descLines.join('\n'),
+    start, end, allDay, alarmMinutesBefore: allDay?null:120, alarmText:'Ferry in 2 hours: '+summary
+  });
 };
 App.delFerry = i => {
   const t = getTrip(CUR_TRIP_ID); if(!t) return;
@@ -15787,7 +15916,10 @@ App.carForm = i => {
     </div>
     <div class="field"><label class="label">Link</label><input id="cr-link" type="url" value="${esc(c.link||'')}" placeholder="Booking confirmation, rental terms…"></div>
     ${attachField()}
-    <div class="modal-actions"><button class="btn primary" style="width:100%" onclick="App.saveCar(${i})">Save Car Hire</button></div>`, {autofocus:false});
+    <div class="modal-actions">
+      <button class="btn primary" style="width:100%" onclick="App.saveCar(${i})">Save Car Hire</button>
+      <button class="btn" style="width:100%;margin-top:10px" onclick="App.carCalendar(${i})">${secEmoji('📅')} Add to Calendar</button>
+    </div>`, {autofocus:false});
 };
 App.saveCar = i => {
   const t = getTrip(CUR_TRIP_ID); if(!t) return;
@@ -15803,6 +15935,26 @@ App.saveCar = i => {
   FORM_DOC = null;
   logEdit('Travel',(i>=0?'Travel edited: ':'Travel added: ')+label);
   save(); closeModal(); CUR_TAB='travel'; rerender(); toast('Car hire saved');
+};
+App.carCalendar = i => {
+  const t = getTrip(CUR_TRIP_ID); if(!t) return;
+  const pickupDate = $('#cr-pdate').value;
+  if(!pickupDate) return markErr('#cr-pdate','Add a pick-up date first');
+  const company = $('#cr-co').value.trim();
+  const pickupLoc = $('#cr-ploc').value.trim();
+  const pickupTime = $('#cr-ptime').value || '10:00';
+  const dropoffDate = $('#cr-ddate').value || pickupDate;
+  const dropoffTime = $('#cr-dtime').value || pickupTime;
+  const summary = [company||'Car Hire', pickupLoc].filter(Boolean).join(': ');
+  const start = new Date(pickupDate+'T'+pickupTime+':00');
+  const end = new Date(dropoffDate+'T'+dropoffTime+':00');
+  const ref = $('#cr-ref').value.trim(), note = $('#cr-note').value.trim();
+  const descLines = []; if(ref) descLines.push('Booking ref: '+ref); if(note) descLines.push(note);
+  downloadIcsEvent({
+    uidPrefix:'car', id: i>=0 && t.carHire[i] ? t.carHire[i].id : uid(),
+    summary, location: pickupLoc, description: descLines.join('\n'),
+    start, end, allDay:false, alarmMinutesBefore:120, alarmText:'Car hire pick-up in 2 hours: '+summary
+  });
 };
 App.delCar = i => {
   const t = getTrip(CUR_TRIP_ID); if(!t) return;
@@ -15856,6 +16008,7 @@ App.accomForm = (i, prefill) => {
         <button class="btn primary" style="width:100%" onclick="App.saveAccom(${i})">Save</button>
         <button id="ac-complete-btn" class="btn primary" style="width:100%;${a.asTask?'':'display:none'}" onclick="App.saveAccom(${i}, true)">Save &amp; Complete Task</button>
       </div>
+      <button class="btn" style="width:100%;margin-top:10px" onclick="App.accomCalendar(${i})">${secEmoji('📅')} Add to Calendar</button>
       ${i>=0?`<button class="btn danger" style="width:100%;margin-top:10px" onclick="App.delAccom(${i})">Delete Accommodation</button>`:''}
     </div>`);
 };
@@ -15884,6 +16037,31 @@ App.saveAccom = (i, complete) => {
   if(i>=0) t.accommodations[i]=a; else t.accommodations.push(a);
   logEdit('Accommodation', (i>=0?'Accommodation updated':'Accommodation added')+(name?': '+name:''));
   save(); closeModal(); rerender();
+};
+/* a stay's whole point is its span, so this is the one item whose calendar event runs from a
+   start to a genuinely different end (check-in to check-out) rather than a guessed duration -
+   your own arrival/leave time overrides the property's standard check-in/out time when set,
+   same override order the itinerary's own stay card already uses. */
+App.accomCalendar = i => {
+  const t = getTrip(CUR_TRIP_ID); if(!t) return;
+  const url = $('#ac-url').value.trim(), address = $('#ac-addr').value.trim();
+  const name = $('#ac-name').value.trim() || autoAccomName(url, address);
+  if(!name && !address) return markErr('#ac-name','Give it a name or address first');
+  const checkin = $('#ac-in').value;
+  if(!checkin) return markErr('#ac-in','Add a check-in date first');
+  const checkout = $('#ac-out').value || checkin;
+  const inTime = $('#ac-arrival-time').value || $('#ac-in-time').value || '15:00';
+  const outTime = $('#ac-leave-time').value || $('#ac-out-time').value || '11:00';
+  const start = new Date(checkin+'T'+inTime+':00');
+  const end = new Date(checkout+'T'+outTime+':00');
+  const ref = $('#ac-ref').value.trim(), notes = $('#ac-notes').value.trim();
+  const descLines = []; if(ref) descLines.push('Booking ref: '+ref); if(notes) descLines.push(notes);
+  downloadIcsEvent({
+    uidPrefix:'accom', id: i>=0 && t.accommodations[i] ? t.accommodations[i].id : uid(),
+    summary: name || address, location: address, description: descLines.join('\n'),
+    start, end: end>start?end:new Date(start.getTime()+3600000), allDay:false,
+    alarmMinutesBefore:180, alarmText:'Check in soon: '+(name||address)
+  });
 };
 /* accommodation holds a lot of detail (address, dates, ref, booking link), confirm before
    losing it, on top of the usual undo toast */

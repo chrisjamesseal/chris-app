@@ -11212,7 +11212,9 @@ const ICONS = {
   train: fa('train'),
   bus: fa('bus'),
   taxi: fa('taxi'),
-  tasks: fa('thumbtack')
+  tasks: fa('thumbtack'),
+  add: fa('plus'),
+  remove: fa('minus')
 };
 /* Emoji rather than icon-font glyphs for the big dashboard tiles: they bring their own
    colour, which lifts the grid and sits naturally beside the country flags in the header.
@@ -11600,7 +11602,7 @@ function crumbAction(t){
     // wrapped awkwardly on a phone, and the sticky bar is reachable without scrolling back
     // to the top of what can be a long page.
     case 'plan':   return '';
-    case 'mood':   return `<button class="btn sm primary" onclick="App.moodForm()">+ New Idea</button>`;
+    case 'mood':   return `<button class="btn sm primary" onclick="App.moodForm()">${ICONS.add}New Idea</button>`;
     case 'contacts': return `<button class="btn sm primary" onclick="App.contactForm()">+ Add</button>`;
     case 'notes':  return `<button class="btn sm primary" onclick="App.noteForm(-1)">+ Add Note</button>`;
     case 'stay':   return `<button class="btn sm primary" onclick="App.accomForm(-1)">+ Add</button>`;
@@ -16405,8 +16407,8 @@ function tabMood(t, ro){
       ${m.text?`<p class="small" style="margin-top:6px;white-space:pre-wrap">${esc(m.text)}</p>`:''}
       <div class="mood-actions">
         ${m.title && !ro?(inItinerary
-          ?`<button class="btn sm" style="width:100%" onclick="App.removeIdeaFromItinerary(${i})">Remove from Itinerary</button>`
-          :`<button class="btn sm" style="width:100%" onclick="App.planFromIdea(${i})">+ Add to Itinerary</button>`):''}
+          ?`<button class="btn sm" style="width:100%" onclick="App.removeIdeaFromItinerary(${i})">${ICONS.remove}Remove from Itinerary</button>`
+          :`<button class="btn sm" style="width:100%" onclick="App.planFromIdea(${i})">${ICONS.add}Add to Itinerary</button>`):''}
         ${mapsHref?`<a class="btn sm" style="width:100%" href="${esc(mapsHref)}" target="_blank" rel="noopener">${mapIcon(mapsHref)}Open Map</a>`:''}
         ${!ro?`<button class="btn sm" style="width:100%" onclick="App.moodForm(${i})">${ICONS.edit}Edit Idea</button>`:''}
       </div>

@@ -1836,23 +1836,25 @@ body.kb-open .tabbar.on{display:none;}
    rather than a card of text. A generous gap between cards (rather than relying on each card's
    own bottom margin) keeps one phrase's caption from reading like it belongs to the next
    bubble down. */
-.phrase-grid{display:flex; flex-direction:column; gap:28px;}
+.phrase-grid{display:flex; flex-direction:column; gap:28px; padding-bottom:24px;}
 .phrase-card{display:flex; flex-direction:column; align-items:flex-start; gap:14px;}
 .phrase-local{font-family:var(--font-head); font-weight:600; font-size:1.1rem; color:var(--ink); opacity:.7;}
-/* solid brand blue, same tone as the app's icons/buttons - text inside switches to white so it
-   still reads against the fill instead of the app's usual dark ink. */
-.phrase-bubble{position:relative; width:100%; background:var(--brand); color:#fff;
+/* a solid fill in that language's own flag colour (--bubble-bg/--bubble-fg, set inline per card
+   by tabPhrases/phraseBubbleColors - falls back to the app's brand blue/white here for any
+   language that JS doesn't set them on, e.g. printed markup before JS runs). Every bit of text
+   inside reads via color:inherit rather than its own hardcoded white, so it stays legible
+   whatever that language's colour turns out to be. */
+.phrase-bubble{position:relative; width:100%; background:var(--bubble-bg,var(--brand)); color:var(--bubble-fg,#fff);
   border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 44px 14px 16px;}
 /* the tail, pointing down from the bubble's lower-left - a plain CSS triangle rather than an
    image, so it always matches the bubble's own background colour exactly */
 .phrase-bubble::after{content:""; position:absolute; left:11px; bottom:-9px; width:0; height:0;
-  border-left:9px solid transparent; border-right:9px solid transparent; border-top:9px solid var(--brand);}
-.phrase-native{font-family:var(--font-head); font-weight:700; font-size:1.4rem; line-height:1.25; color:#fff; display:block;}
-.phrase-pron{color:#fff; opacity:.6; font-size:.92rem; font-style:italic; display:block; margin-top:4px;}
-/* white to match the rest of the bubble's own text now it's a solid fill - still sat in its
-   bottom-right corner rather than in a row of its own, since the pronunciation already lives in
-   the bubble */
-.phrase-speak{position:absolute; right:12px; bottom:10px; border:none; background:none; color:#fff;
+  border-left:9px solid transparent; border-right:9px solid transparent; border-top:9px solid var(--bubble-bg,var(--brand));}
+.phrase-native{font-family:var(--font-head); font-weight:700; font-size:1.4rem; line-height:1.25; color:inherit; display:block;}
+.phrase-pron{color:inherit; opacity:.6; font-size:.92rem; font-style:italic; display:block; margin-top:4px;}
+/* inherits the bubble's own text colour - still sat in its bottom-right corner rather than in a
+   row of its own, since the pronunciation already lives in the bubble */
+.phrase-speak{position:absolute; right:12px; bottom:10px; border:none; background:none; color:inherit;
   cursor:pointer; padding:4px; font-size:1.05rem; display:inline-flex; align-items:center; justify-content:center;}
 .phrase-speak:hover{opacity:.7;}
 /* full-bleed, no radius of its own - .plan-card-photo clips it back to the card's own rounded
@@ -10956,10 +10958,12 @@ function renderHome(){
         <button class="version-tag" onclick="App.toggleChangelog()">v${esc(APP_VERSION)} · What's new</button>
       </div>
     </div>`;
+  initDashTripMaps();
   if(cloudEnabled()){
     fetchAllTrips(all => {
       if(CUR_TRIP_ID) return; // navigated into a trip while this was loading
       const el = $('#home-grid'); if(el) el.innerHTML = homeGridHTML(all);
+      initDashTripMaps();
     });
   }
 }
@@ -11210,7 +11214,9 @@ const ICONS = {
   train: fa('train'),
   bus: fa('bus'),
   taxi: fa('taxi'),
-  tasks: fa('thumbtack')
+  tasks: fa('thumbtack'),
+  add: fa('plus'),
+  remove: fa('minus')
 };
 /* Emoji rather than icon-font glyphs for the big dashboard tiles: they bring their own
    colour, which lifts the grid and sits naturally beside the country flags in the header.
@@ -11598,7 +11604,7 @@ function crumbAction(t){
     // wrapped awkwardly on a phone, and the sticky bar is reachable without scrolling back
     // to the top of what can be a long page.
     case 'plan':   return '';
-    case 'mood':   return `<button class="btn sm primary" onclick="App.moodForm()">+ New Idea</button>`;
+    case 'mood':   return `<button class="btn sm primary" onclick="App.moodForm()">${ICONS.add}New Idea</button>`;
     case 'contacts': return `<button class="btn sm primary" onclick="App.contactForm()">+ Add</button>`;
     case 'notes':  return `<button class="btn sm primary" onclick="App.noteForm(-1)">+ Add Note</button>`;
     case 'stay':   return `<button class="btn sm primary" onclick="App.accomForm(-1)">+ Add</button>`;
@@ -11695,9 +11701,9 @@ function tabHome(t, ro){
     ['tasks','Tasks', taskSum, !allBooked],
     ['mood','Ideas', nPins ? nPins+' Pinned' : 'Nothing Pinned Yet', !nPins],
     ['travel','Travel', travParts.join(', ') || 'Nothing Booked Yet', !travParts.length],
-    ['stay','Accommodation', staySum, !accoms.length],
-    ['allergy','Allergy Card', allergySummaryLine(t), !(t.countries||[]).length],
     ['phrases','Phrases', phrasesSummaryLine(t), !(t.countries||[]).length],
+    ['allergy','Allergy Card', allergySummaryLine(t), !(t.countries||[]).length],
+    ['stay','Accommodation', staySum, !accoms.length],
     ['money','Money', moneySum, !nRec],
     ['photos','Photos', album ? album+' Linked' : 'No Shared Album Yet', !album],
     ['contacts','Contacts', nContacts ? nContacts+(nContacts===1?' Contact Logged':' Contacts Logged') : 'None Added Yet', !nContacts],
@@ -12105,67 +12111,67 @@ const ALLERGY_TEXT = {
 /* Ten short, useful travel phrases (a fixed set - not editable), shown alongside their English
    meaning so a phrase can be pointed at and understood even if it's read back wrong. Same
    index across every language as PHRASES_EN, so tabPhrases can just zip the two together. */
-const PHRASES_EN = ['Hello','Please','Thank you','Yes','No','Excuse me','Do you speak English?','Where is the toilet?','The bill, please','Goodbye'];
+const PHRASES_EN = ['Hello','Please','Thank you','Yes','No','Goodbye','Excuse me','Do you speak English?','Where is the toilet?','The bill, please'];
 const PHRASES_TEXT = {
-  en: ['Hello','Please','Thank you','Yes','No','Excuse me','Do you speak English?','Where is the toilet?','The bill, please','Goodbye'],
-  fr: ['Bonjour','S’il vous plaît','Merci','Oui','Non','Excusez-moi','Parlez-vous anglais ?','Où sont les toilettes ?','L’addition, s’il vous plaît','Au revoir'],
-  es: ['Hola','Por favor','Gracias','Sí','No','Disculpe','¿Habla inglés?','¿Dónde está el baño?','La cuenta, por favor','Adiós'],
-  pt: ['Olá','Por favor','Obrigado(a)','Sim','Não','Com licença','Fala inglês?','Onde é a casa de banho?','A conta, por favor','Adeus'],
-  de: ['Hallo','Bitte','Danke','Ja','Nein','Entschuldigung','Sprechen Sie Englisch?','Wo ist die Toilette?','Die Rechnung, bitte','Auf Wiedersehen'],
-  it: ['Ciao','Per favore','Grazie','Sì','No','Mi scusi','Parla inglese?',"Dov'è il bagno?",'Il conto, per favore','Arrivederci'],
-  nl: ['Hallo','Alstublieft','Dank u','Ja','Nee','Pardon','Spreekt u Engels?','Waar is het toilet?','De rekening, alstublieft','Tot ziens'],
-  el: ['Γεια σας','Παρακαλώ','Ευχαριστώ','Ναι','Όχι','Με συγχωρείτε','Μιλάτε αγγλικά;','Πού είναι η τουαλέτα;','Τον λογαριασμό, παρακαλώ','Αντίο'],
-  tr: ['Merhaba','Lütfen','Teşekkür ederim','Evet','Hayır','Affedersiniz','İngilizce biliyor musunuz?','Tuvalet nerede?','Hesap, lütfen','Hoşça kalın'],
-  ru: ['Здравствуйте','Пожалуйста','Спасибо','Да','Нет','Извините','Вы говорите по-английски?','Где туалет?','Счёт, пожалуйста','До свидания'],
-  uk: ['Вітаю','Будь ласка','Дякую','Так','Ні','Перепрошую','Ви розмовляєте англійською?','Де туалет?','Рахунок, будь ласка','До побачення'],
-  pl: ['Dzień dobry','Proszę','Dziękuję','Tak','Nie','Przepraszam','Czy mówi Pan/Pani po angielsku?','Gdzie jest toaleta?','Rachunek, proszę','Do widzenia'],
-  cs: ['Dobrý den','Prosím','Děkuji','Ano','Ne','Promiňte','Mluvíte anglicky?','Kde je toaleta?','Účet, prosím','Na shledanou'],
-  sk: ['Dobrý deň','Prosím','ďakujem','Áno','Nie','Prepáčte','Hovoríte po anglicky?','Kde je toaleta?','Účet, prosím','Dovidenia'],
-  hu: ['Jó napot','Kérem','Köszönöm','Igen','Nem','Elnézést','Beszél angolul?','Hol van a mosdó?','A számlát, kérem','Viszlát'],
-  ro: ['Bună ziua','Vă rog','Mulțumesc','Da','Nu','Scuzați-mă','Vorbiți engleză?','Unde este toaleta?','Nota de plată, vă rog','La revedere'],
-  bg: ['Здравейте','Моля','Благодаря','Да','Не','Извинете','Говорите ли английски?','Къде е тоалетната?','Сметката, моля','Довиждане'],
-  hr: ['Dobar dan','Molim','Hvala','Da','Ne','Oprostite','Govorite li engleski?','Gdje je toalet?','Račun, molim','Doviđenja'],
-  bs: ['Dobar dan','Molim','Hvala','Da','Ne','Izvinite','Da li govorite engleski?','Gdje je toalet?','Račun, molim','Doviđenja'],
-  sr: ['Dobar dan','Molim','Hvala','Da','Ne','Izvinite','Da li govorite engleski?','Gde je toalet?','Račun, molim','Doviđenja'],
-  sl: ['Dober dan','Prosim','Hvala','Da','Ne','Oprostite','Govorite angleško?','Kje je stranišče?','Račun, prosim','Nasvidenje'],
-  mk: ['Добар ден','Молам','Благодарам','Да','Не','Извинете','Зборувате ли англиски?','Каде е тоалетот?','Сметката, молам','Довидување'],
-  sq: ['Mirëdita','Ju lutem','Faleminderit','Po','Jo','Më falni','A flisni anglisht?','Ku është tualeti?','Faturën, ju lutem','Mirupafshim'],
-  sv: ['Hej','Snälla','Tack','Ja','Nej','Ursäkta mig','Talar du engelska?','Var är toaletten?','Notan, tack','Hej då'],
-  no: ['Hei','Vær så snill','Takk','Ja','Nei','Unnskyld meg','Snakker du engelsk?','Hvor er toalettet?','Regningen, takk','Ha det'],
-  da: ['Hej','Vær venlig','Tak','Ja','Nej','Undskyld mig','Taler du engelsk?','Hvor er toilettet?','Regningen, tak','Farvel'],
-  fi: ['Hei','Ole hyvä','Kiitos','Kyllä','Ei','Anteeksi','Puhutteko englantia?','Missä on vessa?','Lasku, kiitos','Näkemiin'],
-  is: ['Halló','Vinsamlegast','Takk','Já','Nei','Afsakið','Talar þú ensku?','Hvar er klósettið?','Reikninginn, takk','Bless'],
-  et: ['Tere','Palun','Aitäh','Jah','Ei','Vabandage','Kas räägite inglise keelt?','Kus on tualett?','Arve, palun','Nägemist'],
-  lv: ['Sveiki','Lūdzu','Paldies','Jā','Nē','Atvainojiet','Vai jūs runājat angliski?','Kur ir tualete?','Rēķinu, lūdzu','Uz redzēšanos'],
-  lt: ['Sveiki','Prašau','Ačiū','Taip','Ne','Atsiprašau','Ar kalbate angliškai?','Kur yra tualetas?','Sąskaitą, prašau','Viso gero'],
-  mt: ['Bonġu','Jekk jogħħbok','Grazzi','Iva','Le','Skużani','Titkellem bl-Ingliż?','Fejn hu t-tojlit?','Il-kont, jekk jogħħbok','Saħħa'],
-  ca: ['Hola','Si us plau','Gràcies','Sí','No','Perdoni','Parla anglès?','On és el lavabo?','El compte, si us plau','Adéu'],
-  ja: ['こんにちは','お願いします','ありがとう','はい','いいえ','すみません','英語を話せますか？','トイレはどこですか？','お会計をお願いします','さようなら'],
-  zh: ['你好','请','谢谢','是','不是','打扰一下','你会说英语吗？','洗手间在哪里？','请买单','再见'],
-  ko: ['안녕하세요','부탁합니다','감사합니다','네','아니요','실례합니다','영어 할 줄 아세요?','화장실이 어디예요?','계산서 주세요','안녕히 가세요'],
-  vi: ['Xin chào','Làm ơn','Cảm ơn','Vâng','Không','Xin lỗi','Bạn có nói tiếng Anh không?','Nhà vệ sinh ở đâu?','Cho tôi hóa đơn','Tạm biệt'],
-  th: ['สวัสดี','กรุณา','ขอบคุณ','ใช่','ไม่','ขอโทษ','คุณพูดภาษาอังกฤษได้ไหม','ห้องน้ำอยู่ที่ไหน','เก็บเงินด้วย','ลาก่อน'],
-  km: ['សួស្តី','សូម','អរគុណ','បាទ/ចាស៎','ទេ','សុំទោស','តើអ្នកនិយាយភាសាអង់គ្លេសបានទេ?','បន្ទប់ទឹកនៅឯណា?','សូមគិតលុយ','លាហើយ'],
-  lo: ['ສະບາຍດີ','ກະລຸນາ','ຂອບໃຈ','ແມ່ນ','ບໍ່','ຂໍໂທດ','ເຈົ້າເວົ້າພາສາອັງກິດໄດ້ບໍ?','ຫ້ອງນ້ຳຢູ່ໃສ?','ຂໍໃບບິນແດ່','ລາກ່ອນ'],
-  my: ['မင်္ဂလာပါ','ကျေးဇူးပြု၍','ကျေးဇူးတင်ပါတယ်','ဟုတ်ကဲ့','မဟုတ်ဘူး','တစ်ဆိတ်လောက်','အင်္ဂလိပ်စကားပြောတတ်လား?','အိမ်သာဘယ်မှာလဲ?','ဘေဲလ်ရှင်းပေးပါ','ဂွက်ဘိုင်'],
-  id: ['Halo','Tolong','Terima kasih','Ya','Tidak','Permisi','Apakah Anda bisa berbahasa Inggris?','Di mana toilet?','Tolong bonnya','Selamat tinggal'],
-  ms: ['Helo','Tolong','Terima kasih','Ya','Tidak','Maaf','Bolehkah anda bertutur Bahasa Inggeris?','Di mana tandas?','Bil, tolong','Selamat tinggal'],
-  tl: ['Kumusta','Pakiusap','Salamat','Oo','Hindi','Paumanhin','Nagsasalita ka ba ng Ingles?','Nasaan ang banyo?','Ang bill, pakiusap','Paalam'],
-  hi: ['नमस्ते','कृपया','धन्यवाद','हां','नहीं','माफ़ कीजिए','क्या आप अंग्रेज़ी बोलते हैं?','शौचालय कहाँ है?','बिल दीजिए','अलविदा'],
-  bn: ['হ্যালো','দয়া করে','ধন্যবাদ','হ্যাঁ','না','দুঃখিত','আপনি কি ইংরেজি বলতে পারেন?','টয়লেট কোথায়?','বিল দিন, দয়া করে','বিদায়'],
-  ur: ['ہیلو','براہ کرم','شکریہ','جی ہاں','نہیں','معاف کیجیے','کیا آپ انگریزی بولتے ہیں؟','باتھ روم کہاں ہے؟','بل دیجیے','خدا حافظ'],
-  ne: ['नमस्ते','कृपया','धन्यवाद','हो','होइन','माफ गर्नुहोस्','के तपाईं अंग्रेजी बोल्नुहुन्छ?','शौचालय कहाँ छ?','बिल दिनुहोस्','नमस्कार'],
-  si: ['ආයුබෝවන්','කරුණාකර','ස්තුතියි','ඔව්','නැහැ','සමාවෙන්න','ඔබ ඉංග්‍රීසි කතා කරනවාද?','වැසිකිළිය කොහෙද?','බිල් එක කරුණාකර','ආයුබෝවන්'],
-  fa: ['سلام','لطفاً','متشکرم','بله','نه','ببخشید','انگلیسی صحبت می‌کنید؟','دستشویی کجاست؟','صورتحساب لطفاً','خداحافظ'],
-  ar: ['مرحبا','من فضلك','شكرا','نعم','لا','عفواً','هل تتحدث الإنجليزية؟','أين الحمام؟','الفاتورة من فضلك','مع السلامة'],
-  he: ['שלום','בבקשה','תודה','כן','לא','סליחה','האם אתה מדבר אנגלית?','איפה השירותים?','החשבון בבקשה','להתראות'],
-  sw: ['Hujambo','Tafadhali','Asante','Ndiyo','Hapana','Samahani','Unazungumza Kiingereza?','Choo kiko wapi?','Bili tafadhali','Kwaheri'],
-  am: ['ሰላም','እባክዎ','አመሰግናለሁ','አዎ','አይ','ይቅርታ','እንግሊዝኛ ይችላሉ?','መጸዳጃ ቤቱ የት ነው?','ሂሳቡን እባክዎ','ደህና ሁን'],
-  ka: ['გამარჯობა','თუ შეიძლება','მადლობა','კი','არა','ბოდიში','ინგლისურად ლაპარაკობთ?','სად არის ტუალეტი?','ანგარიში, თუ შეიძლება','ნახვამდის'],
-  hy: ['Բարև','Խնդրում եմ','Շնորհակալություն','Այո','Ոչ','Ներողություն','Դուք անգլերեն խոսո՞ւմ եք','Որտե՞ղ է զուգարանը','Հաշիվը, խնդրում եմ','Ցտեսություն'],
-  az: ['Salam','Zəhmət olmasa','Təşəkkür edirəm','Bəli','Xeyr','Bağışlayın','İngiliscə danışırsınız?','Tualet haradadır?','Hesabı, zəhmət olmasa','Sağ olun'],
-  mn: ['Сайн байна уу','Хүсье','Баярлалаа','Тийм','Үгүй','Уучлаарай','Та англиар ярьдаг уу?','Ариун цэврийн өрөө хаана байдаг вэ?','Тооцоог өгнө үү','Баяртай'],
-  so: ['Salaan','Fadlan','Mahadsanid','Haa','Maya','Iga raalli ahow','Ma ku hadashaa Ingiriisi?','Musqusha xaggee buu ku yaallaa?','Qaansheegta fadlan','Nabadgelyo'],
+  en: ['Hello','Please','Thank you','Yes','No','Goodbye','Excuse me','Do you speak English?','Where is the toilet?','The bill, please'],
+  fr: ['Bonjour','S’il vous plaît','Merci','Oui','Non','Au revoir','Excusez-moi','Parlez-vous anglais ?','Où sont les toilettes ?','L’addition, s’il vous plaît'],
+  es: ['Hola','Por favor','Gracias','Sí','No','Adiós','Disculpe','¿Habla inglés?','¿Dónde está el baño?','La cuenta, por favor'],
+  pt: ['Olá','Por favor','Obrigado(a)','Sim','Não','Adeus','Com licença','Fala inglês?','Onde é a casa de banho?','A conta, por favor'],
+  de: ['Hallo','Bitte','Danke','Ja','Nein','Auf Wiedersehen','Entschuldigung','Sprechen Sie Englisch?','Wo ist die Toilette?','Die Rechnung, bitte'],
+  it: ['Ciao','Per favore','Grazie','Sì','No','Arrivederci','Mi scusi','Parla inglese?',"Dov'è il bagno?",'Il conto, per favore'],
+  nl: ['Hallo','Alstublieft','Dank u','Ja','Nee','Tot ziens','Pardon','Spreekt u Engels?','Waar is het toilet?','De rekening, alstublieft'],
+  el: ['Γεια σας','Παρακαλώ','Ευχαριστώ','Ναι','Όχι','Αντίο','Με συγχωρείτε','Μιλάτε αγγλικά;','Πού είναι η τουαλέτα;','Τον λογαριασμό, παρακαλώ'],
+  tr: ['Merhaba','Lütfen','Teşekkür ederim','Evet','Hayır','Hoşça kalın','Affedersiniz','İngilizce biliyor musunuz?','Tuvalet nerede?','Hesap, lütfen'],
+  ru: ['Здравствуйте','Пожалуйста','Спасибо','Да','Нет','До свидания','Извините','Вы говорите по-английски?','Где туалет?','Счёт, пожалуйста'],
+  uk: ['Вітаю','Будь ласка','Дякую','Так','Ні','До побачення','Перепрошую','Ви розмовляєте англійською?','Де туалет?','Рахунок, будь ласка'],
+  pl: ['Dzień dobry','Proszę','Dziękuję','Tak','Nie','Do widzenia','Przepraszam','Czy mówi Pan/Pani po angielsku?','Gdzie jest toaleta?','Rachunek, proszę'],
+  cs: ['Dobrý den','Prosím','Děkuji','Ano','Ne','Na shledanou','Promiňte','Mluvíte anglicky?','Kde je toaleta?','Účet, prosím'],
+  sk: ['Dobrý deň','Prosím','ďakujem','Áno','Nie','Dovidenia','Prepáčte','Hovoríte po anglicky?','Kde je toaleta?','Účet, prosím'],
+  hu: ['Jó napot','Kérem','Köszönöm','Igen','Nem','Viszlát','Elnézést','Beszél angolul?','Hol van a mosdó?','A számlát, kérem'],
+  ro: ['Bună ziua','Vă rog','Mulțumesc','Da','Nu','La revedere','Scuzați-mă','Vorbiți engleză?','Unde este toaleta?','Nota de plată, vă rog'],
+  bg: ['Здравейте','Моля','Благодаря','Да','Не','Довиждане','Извинете','Говорите ли английски?','Къде е тоалетната?','Сметката, моля'],
+  hr: ['Dobar dan','Molim','Hvala','Da','Ne','Doviđenja','Oprostite','Govorite li engleski?','Gdje je toalet?','Račun, molim'],
+  bs: ['Dobar dan','Molim','Hvala','Da','Ne','Doviđenja','Izvinite','Da li govorite engleski?','Gdje je toalet?','Račun, molim'],
+  sr: ['Dobar dan','Molim','Hvala','Da','Ne','Doviđenja','Izvinite','Da li govorite engleski?','Gde je toalet?','Račun, molim'],
+  sl: ['Dober dan','Prosim','Hvala','Da','Ne','Nasvidenje','Oprostite','Govorite angleško?','Kje je stranišče?','Račun, prosim'],
+  mk: ['Добар ден','Молам','Благодарам','Да','Не','Довидување','Извинете','Зборувате ли англиски?','Каде е тоалетот?','Сметката, молам'],
+  sq: ['Mirëdita','Ju lutem','Faleminderit','Po','Jo','Mirupafshim','Më falni','A flisni anglisht?','Ku është tualeti?','Faturën, ju lutem'],
+  sv: ['Hej','Snälla','Tack','Ja','Nej','Hej då','Ursäkta mig','Talar du engelska?','Var är toaletten?','Notan, tack'],
+  no: ['Hei','Vær så snill','Takk','Ja','Nei','Ha det','Unnskyld meg','Snakker du engelsk?','Hvor er toalettet?','Regningen, takk'],
+  da: ['Hej','Vær venlig','Tak','Ja','Nej','Farvel','Undskyld mig','Taler du engelsk?','Hvor er toilettet?','Regningen, tak'],
+  fi: ['Hei','Ole hyvä','Kiitos','Kyllä','Ei','Näkemiin','Anteeksi','Puhutteko englantia?','Missä on vessa?','Lasku, kiitos'],
+  is: ['Halló','Vinsamlegast','Takk','Já','Nei','Bless','Afsakið','Talar þú ensku?','Hvar er klósettið?','Reikninginn, takk'],
+  et: ['Tere','Palun','Aitäh','Jah','Ei','Nägemist','Vabandage','Kas räägite inglise keelt?','Kus on tualett?','Arve, palun'],
+  lv: ['Sveiki','Lūdzu','Paldies','Jā','Nē','Uz redzēšanos','Atvainojiet','Vai jūs runājat angliski?','Kur ir tualete?','Rēķinu, lūdzu'],
+  lt: ['Sveiki','Prašau','Ačiū','Taip','Ne','Viso gero','Atsiprašau','Ar kalbate angliškai?','Kur yra tualetas?','Sąskaitą, prašau'],
+  mt: ['Bonġu','Jekk jogħħbok','Grazzi','Iva','Le','Saħħa','Skużani','Titkellem bl-Ingliż?','Fejn hu t-tojlit?','Il-kont, jekk jogħħbok'],
+  ca: ['Hola','Si us plau','Gràcies','Sí','No','Adéu','Perdoni','Parla anglès?','On és el lavabo?','El compte, si us plau'],
+  ja: ['こんにちは','お願いします','ありがとう','はい','いいえ','さようなら','すみません','英語を話せますか？','トイレはどこですか？','お会計をお願いします'],
+  zh: ['你好','请','谢谢','是','不是','再见','打扰一下','你会说英语吗？','洗手间在哪里？','请买单'],
+  ko: ['안녕하세요','부탁합니다','감사합니다','네','아니요','안녕히 가세요','실례합니다','영어 할 줄 아세요?','화장실이 어디예요?','계산서 주세요'],
+  vi: ['Xin chào','Làm ơn','Cảm ơn','Vâng','Không','Tạm biệt','Xin lỗi','Bạn có nói tiếng Anh không?','Nhà vệ sinh ở đâu?','Cho tôi hóa đơn'],
+  th: ['สวัสดี','กรุณา','ขอบคุณ','ใช่','ไม่','ลาก่อน','ขอโทษ','คุณพูดภาษาอังกฤษได้ไหม','ห้องน้ำอยู่ที่ไหน','เก็บเงินด้วย'],
+  km: ['សួស្តី','សូម','អរគុណ','បាទ/ចាស៎','ទេ','លាហើយ','សុំទោស','តើអ្នកនិយាយភាសាអង់គ្លេសបានទេ?','បន្ទប់ទឹកនៅឯណា?','សូមគិតលុយ'],
+  lo: ['ສະບາຍດີ','ກະລຸນາ','ຂອບໃຈ','ແມ່ນ','ບໍ່','ລາກ່ອນ','ຂໍໂທດ','ເຈົ້າເວົ້າພາສາອັງກິດໄດ້ບໍ?','ຫ້ອງນ້ຳຢູ່ໃສ?','ຂໍໃບບິນແດ່'],
+  my: ['မင်္ဂလာပါ','ကျေးဇူးပြု၍','ကျေးဇူးတင်ပါတယ်','ဟုတ်ကဲ့','မဟုတ်ဘူး','ဂွက်ဘိုင်','တစ်ဆိတ်လောက်','အင်္ဂလိပ်စကားပြောတတ်လား?','အိမ်သာဘယ်မှာလဲ?','ဘေဲလ်ရှင်းပေးပါ'],
+  id: ['Halo','Tolong','Terima kasih','Ya','Tidak','Selamat tinggal','Permisi','Apakah Anda bisa berbahasa Inggris?','Di mana toilet?','Tolong bonnya'],
+  ms: ['Helo','Tolong','Terima kasih','Ya','Tidak','Selamat tinggal','Maaf','Bolehkah anda bertutur Bahasa Inggeris?','Di mana tandas?','Bil, tolong'],
+  tl: ['Kumusta','Pakiusap','Salamat','Oo','Hindi','Paalam','Paumanhin','Nagsasalita ka ba ng Ingles?','Nasaan ang banyo?','Ang bill, pakiusap'],
+  hi: ['नमस्ते','कृपया','धन्यवाद','हां','नहीं','अलविदा','माफ़ कीजिए','क्या आप अंग्रेज़ी बोलते हैं?','शौचालय कहाँ है?','बिल दीजिए'],
+  bn: ['হ্যালো','দয়া করে','ধন্যবাদ','হ্যাঁ','না','বিদায়','দুঃখিত','আপনি কি ইংরেজি বলতে পারেন?','টয়লেট কোথায়?','বিল দিন, দয়া করে'],
+  ur: ['ہیلو','براہ کرم','شکریہ','جی ہاں','نہیں','خدا حافظ','معاف کیجیے','کیا آپ انگریزی بولتے ہیں؟','باتھ روم کہاں ہے؟','بل دیجیے'],
+  ne: ['नमस्ते','कृपया','धन्यवाद','हो','होइन','नमस्कार','माफ गर्नुहोस्','के तपाईं अंग्रेजी बोल्नुहुन्छ?','शौचालय कहाँ छ?','बिल दिनुहोस्'],
+  si: ['ආයුබෝවන්','කරුණාකර','ස්තුතියි','ඔව්','නැහැ','ආයුබෝවන්','සමාවෙන්න','ඔබ ඉංග්‍රීසි කතා කරනවාද?','වැසිකිළිය කොහෙද?','බිල් එක කරුණාකර'],
+  fa: ['سلام','لطفاً','متشکرم','بله','نه','خداحافظ','ببخشید','انگلیسی صحبت می‌کنید؟','دستشویی کجاست؟','صورتحساب لطفاً'],
+  ar: ['مرحبا','من فضلك','شكرا','نعم','لا','مع السلامة','عفواً','هل تتحدث الإنجليزية؟','أين الحمام؟','الفاتورة من فضلك'],
+  he: ['שלום','בבקשה','תודה','כן','לא','להתראות','סליחה','האם אתה מדבר אנגלית?','איפה השירותים?','החשבון בבקשה'],
+  sw: ['Hujambo','Tafadhali','Asante','Ndiyo','Hapana','Kwaheri','Samahani','Unazungumza Kiingereza?','Choo kiko wapi?','Bili tafadhali'],
+  am: ['ሰላም','እባክዎ','አመሰግናለሁ','አዎ','አይ','ደህና ሁን','ይቅርታ','እንግሊዝኛ ይችላሉ?','መጸዳጃ ቤቱ የት ነው?','ሂሳቡን እባክዎ'],
+  ka: ['გამარჯობა','თუ შეიძლება','მადლობა','კი','არა','ნახვამდის','ბოდიში','ინგლისურად ლაპარაკობთ?','სად არის ტუალეტი?','ანგარიში, თუ შეიძლება'],
+  hy: ['Բարև','Խնդրում եմ','Շնորհակալություն','Այո','Ոչ','Ցտեսություն','Ներողություն','Դուք անգլերեն խոսո՞ւմ եք','Որտե՞ղ է զուգարանը','Հաշիվը, խնդրում եմ'],
+  az: ['Salam','Zəhmət olmasa','Təşəkkür edirəm','Bəli','Xeyr','Sağ olun','Bağışlayın','İngiliscə danışırsınız?','Tualet haradadır?','Hesabı, zəhmət olmasa'],
+  mn: ['Сайн байна уу','Хүсье','Баярлалаа','Тийм','Үгүй','Баяртай','Уучлаарай','Та англиар ярьдаг уу?','Ариун цэврийн өрөө хаана байдаг вэ?','Тооцоог өгнө үү'],
+  so: ['Salaan','Fadlan','Mahadsanid','Haa','Maya','Nabadgelyo','Iga raalli ahow','Ma ku hadashaa Ingiriisi?','Musqusha xaggee buu ku yaallaa?','Qaansheegta fadlan'],
 };
 /* Plain English-reader phonetic respelling (not IPA) for each of the 10 phrases above, in the
    same order - stressed syllable in caps, hyphens between syllables. No entry for English
@@ -12173,64 +12179,64 @@ const PHRASES_TEXT = {
    design, same spirit as the translations themselves: enough to be understood, not a
    linguistics reference. */
 const PHRASES_PRON = {
-  fr: ['bohn-ZHOOR','seel voo PLEH','mehr-SEE','WEE','NOHN','ex-koo-zay MWAH','par-lay-voo ahn-GLEH','oo sohn lay twah-LET','lah-dee-syohn seel voo PLEH','oh ruh-VWAHR'],
-  es: ['OH-lah','por fah-VOR','GRAH-syahs','SEE','NOH','dees-KOOL-peh','AH-blah een-GLESS','DOHN-deh es-TAH el BAH-nyoh','lah KWEN-tah por fah-VOR','ah-DYOHS'],
-  pt: ['oh-LAH','por fah-VOR','oh-bree-GAH-doo','SEEM','NOW','kohn lee-SEN-sah','FAH-lah een-GLESH','OHN-deh eh ah KAH-zah deh BAH-nyoo','ah KOHN-tah por fah-VOR','ah-DEH-oosh'],
-  de: ['hah-LOH','BIT-uh','DAHN-kuh','YAH','NINE','ent-SHOOL-dee-goong','SHPREH-khen zee ENG-lish','voh ist dee twah-LET-uh','dee REKH-noong BIT-uh','owf VEE-der-zayn'],
-  it: ['CHOW','pair fah-VOH-reh','GRAHT-syeh','SEE','NOH','mee SKOO-zee','PAR-lah een-GLEH-zeh','doh-VEH eel BAH-nyoh','eel KOHN-toh pair fah-VOH-reh','ah-ree-veh-DAIR-chee'],
-  nl: ['hah-LOH','ahls-too-BLEEFT','dahnk oo','YAH','NAY','par-DOHN','SPRAYKT oo ENG-uhls','vahr is het twah-LET','duh RAY-kuh-ning ahls-too-BLEEFT','tot ZEENS'],
-  el: ['YAH sahs','pah-rah-kah-LOH','ef-khah-ree-STOH','NEH','OH-hee','meh seen-khoh-REE-teh','mee-LAH-teh ahn-glee-KAH','poo EE-neh ee too-ah-LEH-tah','tohn loh-gahr-yahz-MOH pah-rah-kah-LOH','ahn-DEE-oh'],
-  tr: ['MEHR-hah-bah','LEWT-fen','teh-shek-KEWR eh-deh-reem','eh-VET','HAH-yuhr','ahf-feh-DAIR-see-neez','een-gee-leez-JEH bee-lee-yor moo-soo-NOOZ','too-vah-LET NEH-reh-deh','heh-SAHP LEWT-fen','HOSH-chah kah-LUHN'],
-  ru: ['ZDRAHST-vooy-tyeh','pah-ZHAHL-stah','spah-SEE-bah','DAH','NYET','eez-vee-NEE-tyeh','vih gah-vah-REE-tyeh pah ahn-GLEE-skee','GDYEH too-ah-LYET','SHYOT pah-ZHAHL-stah','dah svee-DAH-nee-yah'],
-  uk: ['vee-TAH-yoo','bood LAHS-kah','DYAH-koo-yoo','TAHK','NEE','peh-reh-PROH-shoo-yoo','vih rohz-mohv-LYAH-yeh-teh ahn-HLEEY-skoh-yoo','deh too-ah-LET','rah-HOO-nohk bood LAHS-kah','doh poh-BAH-chen-nyah'],
-  pl: ['jen DOH-brih','PROH-sheh','jen-KOO-yeh','TAHK','NYEH','psheh-PRAH-shahm','chih MOO-vee pahn/PAH-nee poh ahn-GYEL-skoo','gjeh yest toh-ah-LEH-tah','rah-HOO-nek PROH-sheh','doh vee-DZEH-nyah'],
-  cs: ['DOH-bree den','PROH-seem','DYEH-koo-yee','AH-noh','NEH','PROH-min-yteh','MLOO-vee-teh ahn-glits-kee','g-deh yeh toh-ah-LEH-tah','OO-chet PROH-seem','nah s-HLEH-dah-noh'],
-  sk: ['DOH-bree deny','PROH-seem','DYAH-koo-yem','AH-noh','NYEH','PREH-pahch-teh','hoh-voh-REE-teh poh ahn-glits-kee','g-deh yeh toh-ah-LEH-tah','OO-chet PROH-seem','doh-vee-DEH-nyah'],
-  hu: ['YOH NAH-pot','KAY-rem','KUR-sur-nurm','EE-gen','NEM','EL-nay-zaysht','BEH-sail AHN-goh-lool','HOL vahn ah MOSH-doh','ah SAHM-laht KAY-rem','VEES-laht'],
-  ro: ['BOO-nuh ZEE-wah','vuh ROHG','mool-tsoo-MESK','DAH','NOO','skoo-ZAH-tsee muh','vor-BEETS en-GLEH-zuh','OON-deh YES-teh toh-ah-LEH-tah','NOH-tah deh PLAH-tuh vuh ROHG','lah reh-veh-DEH-reh'],
-  bg: ['zdrah-VAY-teh','MOH-lyah','blah-goh-dah-RYAH','DAH','NEH','eez-vee-NEH-teh','goh-VOH-ree-teh lee ahn-GLEEY-skee','kuh-DEH eh toh-ah-LET-nah-tah','SMET-kah-tah MOH-lyah','doh-VEEZH-dah-neh'],
-  hr: ['DOH-bar dahn','MOH-leem','HVAH-lah','DAH','NEH','oh-PROH-stee-teh','goh-VOH-ree-teh lee EN-gles-kee','g-dyeh yeh toh-AH-let','RAH-choon MOH-leem','doh-vee-JEN-yah'],
-  bs: ['DOH-bar dahn','MOH-leem','HVAH-lah','DAH','NEH','eez-VEE-nee-teh','dah lee goh-VOH-ree-teh EN-gles-kee','g-dyeh yeh toh-AH-let','RAH-choon MOH-leem','doh-vee-JEN-yah'],
-  sr: ['DOH-bar dahn','MOH-leem','HVAH-lah','DAH','NEH','eez-VEE-nee-teh','dah lee goh-VOH-ree-teh EN-gles-kee','g-deh yeh toh-AH-let','RAH-choon MOH-leem','doh-vee-JEN-yah'],
-  sl: ['DOH-ber dahn','PROH-seem','HVAH-lah','DAH','NEH','oh-PROH-stee-teh','goh-VOH-ree-teh ahn-GLESH-koh','k-YEH yeh strah-NEESH-cheh','RAH-choon PROH-seem','nahs-VEED-en-yeh'],
-  mk: ['DOH-bar den','MOH-lahm','blah-goh-DAH-rahm','DAH','NEH','eez-vee-NEH-teh','ZBOH-roo-vah-teh lee ahn-GLEE-skee','KAH-deh eh toh-ah-LEH-tot','SMET-kah-tah MOH-lahm','doh-vee-DOO-vahn-yeh'],
-  sq: ['mee-ruh-DEE-tah','yoo LOO-tem','fah-leh-meen-DEH-reet','POH','YOH','muh FAHL-nee','ah FLEES-nee ahn-GLEESHT','koo UHSH-tuh too-ah-LEH-tee','fah-TOO-ruhn yoo LOO-tem','mee-roo-pahf-SHEEM'],
-  sv: ['HAY','SNEL-lah','TAHK','YAH','NAY','oor-SHEK-tah may','TAH-lar doo ENG-el-skah','vahr air toh-ah-LET-en','NOH-tahn TAHK','hay DOH'],
-  no: ['HAY','vair soh SNIL','TAHK','YAH','NAY','OON-shool may','SNAH-ker doo ENG-elsk','voor air toh-ah-LET-eh','RY-ning-en TAHK','hah DEH'],
-  da: ['HYE','vair VEN-lee','TAK','YAH','NYE','OHN-skool my','TAH-ler doo ENG-elsk','voor air toy-LET-eth','RYE-ning-en TAK','fah-VEL'],
-  fi: ['HAY','OH-leh HEW-vah','KEE-tohs','KEWL-lah','AY','AHN-tayk-see','POO-hoot-teh-koh eng-LAHN-tee-ah','MEES-sah ohn VES-sah','LAHS-koo KEE-tohs','NAH-keh-meen'],
-  is: ['hahl-LOH','VIN-sahm-leh-gahst','TAHK','YOW','NAY','AHF-sah-kith','TAH-lahr thoo EN-skoo','kvahr air KLOH-set-tith','RAYK-ning-in TAHK','BLESS'],
-  et: ['TEH-reh','PAH-loon','EYE-tah','YAH','AY','VAH-bahn-dah-geh','kahs RY-gee-teh IN-glee-seh kaylt','koos ohn too-ah-LET','AR-veh PAH-loon','NAH-geh-meest'],
-  lv: ['SVAY-kee','LOO-dzoo','PAHL-dyehs','YAH','NEH','aht-VYE-noh-yeht','vye yoos ROO-nah-yaht AHN-glee-skee','koor eer too-ah-LEH-teh','RAY-kyee-noo LOO-dzoo','ooz REH-dzeh-shah-nohs'],
-  lt: ['SVAY-kee','PRAH-show','AH-choo','TAI-p','NEH','aht-see-PRAH-show','ar KAHL-bah-teh ahn-GLEESH-kai','koor ee-RAH too-ah-LEH-tahs','SAHS-kai-tuh PRAH-show','VEE-soh GEH-roh'],
-  mt: ['BOHN-joo','yek YOHJ-bohk','GRAHT-see','EE-vah','LEH','skoo-ZAH-nee','tit-KEL-lem bleen-GLEEZ','fayn hoo tor-TOY-leet','eel-KONT yek YOHJ-bohk','SAH-hhah'],
-  ca: ['OH-lah','see oos PLOW','GRAH-syuhs','SEE','NOH','per-DOH-nee','PAR-lah ahn-GLES','ohn ehs el lah-VAH-boo','el KOHM-teh see oos PLOW','ah-DEH-oo'],
-  ja: ['kohn-nee-chee-WAH','oh-neh-GAI shee-MAHS','ah-ree-gah-TOH','HAI','EE-eh','soo-mee-mah-SEN','AY-goh oh hah-nah-seh-mahs KAH','TOY-reh wah DOH-koh dess KAH','oh-KAI-keh oh oh-neh-GAI shee-MAHS','sah-yoh-NAH-rah'],
-  zh: ['NEE-how','CHING','SYEH-syeh','SHUH','BOO-shuh','DAH-row EE-syah','NEE hway SHWOH ying-YOO mah','SHEE-show-jyen dzai NAH-lee','CHING MY-dahn','DZAI-jyen'],
-  ko: ['ahn-nyawng-hah-SEH-yoh','boo-tahk-HAHM-nee-dah','gahm-sah-HAHM-nee-dah','NEH','ah-nee-YOH','shil-lyeh-HAHM-nee-dah','yawng-oh hahl jool ah-SEH-yoh','hwah-jahng-shee-ree oh-dee-EH-yoh','gyeh-sahn-saw joo-SEH-yoh','ahn-nyawng-hee gah-SEH-yoh'],
-  vi: ['sin CHOW','lahm UHN','gahm UHN','VUHNG','KOHNG','sin LOY','bahn kaw noy tyeng ahn kohng','nyah veh shin uh dow','chaw toy hwah duhn','tahm byet'],
-  th: ['sah-wah-DEE','gah-ROO-nah','kop KOON','CHAI','MAI','kor TOHT','koon POOT pah-SAH ahng-GRIT dai MAI','HONG nahm YOO tee NAI','GEP ngern DOO-ay','lah GAWN'],
-  km: ['soo-ah s-DAY','SOHM','AH-koh(n)','BAHT / CHAH','TEH','sohm TOHS','dtae neh-AK nee-YAY-ay pee-AH-sah ahng-gleh BAHN teh','bahn-TOHP took nu-ay-NAH','sohm KEET LOO-ee','lee-AH hao-ee'],
-  lo: ['sah-BAI-dee','gah-loo-NAH','kawp JIGH','MAN','BAW','kaw TOHT','jow VOW pah-SAH ahng-GIT dai BAW','HAWNG nahm yoo SAI','kaw bai BIN DEH','lah GAWN'],
-  my: ['ming-gah-lah-BAH','CHAY-zoo PYOO-thway','CHAY-zoo tin BAH-day','HOH-keh','mah-HOH-boo','tuh-SAYT lowk','in-guh-LAKE zuh-GAH pyaw DAT lah','AIN-thah beh HMAH-leh','beh shin PAY bah','bye BYE'],
-  id: ['HAH-loh','TOH-lohng','teh-REE-mah KAH-see','YAH','TEE-dahk','per-MEE-see','AH-pah-kah AHN-dah BEE-sah ber-bah-HAH-sah ING-grees','dee MAH-nah TOY-let','TOH-lohng BON-nyah','seh-LAH-maht TING-gahl'],
-  ms: ['HEH-loh','TOH-lohng','teh-REE-mah KAH-see','YAH','TEE-dahk','MAH-ahf','BOH-leh-kah AHN-dah ber-TOO-toor bah-HAH-sah ING-geh-rees','dee MAH-nah TAHN-dahs','BEEL TOH-lohng','seh-LAH-maht TING-gahl'],
-  tl: ['koo-MOOS-tah','pah-kee-OO-sahp','sah-LAH-maht','OH-oh','hin-DEE','pah-oo-mahn-HEEN','nahg-sah-sah-LEE-tah kah bah nahng eeng-LES','nah-SAH-ahn ahng BAHN-yoh','ahng bill pah-kee-OO-sahp','pah-AH-lahm'],
-  hi: ['nah-mahs-TAY','KRIP-yah','dhun-yuh-VAHD','HAHN','nuh-HEEN','MAHF KEE-jee-yeh','kyah aap ahn-GRAY-zee BOHL-teh hain','show-CHAH-lay kuh-HAHN hai','bill DEE-jee-yeh','ahl-vee-DAH'],
-  bn: ['HYAH-loh','DOH-yah KOH-reh','DHON-noh-bahd','HYAN','NAH','DOOK-khee-toh','AHP-nee kee ing-REH-jee BOL-teh PAH-ren','TOY-let koh-THAY','bill din DOH-yah KOH-reh','bee-DAY'],
-  ur: ['HEH-loh','buh-RAH-eh KUH-rum','shook-REE-yah','jee HAHN','nuh-HEEN','MAHF KEE-jee-yeh','kyah aap ahn-GREH-zee BOHL-teh hain','BATH-room kuh-HAHN hai','bill DEE-jee-yeh','khoo-DAH HAH-fiz'],
-  ne: ['nah-mahs-TAY','KRIP-yah','dhun-yuh-BAHD','HOH','HOH-in','MAHF gar-noo-HOHS','keh tuh-PIE ahn-GREH-jee bohl-noo-HOON-chah','show-CHAH-luh-yuh kuh-HAH chah','bill dee-noo-HOHS','nuh-mus-KAHR'],
-  si: ['ah-yoo-BOH-wahn','kah-roo-NAH-kah-rah','stoo-tee-YEE','OH','NAH-hah','sah-MAH-wen-nah','OH-bah ing-GREE-see kuh-THAH KAH-ruh-nuh-wah-dah','wah-see-KEE-lee-yah KOH-heh-dah','bill EH-kah kah-roo-NAH-kah-rah','ah-yoo-BOH-wahn'],
-  fa: ['sah-LAHM','lot-FAHN','moh-teh-shah-keh-RAHM','bah-LEH','NAH','beh-bahk-SHEED','in-gee-LEE-see sohb-BAHT mee-koh-NEED','dast-shoo-EE koh-JAHST','soo-raht heh-SAHB lot-FAHN','khoh-dah-HAH-fez'],
-  ar: ['MAR-hah-bahn','min FAHD-lik','SHOOK-rahn','NAH-ahm','LAH','ahf-WAHN','hahl tah-tah-HAHD-dahth al-in-jee-lee-ZEE-yah','AY-nah al-hahm-MAHM','al-fah-TOO-rah min FAHD-lik','MAH-ah as-sah-LAH-mah'],
-  he: ['shah-LOHM','beh-vah-kah-SHAH','toh-DAH','KEN','LOH','slee-KHAH','hah-EEM ah-TAH meh-dah-BEHR ahn-GLEET','AY-foh hah-sheh-roo-TEEM','hah-khesh-BOHN beh-vah-kah-SHAH','leh-heet-rah-OHT'],
-  sw: ['hoo-JAHM-boh','tah-fah-DHAH-lee','ah-SAHN-teh','n-DEE-yoh','hah-PAH-nah','sah-mah-HAH-nee','oo-nah-zoon-GOON-zah kee-in-geh-REH-zah','CHOH kee-koh WAH-pee','BEE-lee tah-fah-DHAH-lee','kwah-HEH-ree'],
-  am: ['seh-LAHM','eh-BAHK-woh','ah-meh-seg-nah-LEH-hoo','AH-woh','EYE','yee-KIR-tah','in-glee-ZEEN-yah YEE-chee-lah-loo','meh-tseh-DAH-jah BEH-too yet noo','hee-SAH-boon eh-BAHK-woh','DEH-nah HOON'],
-  ka: ['gah-mar-JOH-bah','too shay-DZLEH-bah','mahd-LOH-bah','KEE','AH-rah','boh-DEE-shee','een-glee-soo-RAHD lah-pah-RAH-kobt','SAHD AH-rees too-ah-LEH-tee','ahn-gah-REE-shee too shay-DZLEH-bah','nahkh-VAHM-dees'],
-  hy: ['bah-REV','khun-DROOM yem','shnor-hah-kah-loo-TYOON','eye-OH','VOHCH','neh-roh-hoo-TYOON','dook ahn-gleh-REN khoh-SOOM yek','vor-TEGH eh zoo-gah-RAH-nuh','hah-SHEE-vuh khun-DROOM yem','tseh-teh-soo-TYOON'],
-  az: ['sah-LAHM','zeh-MET ol-MAH-sah','teh-sheh-KEWR eh-DEE-rem','BEH-lee','KHEYR','bah-uhsh-lah-YUHN','in-gee-lees-JEH dah-nuh-shuhr-suh-nuhz','too-ah-LET hah-rah-dah-duhr','heh-sah-BUH zeh-MET ol-MAH-sah','SAH oh-loon'],
-  mn: ['SIGH-n BYE-nah OO','KHOO-syeh','bah-YAR-lah-lah','TEEM','oo-GOO-ee','OOCH-lah-rye','tah AHNG-lee-ar YAH-ree-dag oo','AH-ree-oon TSEV-reen oo-ROO KHAH-nah BYE-dag veh','TOH-tsohg OOG-nuh oo','bah-yar-TIE'],
-  so: ['sah-LAHN','FAHD-lahn','mah-had-SAH-nid','HAH','MAH-yah','EE-gah RAH-lee AH-how','mah koo hah-dah-SHAH in-gee-REE-see','moos-KOO-shah HAH-geh boo koo YAHL-lah','KAHN-sheeg-tah FAHD-lahn','nah-bahd-GEL-yoh'],
+  fr: ['bohn-ZHOOR','seel voo PLEH','mehr-SEE','WEE','NOHN','oh ruh-VWAHR','ex-koo-zay MWAH','par-lay-voo ahn-GLEH','oo sohn lay twah-LET','lah-dee-syohn seel voo PLEH'],
+  es: ['OH-lah','por fah-VOR','GRAH-syahs','SEE','NOH','ah-DYOHS','dees-KOOL-peh','AH-blah een-GLESS','DOHN-deh es-TAH el BAH-nyoh','lah KWEN-tah por fah-VOR'],
+  pt: ['oh-LAH','por fah-VOR','oh-bree-GAH-doo','SEEM','NOW','ah-DEH-oosh','kohn lee-SEN-sah','FAH-lah een-GLESH','OHN-deh eh ah KAH-zah deh BAH-nyoo','ah KOHN-tah por fah-VOR'],
+  de: ['hah-LOH','BIT-uh','DAHN-kuh','YAH','NINE','owf VEE-der-zayn','ent-SHOOL-dee-goong','SHPREH-khen zee ENG-lish','voh ist dee twah-LET-uh','dee REKH-noong BIT-uh'],
+  it: ['CHOW','pair fah-VOH-reh','GRAHT-syeh','SEE','NOH','ah-ree-veh-DAIR-chee','mee SKOO-zee','PAR-lah een-GLEH-zeh','doh-VEH eel BAH-nyoh','eel KOHN-toh pair fah-VOH-reh'],
+  nl: ['hah-LOH','ahls-too-BLEEFT','dahnk oo','YAH','NAY','tot ZEENS','par-DOHN','SPRAYKT oo ENG-uhls','vahr is het twah-LET','duh RAY-kuh-ning ahls-too-BLEEFT'],
+  el: ['YAH sahs','pah-rah-kah-LOH','ef-khah-ree-STOH','NEH','OH-hee','ahn-DEE-oh','meh seen-khoh-REE-teh','mee-LAH-teh ahn-glee-KAH','poo EE-neh ee too-ah-LEH-tah','tohn loh-gahr-yahz-MOH pah-rah-kah-LOH'],
+  tr: ['MEHR-hah-bah','LEWT-fen','teh-shek-KEWR eh-deh-reem','eh-VET','HAH-yuhr','HOSH-chah kah-LUHN','ahf-feh-DAIR-see-neez','een-gee-leez-JEH bee-lee-yor moo-soo-NOOZ','too-vah-LET NEH-reh-deh','heh-SAHP LEWT-fen'],
+  ru: ['ZDRAHST-vooy-tyeh','pah-ZHAHL-stah','spah-SEE-bah','DAH','NYET','dah svee-DAH-nee-yah','eez-vee-NEE-tyeh','vih gah-vah-REE-tyeh pah ahn-GLEE-skee','GDYEH too-ah-LYET','SHYOT pah-ZHAHL-stah'],
+  uk: ['vee-TAH-yoo','bood LAHS-kah','DYAH-koo-yoo','TAHK','NEE','doh poh-BAH-chen-nyah','peh-reh-PROH-shoo-yoo','vih rohz-mohv-LYAH-yeh-teh ahn-HLEEY-skoh-yoo','deh too-ah-LET','rah-HOO-nohk bood LAHS-kah'],
+  pl: ['jen DOH-brih','PROH-sheh','jen-KOO-yeh','TAHK','NYEH','doh vee-DZEH-nyah','psheh-PRAH-shahm','chih MOO-vee pahn/PAH-nee poh ahn-GYEL-skoo','gjeh yest toh-ah-LEH-tah','rah-HOO-nek PROH-sheh'],
+  cs: ['DOH-bree den','PROH-seem','DYEH-koo-yee','AH-noh','NEH','nah s-HLEH-dah-noh','PROH-min-yteh','MLOO-vee-teh ahn-glits-kee','g-deh yeh toh-ah-LEH-tah','OO-chet PROH-seem'],
+  sk: ['DOH-bree deny','PROH-seem','DYAH-koo-yem','AH-noh','NYEH','doh-vee-DEH-nyah','PREH-pahch-teh','hoh-voh-REE-teh poh ahn-glits-kee','g-deh yeh toh-ah-LEH-tah','OO-chet PROH-seem'],
+  hu: ['YOH NAH-pot','KAY-rem','KUR-sur-nurm','EE-gen','NEM','VEES-laht','EL-nay-zaysht','BEH-sail AHN-goh-lool','HOL vahn ah MOSH-doh','ah SAHM-laht KAY-rem'],
+  ro: ['BOO-nuh ZEE-wah','vuh ROHG','mool-tsoo-MESK','DAH','NOO','lah reh-veh-DEH-reh','skoo-ZAH-tsee muh','vor-BEETS en-GLEH-zuh','OON-deh YES-teh toh-ah-LEH-tah','NOH-tah deh PLAH-tuh vuh ROHG'],
+  bg: ['zdrah-VAY-teh','MOH-lyah','blah-goh-dah-RYAH','DAH','NEH','doh-VEEZH-dah-neh','eez-vee-NEH-teh','goh-VOH-ree-teh lee ahn-GLEEY-skee','kuh-DEH eh toh-ah-LET-nah-tah','SMET-kah-tah MOH-lyah'],
+  hr: ['DOH-bar dahn','MOH-leem','HVAH-lah','DAH','NEH','doh-vee-JEN-yah','oh-PROH-stee-teh','goh-VOH-ree-teh lee EN-gles-kee','g-dyeh yeh toh-AH-let','RAH-choon MOH-leem'],
+  bs: ['DOH-bar dahn','MOH-leem','HVAH-lah','DAH','NEH','doh-vee-JEN-yah','eez-VEE-nee-teh','dah lee goh-VOH-ree-teh EN-gles-kee','g-dyeh yeh toh-AH-let','RAH-choon MOH-leem'],
+  sr: ['DOH-bar dahn','MOH-leem','HVAH-lah','DAH','NEH','doh-vee-JEN-yah','eez-VEE-nee-teh','dah lee goh-VOH-ree-teh EN-gles-kee','g-deh yeh toh-AH-let','RAH-choon MOH-leem'],
+  sl: ['DOH-ber dahn','PROH-seem','HVAH-lah','DAH','NEH','nahs-VEED-en-yeh','oh-PROH-stee-teh','goh-VOH-ree-teh ahn-GLESH-koh','k-YEH yeh strah-NEESH-cheh','RAH-choon PROH-seem'],
+  mk: ['DOH-bar den','MOH-lahm','blah-goh-DAH-rahm','DAH','NEH','doh-vee-DOO-vahn-yeh','eez-vee-NEH-teh','ZBOH-roo-vah-teh lee ahn-GLEE-skee','KAH-deh eh toh-ah-LEH-tot','SMET-kah-tah MOH-lahm'],
+  sq: ['mee-ruh-DEE-tah','yoo LOO-tem','fah-leh-meen-DEH-reet','POH','YOH','mee-roo-pahf-SHEEM','muh FAHL-nee','ah FLEES-nee ahn-GLEESHT','koo UHSH-tuh too-ah-LEH-tee','fah-TOO-ruhn yoo LOO-tem'],
+  sv: ['HAY','SNEL-lah','TAHK','YAH','NAY','hay DOH','oor-SHEK-tah may','TAH-lar doo ENG-el-skah','vahr air toh-ah-LET-en','NOH-tahn TAHK'],
+  no: ['HAY','vair soh SNIL','TAHK','YAH','NAY','hah DEH','OON-shool may','SNAH-ker doo ENG-elsk','voor air toh-ah-LET-eh','RY-ning-en TAHK'],
+  da: ['HYE','vair VEN-lee','TAK','YAH','NYE','fah-VEL','OHN-skool my','TAH-ler doo ENG-elsk','voor air toy-LET-eth','RYE-ning-en TAK'],
+  fi: ['HAY','OH-leh HEW-vah','KEE-tohs','KEWL-lah','AY','NAH-keh-meen','AHN-tayk-see','POO-hoot-teh-koh eng-LAHN-tee-ah','MEES-sah ohn VES-sah','LAHS-koo KEE-tohs'],
+  is: ['hahl-LOH','VIN-sahm-leh-gahst','TAHK','YOW','NAY','BLESS','AHF-sah-kith','TAH-lahr thoo EN-skoo','kvahr air KLOH-set-tith','RAYK-ning-in TAHK'],
+  et: ['TEH-reh','PAH-loon','EYE-tah','YAH','AY','NAH-geh-meest','VAH-bahn-dah-geh','kahs RY-gee-teh IN-glee-seh kaylt','koos ohn too-ah-LET','AR-veh PAH-loon'],
+  lv: ['SVAY-kee','LOO-dzoo','PAHL-dyehs','YAH','NEH','ooz REH-dzeh-shah-nohs','aht-VYE-noh-yeht','vye yoos ROO-nah-yaht AHN-glee-skee','koor eer too-ah-LEH-teh','RAY-kyee-noo LOO-dzoo'],
+  lt: ['SVAY-kee','PRAH-show','AH-choo','TAI-p','NEH','VEE-soh GEH-roh','aht-see-PRAH-show','ar KAHL-bah-teh ahn-GLEESH-kai','koor ee-RAH too-ah-LEH-tahs','SAHS-kai-tuh PRAH-show'],
+  mt: ['BOHN-joo','yek YOHJ-bohk','GRAHT-see','EE-vah','LEH','SAH-hhah','skoo-ZAH-nee','tit-KEL-lem bleen-GLEEZ','fayn hoo tor-TOY-leet','eel-KONT yek YOHJ-bohk'],
+  ca: ['OH-lah','see oos PLOW','GRAH-syuhs','SEE','NOH','ah-DEH-oo','per-DOH-nee','PAR-lah ahn-GLES','ohn ehs el lah-VAH-boo','el KOHM-teh see oos PLOW'],
+  ja: ['kohn-nee-chee-WAH','oh-neh-GAI shee-MAHS','ah-ree-gah-TOH','HAI','EE-eh','sah-yoh-NAH-rah','soo-mee-mah-SEN','AY-goh oh hah-nah-seh-mahs KAH','TOY-reh wah DOH-koh dess KAH','oh-KAI-keh oh oh-neh-GAI shee-MAHS'],
+  zh: ['NEE-how','CHING','SYEH-syeh','SHUH','BOO-shuh','DZAI-jyen','DAH-row EE-syah','NEE hway SHWOH ying-YOO mah','SHEE-show-jyen dzai NAH-lee','CHING MY-dahn'],
+  ko: ['ahn-nyawng-hah-SEH-yoh','boo-tahk-HAHM-nee-dah','gahm-sah-HAHM-nee-dah','NEH','ah-nee-YOH','ahn-nyawng-hee gah-SEH-yoh','shil-lyeh-HAHM-nee-dah','yawng-oh hahl jool ah-SEH-yoh','hwah-jahng-shee-ree oh-dee-EH-yoh','gyeh-sahn-saw joo-SEH-yoh'],
+  vi: ['sin CHOW','lahm UHN','gahm UHN','VUHNG','KOHNG','tahm byet','sin LOY','bahn kaw noy tyeng ahn kohng','nyah veh shin uh dow','chaw toy hwah duhn'],
+  th: ['sah-wah-DEE','gah-ROO-nah','kop KOON','CHAI','MAI','lah GAWN','kor TOHT','koon POOT pah-SAH ahng-GRIT dai MAI','HONG nahm YOO tee NAI','GEP ngern DOO-ay'],
+  km: ['soo-ah s-DAY','SOHM','AH-koh(n)','BAHT / CHAH','TEH','lee-AH hao-ee','sohm TOHS','dtae neh-AK nee-YAY-ay pee-AH-sah ahng-gleh BAHN teh','bahn-TOHP took nu-ay-NAH','sohm KEET LOO-ee'],
+  lo: ['sah-BAI-dee','gah-loo-NAH','kawp JIGH','MAN','BAW','lah GAWN','kaw TOHT','jow VOW pah-SAH ahng-GIT dai BAW','HAWNG nahm yoo SAI','kaw bai BIN DEH'],
+  my: ['ming-gah-lah-BAH','CHAY-zoo PYOO-thway','CHAY-zoo tin BAH-day','HOH-keh','mah-HOH-boo','bye BYE','tuh-SAYT lowk','in-guh-LAKE zuh-GAH pyaw DAT lah','AIN-thah beh HMAH-leh','beh shin PAY bah'],
+  id: ['HAH-loh','TOH-lohng','teh-REE-mah KAH-see','YAH','TEE-dahk','seh-LAH-maht TING-gahl','per-MEE-see','AH-pah-kah AHN-dah BEE-sah ber-bah-HAH-sah ING-grees','dee MAH-nah TOY-let','TOH-lohng BON-nyah'],
+  ms: ['HEH-loh','TOH-lohng','teh-REE-mah KAH-see','YAH','TEE-dahk','seh-LAH-maht TING-gahl','MAH-ahf','BOH-leh-kah AHN-dah ber-TOO-toor bah-HAH-sah ING-geh-rees','dee MAH-nah TAHN-dahs','BEEL TOH-lohng'],
+  tl: ['koo-MOOS-tah','pah-kee-OO-sahp','sah-LAH-maht','OH-oh','hin-DEE','pah-AH-lahm','pah-oo-mahn-HEEN','nahg-sah-sah-LEE-tah kah bah nahng eeng-LES','nah-SAH-ahn ahng BAHN-yoh','ahng bill pah-kee-OO-sahp'],
+  hi: ['nah-mahs-TAY','KRIP-yah','dhun-yuh-VAHD','HAHN','nuh-HEEN','ahl-vee-DAH','MAHF KEE-jee-yeh','kyah aap ahn-GRAY-zee BOHL-teh hain','show-CHAH-lay kuh-HAHN hai','bill DEE-jee-yeh'],
+  bn: ['HYAH-loh','DOH-yah KOH-reh','DHON-noh-bahd','HYAN','NAH','bee-DAY','DOOK-khee-toh','AHP-nee kee ing-REH-jee BOL-teh PAH-ren','TOY-let koh-THAY','bill din DOH-yah KOH-reh'],
+  ur: ['HEH-loh','buh-RAH-eh KUH-rum','shook-REE-yah','jee HAHN','nuh-HEEN','khoo-DAH HAH-fiz','MAHF KEE-jee-yeh','kyah aap ahn-GREH-zee BOHL-teh hain','BATH-room kuh-HAHN hai','bill DEE-jee-yeh'],
+  ne: ['nah-mahs-TAY','KRIP-yah','dhun-yuh-BAHD','HOH','HOH-in','nuh-mus-KAHR','MAHF gar-noo-HOHS','keh tuh-PIE ahn-GREH-jee bohl-noo-HOON-chah','show-CHAH-luh-yuh kuh-HAH chah','bill dee-noo-HOHS'],
+  si: ['ah-yoo-BOH-wahn','kah-roo-NAH-kah-rah','stoo-tee-YEE','OH','NAH-hah','ah-yoo-BOH-wahn','sah-MAH-wen-nah','OH-bah ing-GREE-see kuh-THAH KAH-ruh-nuh-wah-dah','wah-see-KEE-lee-yah KOH-heh-dah','bill EH-kah kah-roo-NAH-kah-rah'],
+  fa: ['sah-LAHM','lot-FAHN','moh-teh-shah-keh-RAHM','bah-LEH','NAH','khoh-dah-HAH-fez','beh-bahk-SHEED','in-gee-LEE-see sohb-BAHT mee-koh-NEED','dast-shoo-EE koh-JAHST','soo-raht heh-SAHB lot-FAHN'],
+  ar: ['MAR-hah-bahn','min FAHD-lik','SHOOK-rahn','NAH-ahm','LAH','MAH-ah as-sah-LAH-mah','ahf-WAHN','hahl tah-tah-HAHD-dahth al-in-jee-lee-ZEE-yah','AY-nah al-hahm-MAHM','al-fah-TOO-rah min FAHD-lik'],
+  he: ['shah-LOHM','beh-vah-kah-SHAH','toh-DAH','KEN','LOH','leh-heet-rah-OHT','slee-KHAH','hah-EEM ah-TAH meh-dah-BEHR ahn-GLEET','AY-foh hah-sheh-roo-TEEM','hah-khesh-BOHN beh-vah-kah-SHAH'],
+  sw: ['hoo-JAHM-boh','tah-fah-DHAH-lee','ah-SAHN-teh','n-DEE-yoh','hah-PAH-nah','kwah-HEH-ree','sah-mah-HAH-nee','oo-nah-zoon-GOON-zah kee-in-geh-REH-zah','CHOH kee-koh WAH-pee','BEE-lee tah-fah-DHAH-lee'],
+  am: ['seh-LAHM','eh-BAHK-woh','ah-meh-seg-nah-LEH-hoo','AH-woh','EYE','DEH-nah HOON','yee-KIR-tah','in-glee-ZEEN-yah YEE-chee-lah-loo','meh-tseh-DAH-jah BEH-too yet noo','hee-SAH-boon eh-BAHK-woh'],
+  ka: ['gah-mar-JOH-bah','too shay-DZLEH-bah','mahd-LOH-bah','KEE','AH-rah','nahkh-VAHM-dees','boh-DEE-shee','een-glee-soo-RAHD lah-pah-RAH-kobt','SAHD AH-rees too-ah-LEH-tee','ahn-gah-REE-shee too shay-DZLEH-bah'],
+  hy: ['bah-REV','khun-DROOM yem','shnor-hah-kah-loo-TYOON','eye-OH','VOHCH','tseh-teh-soo-TYOON','neh-roh-hoo-TYOON','dook ahn-gleh-REN khoh-SOOM yek','vor-TEGH eh zoo-gah-RAH-nuh','hah-SHEE-vuh khun-DROOM yem'],
+  az: ['sah-LAHM','zeh-MET ol-MAH-sah','teh-sheh-KEWR eh-DEE-rem','BEH-lee','KHEYR','SAH oh-loon','bah-uhsh-lah-YUHN','in-gee-lees-JEH dah-nuh-shuhr-suh-nuhz','too-ah-LET hah-rah-dah-duhr','heh-sah-BUH zeh-MET ol-MAH-sah'],
+  mn: ['SIGH-n BYE-nah OO','KHOO-syeh','bah-YAR-lah-lah','TEEM','oo-GOO-ee','bah-yar-TIE','OOCH-lah-rye','tah AHNG-lee-ar YAH-ree-dag oo','AH-ree-oon TSEV-reen oo-ROO KHAH-nah BYE-dag veh','TOH-tsohg OOG-nuh oo'],
+  so: ['sah-LAHN','FAHD-lahn','mah-had-SAH-nid','HAH','MAH-yah','nah-bahd-GEL-yoh','EE-gah RAH-lee AH-how','mah koo hah-dah-SHAH in-gee-REE-see','moos-KOO-shah HAH-geh boo koo YAHL-lah','KAHN-sheeg-tah FAHD-lahn'],
 };
 /* the flag(s) contributing this language to the trip, so a chip showing "Français" also
    carries whichever of the trip's own countries actually speak it (🇫🇷 and/or 🇧🇪, say) rather
@@ -12340,6 +12346,44 @@ function phraseLangsFor(t){
   const langs = tripLangsFor(t).filter(l => l !== 'en');
   return langs.length ? langs : ['en'];
 }
+/* one representative flag colour per phrase language - the single most dominant/iconic colour
+   of that language's own flag (Albanian -> the flag's red field, Greek -> its blue, etc), not an
+   attempt at reproducing every stripe. A language spoken across several countries (French,
+   Arabic, English...) just gets one fixed pick rather than varying by which of the trip's
+   countries actually triggered it - same "good enough, not a reference" spirit PHRASES_TEXT's
+   own translations are written in. English has no single national flag to speak for, so it
+   keeps the app's own brand blue instead of guessing one. */
+const LANG_FLAG_COLOR = {
+  en:'#0A84FF', fr:'#0055A4', es:'#AA151B', pt:'#C8102E', de:'#DD0000', it:'#009246',
+  nl:'#21468B', el:'#0D5EAF', tr:'#E30A17', ru:'#0039A6', uk:'#005BBB', pl:'#DC143C',
+  cs:'#11457E', sk:'#0B4EA2', hu:'#CE2939', ro:'#002B7F', bg:'#00966E', hr:'#FF0000',
+  bs:'#002395', sr:'#C6363C', sl:'#005DA4', mk:'#D20000', sq:'#E12126', sv:'#006AA7',
+  no:'#EF2B2D', da:'#C8102E', fi:'#003580', is:'#003897', et:'#0072CE', lv:'#9E3039',
+  lt:'#006A44', mt:'#CF142B', ca:'#0018A8', ja:'#BC002D', zh:'#DE2910', ko:'#CD2E3A',
+  vi:'#DA251D', th:'#253C77', km:'#E00025', lo:'#002868', my:'#34B233', id:'#FF0000',
+  ms:'#010066', tl:'#0038A8', hi:'#FF9933', bn:'#006A4E', ur:'#01411C', ne:'#DC143C',
+  si:'#8D153A', fa:'#239F40', ar:'#006C35', he:'#0038B8', sw:'#006600', am:'#078930',
+  ka:'#FF0000', hy:'#D90012', az:'#0092BC', mn:'#0066B3', so:'#4189DD',
+};
+/* white text or the app's own ink, whichever actually gives the better WCAG contrast ratio
+   against that background - not a flat "luminance over some threshold" guess, which reads a
+   mid-brightness colour (India's saffron orange, say - darker than white but still too light for
+   white text to sit comfortably on) wrong in exactly the range that matters. Every entry in
+   LANG_FLAG_COLOR above gets checked this way rather than picked by eye one at a time. */
+function relLuminance(hex){
+  const h = (hex||'').replace('#','');
+  const [r,g,b] = [0,2,4].map(i => parseInt(h.slice(i,i+2),16)/255);
+  const lin = c => c<=.03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4);
+  return .2126*lin(r) + .7152*lin(g) + .0722*lin(b);
+}
+function contrastRatio(hexA, hexB){
+  const a = relLuminance(hexA), b = relLuminance(hexB);
+  return (Math.max(a,b)+.05) / (Math.min(a,b)+.05);
+}
+function readableTextOn(hex){
+  if(!hex || hex.replace('#','').length!==6) return '#fff';
+  return contrastRatio(hex,'#ffffff') >= contrastRatio(hex,'#1C1C1E') ? '#fff' : '#1C1C1E';
+}
 function tabPhrases(t){
   if(!(t.countries||[]).length) return tripLangEmptyHTML('the top phrases for each language appear');
   const langs = phraseLangsFor(t);
@@ -12348,6 +12392,8 @@ function tabPhrases(t){
   const pron = PHRASES_PRON[CUR_TRIP_LANG];
   const isEn = CUR_TRIP_LANG === 'en';
   const canSpeak = 'speechSynthesis' in window;
+  const bubbleBg = LANG_FLAG_COLOR[CUR_TRIP_LANG] || 'var(--brand)';
+  const bubbleStyle = ` style="--bubble-bg:${esc(bubbleBg)};--bubble-fg:${esc(readableTextOn(bubbleBg))}"`;
   const cards = list.map((phrase,i) => {
     const speakBtn = canSpeak ? `<button class="phrase-speak" aria-label="Say this out loud" data-phrase="${esc(phrase)}" data-lang="${esc(CUR_TRIP_LANG)}" onclick="App.speakPhrase(this)">${fa('volume-high')}</button>` : '';
     if(isEn){
@@ -12355,7 +12401,7 @@ function tabPhrases(t){
       // verbatim, so this one card is just the bubble on its own
       return `
     <div class="phrase-card">
-      <div class="phrase-bubble">
+      <div class="phrase-bubble"${bubbleStyle}>
         <span class="phrase-native">${esc(PHRASES_EN[i])}</span>
         ${speakBtn}
       </div>
@@ -12363,7 +12409,7 @@ function tabPhrases(t){
     }
     return `
     <div class="phrase-card">
-      <div class="phrase-bubble">
+      <div class="phrase-bubble"${bubbleStyle}>
         <span class="phrase-native">${esc(phrase)}</span>
         ${pron ? `<span class="phrase-pron">${esc(pron[i])}</span>` : ''}
         ${speakBtn}
@@ -16363,8 +16409,8 @@ function tabMood(t, ro){
       ${m.text?`<p class="small" style="margin-top:6px;white-space:pre-wrap">${esc(m.text)}</p>`:''}
       <div class="mood-actions">
         ${m.title && !ro?(inItinerary
-          ?`<button class="btn sm" style="width:100%" onclick="App.removeIdeaFromItinerary(${i})">Remove from Itinerary</button>`
-          :`<button class="btn sm" style="width:100%" onclick="App.planFromIdea(${i})">+ Add to Itinerary</button>`):''}
+          ?`<button class="btn sm" style="width:100%" onclick="App.removeIdeaFromItinerary(${i})">${ICONS.remove}Remove from Itinerary</button>`
+          :`<button class="btn sm" style="width:100%" onclick="App.planFromIdea(${i})">${ICONS.add}Add to Itinerary</button>`):''}
         ${mapsHref?`<a class="btn sm" style="width:100%" href="${esc(mapsHref)}" target="_blank" rel="noopener">${mapIcon(mapsHref)}Open Map</a>`:''}
         ${!ro?`<button class="btn sm" style="width:100%" onclick="App.moodForm(${i})">${ICONS.edit}Edit Idea</button>`:''}
       </div>

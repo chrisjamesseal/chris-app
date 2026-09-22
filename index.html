@@ -124,6 +124,10 @@ h1{font-family:var(--font-head); font-size:1.9rem; font-weight:800; letter-spaci
 h2{font-family:var(--font-head); font-size:1.08rem; font-weight:800; letter-spacing:-.01em; margin-bottom:12px; color:var(--ink);}
 h3{font-family:var(--font-head); font-size:1rem; font-weight:700; color:var(--ink);}
 .label{font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); display:block; margin-bottom:5px;}
+/* a field hint like "(optional)" sits inside the label as a plain .muted span - .muted's own
+   font-size (.85rem) is bigger than the label's own .7rem, so the hint read larger than the
+   label itself instead of a quiet aside. Inherit instead, so it always matches. */
+.label .muted{font-size:inherit;}
 .muted{color:var(--muted); font-size:.85rem;}
 .small{font-size:.85rem;}
 /* visible to screen readers only - for a label an icon/badge already carries visually */

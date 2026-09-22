@@ -937,6 +937,20 @@ a{color:var(--brand-dark);}
    and its date range read at two different sizes here - pin the date range down to match */
 .chip.location-chip .muted{font-size:.8rem;}
 .chip.location-chip-add{color:var(--brand); border-color:var(--brand-tint); background:var(--brand-ghost);}
+/* the Itinerary page's own Locations display (locationsSummaryHTML, the !nested branch) - a
+   timeline rather than a row of pills, same dot-and-connecting-line shape as the Plant history
+   log. Location name and date range are pinned to the same font-size explicitly (rather than one
+   inheriting a chip's size and the other .muted's own, which used to leave them visibly
+   mismatched) and stacked with a generous gap between them instead of sitting side by side. */
+.loc-timeline{display:flex; flex-direction:column; margin-bottom:18px;}
+.loc-timeline-item{display:flex; gap:12px; position:relative; padding-bottom:16px;}
+.loc-timeline-item:not(:last-child)::before{content:''; position:absolute; left:11px; top:26px; bottom:0; width:2px; background:var(--line);}
+.loc-timeline-dot{flex-shrink:0; width:24px; height:24px; z-index:1; display:flex; align-items:center; justify-content:center; font-size:1.1rem; line-height:1;}
+.loc-timeline-body{flex:1; min-width:0; display:flex; flex-direction:column; text-align:left;
+  background:none; border:none; padding:0; font:inherit; cursor:pointer;}
+.loc-timeline-body strong{font-weight:700; font-size:.95rem; color:var(--ink);}
+.loc-timeline-body .muted{font-size:.95rem; margin-top:8px;}
+.loc-timeline-body:disabled{cursor:default;}
 /* the AI stop summary (aiSummaryHTML) - a tinted callout so it reads as an added extra sat
    above the day-by-day cards, not just another card in the same list */
 .ai-summary{background:var(--brand-ghost); border:1px solid var(--brand-tint); border-radius:var(--radius);
@@ -14167,20 +14181,30 @@ function locationsSummaryHTML(t, ro, nested){
   // earliest first - the order they were added in isn't necessarily the order they fall in
   const sorted = locs.map((loc,i) => ({loc,i}))
     .sort((a,b) => (rough ? a.loc.fromDay-b.loc.fromDay : (a.loc.fromDate||'').localeCompare(b.loc.fromDate||'')));
-  // nested (true when this chip row is shown inside the Edit Trip modal rather than directly on
-  // the Itinerary page) so App.locationForm knows to push a way back onto MODAL_STACK - see
-  // openModal/closeModal
-  const chips = sorted.map(({loc,i}) => `
-    <button type="button" class="chip location-chip" ${ro?'disabled':`onclick="App.locationForm(${i}, ${!!nested})"`}>
-      ${loc.country ? esc((countryByCode(loc.country)||{}).flag||'')+' ' : ''}<strong>${esc(loc.name)}</strong>
-      <span class="muted">${esc(rangeLabel(loc))}</span>
-    </button>`).join('');
-  // only offered from the Edit Trip modal's own Locations field (nested) - the Itinerary page
-  // itself just reads the list back, the same way it doesn't offer to edit the trip's dates or
-  // countries either; App.locationForm(-1) is still one tap away for anyone who taps an
-  // existing chip there, since Edit Trip already sits behind the trip overview's own edit icon
-  const addChip = (!ro && nested) ? `<button type="button" class="chip location-chip location-chip-add" onclick="App.locationForm(-1, ${!!nested})">${fa('plus')} New Location</button>` : '';
-  return locs.length || addChip ? `<div class="location-chips">${chips}${addChip}</div>` : '';
+  if(nested){
+    // inside the Edit Trip modal's own Locations field - a plain row of pill chips, same shape
+    // as every other tag-like field in this form (Countries, etc); App.locationForm's own
+    // `true` here tells it to push a way back onto MODAL_STACK - see openModal/closeModal
+    const chips = sorted.map(({loc,i}) => `
+      <button type="button" class="chip location-chip" ${ro?'disabled':`onclick="App.locationForm(${i}, true)"`}>
+        ${loc.country ? esc((countryByCode(loc.country)||{}).flag||'')+' ' : ''}<strong>${esc(loc.name)}</strong>
+        <span class="muted">${esc(rangeLabel(loc))}</span>
+      </button>`).join('');
+    const addChip = !ro ? `<button type="button" class="chip location-chip location-chip-add" onclick="App.locationForm(-1, true)">${fa('plus')} New Location</button>` : '';
+    return locs.length || addChip ? `<div class="location-chips">${chips}${addChip}</div>` : '';
+  }
+  // the Itinerary page's own display - a timeline rather than a row of pills, same dot-and-line
+  // shape the Plant history log already uses, since this reads as a chronological sequence of
+  // places rather than a set of interchangeable tags the way Edit Trip's own field does
+  const items = sorted.map(({loc,i}) => `
+    <div class="loc-timeline-item">
+      <span class="loc-timeline-dot" aria-hidden="true">${loc.country ? esc((countryByCode(loc.country)||{}).flag||'') : '📍'}</span>
+      <button type="button" class="loc-timeline-body" ${ro?'disabled':`onclick="App.locationForm(${i}, false)"`}>
+        <strong>${esc(loc.name)}</strong>
+        <span class="muted">${esc(rangeLabel(loc))}</span>
+      </button>
+    </div>`).join('');
+  return `<div class="loc-timeline">${items}</div>`;
 }
 /* A stop or travel leg is pinned to a date on a normal trip and to a day number on one
    that's still only "next summer". Same slot in the form either way, so the layout doesn't

@@ -489,9 +489,9 @@ a{color:var(--brand-dark);}
    than square, so it doesn't crop the poster's actual proportions */
 .dash-item-img-sm.poster{width:38px; height:57px;}
 /* Watch Next keeps its poster above the title instead of beside it, unlike its row-layout
-   neighbours above - half the card's width, centred, so there's still room for the title/sub/
-   provider-logos underneath without the tile growing as tall as a full-width poster would make it */
-.dash-watchnext-poster{display:block; width:50%; margin:0 0 12px; aspect-ratio:2/3; object-fit:cover; border-radius:var(--radius-sm);}
+   neighbours above - full width of the tile's own padding, same as Most Played's art, rather
+   than shrunk down with empty space beside it */
+.dash-watchnext-poster{display:block; width:100%; margin:0 0 12px; aspect-ratio:2/3; object-fit:cover; border-radius:var(--radius-sm);}
 /* the same pin-to-top star Watchlist cards use (.iconbtn.pin, see fwMineCardHTML), just sat in
    the tile's top-right corner instead of a button row, so you can favourite what Home is
    already showing without leaving for the Watchlist page */
@@ -894,6 +894,9 @@ a{color:var(--brand-dark);}
 .location-chips.loc-quick-chips{margin:8px 0 0; gap:6px;}
 .location-chips.loc-quick-chips .chip{padding:4px 10px; font-size:.78rem;}
 .chip.location-chip{cursor:pointer; font:inherit; background:#fff;}
+/* .muted's own font-size (.85rem) is bigger than the chip's inherited .8rem, so the place name
+   and its date range read at two different sizes here - pin the date range down to match */
+.chip.location-chip .muted{font-size:.8rem;}
 .chip.location-chip-add{color:var(--brand); border-color:var(--brand-tint); background:var(--brand-ghost);}
 /* the AI stop summary (aiSummaryHTML) - a tinted callout so it reads as an added extra sat
    above the day-by-day cards, not just another card in the same list */
@@ -1752,23 +1755,26 @@ body.kb-open .tabbar.on{display:none;}
 .allergy-section.caution{background:var(--brand-tint); border:1px solid var(--line-strong);}
 .allergy-section.caution .allergy-section-title{color:var(--rag-yellow);}
 .allergy-thanks{margin-top:6px; color:var(--muted); font-style:italic; font-size:.9rem;}
-/* Phrases' own single-column card list - the English meaning leads (what you're actually looking
-   for), faded back since it's just there for reference; the local-language word/phrase follows
-   right under it, the actual headline here since saying it is the whole point; its pronunciation
-   sits at the foot of the card paired with the speak button, since both are "how do I actually
-   say this" and belong together on the same row */
-.phrase-grid{display:flex; flex-direction:column; gap:10px;}
-.phrase-card{border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--paper); box-shadow:var(--shadow); padding:14px; display:flex; flex-direction:column; gap:4px;}
+/* Phrases' own single-column card list - the English meaning sits above as a plain label (what
+   you're actually looking for), then the local-language word/phrase and its pronunciation live
+   together inside a speech-bubble shape, since both are "how do I actually say this" and reads
+   as someone speaking the phrase rather than just a card of text */
+.phrase-grid{display:flex; flex-direction:column; gap:20px;}
+.phrase-card{display:flex; flex-direction:column; align-items:flex-start; gap:6px;}
 .phrase-local{font-family:var(--font-head); font-weight:600; font-size:.85rem; color:var(--ink); opacity:.7;}
-.phrase-native{font-family:var(--font-head); font-weight:700; font-size:1.4rem; line-height:1.25; color:var(--ink);}
-.phrase-pron-row{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px;}
-.phrase-pron{color:var(--brand-dark); font-size:.92rem; font-style:italic;}
-/* a real tappable circle now, not a bare emoji floating with nothing marking it as a button -
-   same tinted-button look .btn's own default variant uses, just icon-only and round */
-.phrase-speak{border:none; background:var(--brand-tint); color:var(--brand-dark); cursor:pointer;
-  width:36px; height:36px; border-radius:50%; display:inline-flex; align-items:center;
-  justify-content:center; font-size:1.05rem; flex-shrink:0;}
-.phrase-speak:hover{background:var(--brand); color:#fff;}
+.phrase-bubble{position:relative; width:100%; background:var(--brand); color:#fff;
+  border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 44px 14px 16px;}
+/* the tail, pointing down from the bubble's lower-left - a plain CSS triangle rather than an
+   image, so it always matches the bubble's own background colour exactly */
+.phrase-bubble::after{content:""; position:absolute; left:22px; bottom:-9px; width:0; height:0;
+  border-left:9px solid transparent; border-right:9px solid transparent; border-top:9px solid var(--brand);}
+.phrase-native{font-family:var(--font-head); font-weight:700; font-size:1.4rem; line-height:1.25; color:#fff; display:block;}
+.phrase-pron{color:rgba(255,255,255,.85); font-size:.92rem; font-style:italic; display:block; margin-top:4px;}
+/* white so it reads against the bubble's blue, sat in its bottom-right corner rather than in a
+   row of its own now that the pronunciation already lives inside the bubble */
+.phrase-speak{position:absolute; right:12px; bottom:10px; border:none; background:none; color:#fff;
+  cursor:pointer; padding:4px; font-size:1.05rem; display:inline-flex; align-items:center; justify-content:center;}
+.phrase-speak:hover{opacity:.8;}
 /* full-bleed, no radius of its own - .plan-card-photo clips it back to the card's own rounded
    corners via overflow instead, so it reads as one continuous edge rather than a photo with a
    frame around it */
@@ -1844,7 +1850,7 @@ body.kb-open .tabbar.on{display:none;}
   .wrap[data-tab="docs"], .wrap[data-tab="notes"], .wrap[data-tab="contacts"]
   {max-width:560px; margin:0 auto; padding:calc(14px + env(safe-area-inset-top)) 24px 96px;}
   /* Watch Next's poster is sized to fill a phone-width tile - on the wider desktop grid that
-     same 50% width blows it up well past every other widget's own image, so it drops to the
+     same full width blows it up well past every other widget's own image, so it drops to the
      same small fixed size Last Seen's poster already uses there */
   .dash-watchnext-poster{width:38px; height:57px;}
   /* Next Trip's map preview gets more room to actually read as a map once the desktop grid
@@ -11150,7 +11156,7 @@ function renderTrip(t){
         ${isArchived(t) ? statusPill(t) : ''}
       </div>
       <p class="muted trip-meta">
-        <span><span class="meta-text">${esc(tripWhenLine(t))}</span></span>
+        <span><span class="meta-emoji" aria-hidden="true">📅</span><span class="meta-text">${esc(tripWhenLine(t))}</span></span>
         ${upcoming ? `<span><span class="meta-text">${esc(daysToGoCount(upcoming))}</span></span>`
           : (phrase ? `<span><span class="meta-emoji" aria-hidden="true">📍</span><span class="meta-text">${esc(phrase)}</span></span>` : '')}
       </p>
@@ -12128,8 +12134,14 @@ function tripLangEmptyHTML(hint){
 function allergySummaryLine(t){
   return (t.countries||[]).length ? 'Card Ready' : 'Add Countries First';
 }
+/* names the actual languages on offer ("German, Greek") rather than just "Phrases Ready", same
+   idea as the Travel tile's own comma-joined summary - falls back to a plain count once the list
+   is too long to read at this tile's width */
 function phrasesSummaryLine(t){
-  return (t.countries||[]).length ? 'Phrases Ready' : 'Add Countries First';
+  if(!(t.countries||[]).length) return 'Add Countries First';
+  const names = phraseLangsFor(t).map(l => LANG_NAMES_EN[l] || (ALLERGY_TEXT[l]||{}).name || l);
+  const joined = names.join(', ');
+  return joined.length <= 24 ? joined : `${names.length} Languages`;
 }
 function tabAllergy(t){
   if(!(t.countries||[]).length) return tripLangEmptyHTML('your allergy card writes itself');
@@ -12179,23 +12191,24 @@ function tabPhrases(t){
   const isEn = CUR_TRIP_LANG === 'en';
   const canSpeak = 'speechSynthesis' in window;
   const cards = list.map((phrase,i) => {
-    const speakBtn = canSpeak ? `<button class="phrase-speak" aria-label="Say this out loud" data-phrase="${esc(phrase)}" data-lang="${esc(CUR_TRIP_LANG)}" onclick="App.speakPhrase(this)">🔊</button>` : '';
+    const speakBtn = canSpeak ? `<button class="phrase-speak" aria-label="Say this out loud" data-phrase="${esc(phrase)}" data-lang="${esc(CUR_TRIP_LANG)}" onclick="App.speakPhrase(this)">${fa('volume-high')}</button>` : '';
     if(isEn){
-      // no separate English reference line here - it'd just repeat the word below it verbatim,
-      // so this one card gets the headline treatment on its own rather than reading small and
-      // faded with nothing underneath to explain why
+      // no separate English reference line here - it'd just repeat the word inside the bubble
+      // verbatim, so this one card is just the bubble on its own
       return `
     <div class="phrase-card">
-      <span class="phrase-native">${esc(PHRASES_EN[i])}</span>
-      ${speakBtn ? `<div class="phrase-pron-row"><span></span>${speakBtn}</div>` : ''}
+      <div class="phrase-bubble">
+        <span class="phrase-native">${esc(PHRASES_EN[i])}</span>
+        ${speakBtn}
+      </div>
     </div>`;
     }
     return `
     <div class="phrase-card">
       <span class="phrase-local">${esc(PHRASES_EN[i])}</span>
-      <span class="phrase-native">${esc(phrase)}</span>
-      <div class="phrase-pron-row">
-        ${pron ? `<span class="phrase-pron">${esc(pron[i])}</span>` : '<span></span>'}
+      <div class="phrase-bubble">
+        <span class="phrase-native">${esc(phrase)}</span>
+        ${pron ? `<span class="phrase-pron">${esc(pron[i])}</span>` : ''}
         ${speakBtn}
       </div>
     </div>`;

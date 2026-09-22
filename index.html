@@ -483,19 +483,15 @@ a{color:var(--brand-dark);}
 /* Places Been / Gigs Seen / This Year / Games - four counts up top, fixed to two columns
    regardless of height (unlike the masonry below, which balances by measured height) so they
    read as one glanceable block rather than being scattered wherever the balancer lands them */
-.dash-stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px;}
-/* a bare "🌍16" pill - four to a row, so each tile drops the "N Label" wording the same shape
-   gets everywhere else on the dashboard (the label still reaches a screen reader via aria-label
-   on the tile itself) and shrinks its padding/gap to actually fit four across on a phone. */
+.dash-stat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;}
+/* a bare "🌍16" pill - three to a row (two full rows of three for today's six), so each tile
+   drops the "N Label" wording the same shape gets everywhere else on the dashboard (the label
+   still reaches a screen reader via aria-label on the tile itself) and shrinks its padding/gap to
+   fit comfortably across on a phone. */
 .dash-stat-grid .dash-widget{padding:12px 10px;}
 .dash-stat-grid .dash-widget-row{gap:6px; justify-content:center;}
 .dash-stat-grid .dash-item-flags{font-size:1.15rem;}
 .dash-stat-grid .dash-item-title{font-size:.95rem;}
-/* the Plants tile's text ("Watering Needed"/"Watering Done"/"Start Growing") is a full phrase,
-   not a bare count like its five neighbours - a single column crushes it onto two cramped lines,
-   so it gets the width of three, filling out the second row exactly (5 bare-count tiles + this
-   one 3-wide tile = 8 grid units, two full rows of 4, no leftover gap) */
-.dash-stat-grid #dash-plants-slot{grid-column:span 3;}
 /* Branch's earnings card - full width rather than squeezed into the 2-column stat grid above,
    since it's carrying two figures (today/this week) side by side, not one. Reuses the same
    .dash-stat-num/.dash-stat-label look each stat tile already has, just two of them sharing one
@@ -1916,8 +1912,8 @@ body.kb-open .tabbar.on{display:none;}
   .gig-list-artists{grid-template-columns:repeat(6,1fr);}
   .plants-list{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
   .places-grid.dense{grid-template-columns:repeat(4,1fr);}
-  /* Home's top stat row sits on one line (five single tiles + the triple-width Watering tile) */
-  .dash-stat-grid{grid-template-columns:repeat(8,1fr);}
+  /* Home's top stat row sits on one line - six equal bare-count tiles */
+  .dash-stat-grid{grid-template-columns:repeat(6,1fr);}
   /* a plant's own page: actions + growing conditions pinned on the left, only the timeline/log
      on the right scrolls with the page */
   .plant-detail-cols{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); gap:28px; align-items:start;}
@@ -5585,10 +5581,10 @@ function renderDashboard(){
   $('#app').innerHTML = `
     <div class="dash-stat-grid">
       <div id="dash-places-slot">${dashPlacesBeenWidgetHTML()}</div>
-      <div id="dash-gigs-slot">${dashGigsStatWidgetHTML()}</div>
       <div id="dash-films-slot">${dashFilmsSeenWidgetHTML()}</div>
-      <div id="dash-games-stat-slot">${dashGamesStatPlaceholderHTML()}</div>
       <div id="dash-theatre-stat-slot">${dashTheatreSeenWidgetHTML()}</div>
+      <div id="dash-gigs-slot">${dashGigsStatWidgetHTML()}</div>
+      <div id="dash-games-stat-slot">${dashGamesStatPlaceholderHTML()}</div>
       <div id="dash-plants-slot">${dashPlantsWidgetHTML()}</div>
     </div>
     <div class="dash-masonry">
@@ -10329,16 +10325,11 @@ function delPlantImpl(id){
     toast('Vegetable removed');
   });
 }
-/* a bare stat tile like the rest of the top row (see dashStatTileHTML) rather than a per-plant
-   chip grid - Home is a glance, not a watering console, so it just needs to say whether
-   anything is waiting for you on the Plants page or not. */
+/* a bare stat tile like the rest of the top row (see dashStatTileHTML) - just how many
+   vegetables you've grown, same lifetime-count shape as Places Been/Gigs Seen/Films Seen rather
+   than a live watering-status readout. */
 function dashPlantsWidgetHTML(){
-  const list = DB.plants||[];
-  if(!list.length) return dashStatTileHTML('🥕', 'Start Growing', '', 'App.goPlants()');
-  const due = plantsSorted().filter(p => p.stage!==PLANT_STAGE_DEFAULT && plantOverdue(p));
-  return due.length
-    ? dashStatTileHTML('💧', 'Watering Needed', '', 'App.goPlants()')
-    : dashStatTileHTML('🌱', 'Watering Done', '', 'App.goPlants()');
+  return dashStatTileHTML('🌱', (DB.plants||[]).length, 'Plants Grown', 'App.goPlants()');
 }
 function drawDashPlantsSlot(){
   const slot = $('#dash-plants-slot'); if(slot) slot.innerHTML = dashPlantsWidgetHTML();

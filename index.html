@@ -8986,14 +8986,18 @@ function drawTheatreList(){
     : `<div class="empty">No shows logged yet.<br>Tap + Log Show to log the first one.</div>`;
 }
 function theatreCardHTML(t, i){
-  const facts = [t.venue, t.date?fmtShortDate(t.date):'', t.time||''].filter(Boolean).join(' · ');
+  // venue and date/time are two different kinds of fact (where vs when) - forced onto their own
+  // lines rather than one joined string, which used to wrap wherever the text happened to run
+  // out of room, sometimes splitting the venue's own name across two lines instead
+  const when = [t.date?fmtShortDate(t.date):'', t.time||''].filter(Boolean).join(' · ');
   return `
     <div class="card theatre-poster-card" role="button" tabindex="0" onclick="App.theatreForm(${i})"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.theatreForm(${i})}">
       ${t.image ? `<img class="theatre-poster" src="${esc(t.image)}" alt="" loading="lazy">`
                  : `<span class="theatre-poster theatre-poster-fallback" aria-hidden="true">🎭</span>`}
       <div class="theatre-poster-title">${esc(t.title||'Untitled')}</div>
-      ${facts?`<div class="theatre-poster-venue muted small">${esc(facts)}</div>`:''}
+      ${t.venue?`<div class="theatre-poster-venue muted small">${esc(t.venue)}</div>`:''}
+      ${when?`<div class="theatre-poster-venue muted small">${esc(when)}</div>`:''}
       ${theatreStarsHTML(t.rating)}
       ${t.notes?`<div class="small muted" style="margin-top:8px">${esc(t.notes)}</div>`:''}
     </div>`;

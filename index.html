@@ -666,15 +666,19 @@ a{color:var(--brand-dark);}
 .plant-timeline{display:flex; flex-direction:column;}
 .plant-timeline-item{display:flex; gap:12px; position:relative; padding-bottom:14px;}
 .plant-timeline-item:not(:last-child)::before{content:''; position:absolute; left:11px; top:26px; bottom:0; width:2px; background:var(--line);}
-.plant-timeline-dot{flex-shrink:0; width:24px; height:24px; border-radius:50%; z-index:1;
-  display:flex; align-items:center; justify-content:center; font-size:.9rem; line-height:1;
-  background:var(--paper); border:1px solid var(--line-strong);
+/* no background/border circle behind the emoji any more - just the glyph itself, sized up a
+   touch (.9rem to 1.1rem) since it's no longer sitting inside a badge to give it visual weight */
+.plant-timeline-dot{flex-shrink:0; width:24px; height:24px; z-index:1;
+  display:flex; align-items:center; justify-content:center; font-size:1.1rem; line-height:1;
   font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;}
 .plant-timeline-body{flex:1; min-width:0; padding-top:3px;}
 .plant-timeline-row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
 .plant-timeline-text{font-size:.82rem; overflow-wrap:anywhere;}
 .plant-timeline-text strong{display:block; font-weight:700; color:var(--ink);}
 .plant-timeline-text span{color:var(--muted); font-size:.74rem;}
+/* edit + delete grouped together with a tight gap of their own, rather than the row's wider
+   text-to-actions gap spacing them apart from each other too */
+.plant-timeline-actions{display:flex; align-items:center; gap:4px; flex-shrink:0;}
 /* the stage-change entry that's still current (plantTimelineHTML) carries the same description
    and germination window the old separate "current stage" card used to show above the log -
    right at the point in the log it actually happened, in chronological order like everything
@@ -683,7 +687,6 @@ a{color:var(--brand-dark);}
 /* the delete action sits right on the row now (plantTimelineHTML) - it used to live behind a
    tap-to-reveal menu so the row read as content first, a manageable log second, but that made
    deleting a mis-tapped entry a two-tap hunt rather than the one obvious tap it should be. */
-.plant-timeline-delete{flex-shrink:0;}
 /* Itinerary (routeStops/tabPlan) - a flat list of stops, each one an accordion onto its own
    day-by-day detail (planDaysHTML). Used to number each stop with its own dot on a connecting
    line, the same treatment as the plant log's timeline, but the map above the list now carries
@@ -9610,10 +9613,12 @@ function plantTimelineHTML(p){
         <div class="plant-timeline-body">
           <div class="plant-timeline-row">
             <span class="plant-timeline-text"><strong>${label}</strong><span>${esc(fmtDate(ev.ts.slice(0,10)))} &middot; ${esc(hhmm(ev.ts))}</span></span>
-            <button type="button" class="iconbtn" aria-label="${esc(editLabel)}" title="Edit date/time"
-              onclick="App.plantEditLogEntry('${esc(p.id)}','${ev.type}','${esc(ev.ts)}')">${fa('pen')}</button>
-            <button type="button" class="iconbtn plant-timeline-delete" aria-label="${esc(deleteLabel)}" title="Delete"
-              onclick="App.plantDeleteLogEntry('${esc(p.id)}','${ev.type}','${esc(ev.ts)}')">${fa('trash')}</button>
+            <div class="plant-timeline-actions">
+              <button type="button" class="iconbtn edit" aria-label="${esc(editLabel)}" title="Edit date/time"
+                onclick="App.plantEditLogEntry('${esc(p.id)}','${ev.type}','${esc(ev.ts)}')">${ICONS.edit}</button>
+              <button type="button" class="iconbtn del" aria-label="${esc(deleteLabel)}" title="Delete"
+                onclick="App.plantDeleteLogEntry('${esc(p.id)}','${ev.type}','${esc(ev.ts)}')">${ICONS.trash}</button>
+            </div>
           </div>
           ${detail ? `<p class="plant-timeline-detail">${detail}</p>` : ''}
         </div>
@@ -11008,6 +11013,11 @@ App.copyText = (enc, btn) => {
 /* ================= trip shell ================= */
 /* monochrome line icons (black & white per spec) */
 const fa = name => `<i class="icon fa-solid fa-${name}"></i>`;
+/* the lighter-weight outline style Font Awesome's Free tier ships for a handful of common
+   icons - closer to Apple's own thin iconography than the bold fa-solid glyphs, used for
+   edit/delete below rather than every icon site-wide (most of this app's icons - chevrons,
+   the filled star, etc - have no outline weight in the free set to switch to). */
+const faR = name => `<i class="icon fa-regular fa-${name}"></i>`;
 const ICONS = {
   home: fa('house'),
   docs: fa('file-lines'),
@@ -11035,8 +11045,8 @@ const ICONS = {
   ext: fa('up-right-from-square'),
   contacts: fa('address-book'),
   notes: fa('note-sticky'),
-  edit: fa('pen'),
-  trash: fa('trash'),
+  edit: faR('pen-to-square'),
+  trash: faR('trash-can'),
   view: fa('eye'),
   question: fa('question'),
   filePdf: fa('file-pdf'),

@@ -896,10 +896,15 @@ a{color:var(--brand-dark);}
    Palaiokastritsa") - see planConnectorHTML/autoFlightCard/autoStayCard */
 .plan-connector{display:flex; align-items:center; justify-content:center; gap:6px; color:var(--ink);
   font-size:.9rem; margin:0 0 20px;}
-/* the plain duration connector ("✈️ 3 Hours") only - a small, even gap above and below instead
-   of sitting flush against the card above it, unlike the leg variant just below (which keeps its
-   card-sized bottom margin to match the real card it's chained next to). */
-.plan-connector:not(.plan-connector-leg){margin:10px 0;}
+/* the plain duration connector ("✈️ 3 Hours") only - an even gap above and below instead of
+   sitting flush against the card above it, unlike the leg variant just below (which keeps its
+   card-sized bottom margin to match the real card it's chained next to). 10px on both sides
+   read as uneven in practice: adjacent block margins collapse to whichever side's bigger, and
+   the flight card above already carries its own 20px bottom margin, so the top gap collapsed up
+   to 20px while the arrive pill below (no top margin of its own) left the bottom gap at a plain
+   10px. Matching that same 20px here instead of a smaller value means both sides collapse to
+   the same number regardless of what either neighbour brings to the table. */
+.plan-connector:not(.plan-connector-leg){margin:20px 0;}
 /* a plain travel leg (train/bus/taxi/drive - see routeStopHTML) uses this same .plan-connector
    class but reads oddly next to a booked flight's own full-width card right below it on the same
    day - centred, no background, only as wide as its own text. A slight background and full-width

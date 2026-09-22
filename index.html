@@ -12448,6 +12448,33 @@ const LANG_SPEECH_LOCALE = {
   fa:'fa-IR', ar:'ar-SA', he:'he-IL', sw:'sw-KE', am:'am-ET', ka:'ka-GE', hy:'hy-AM',
   az:'az-AZ', mn:'mn-MN', so:'so-SO',
 };
+/* the device's own installed voice list - loaded once up front and again whenever the browser
+   (re)populates it, since most browsers return an empty array from getVoices() until its own
+   async voiceschanged event has fired at least once. */
+let SPEECH_VOICES = [];
+if('speechSynthesis' in window){
+  const loadSpeechVoices = () => { SPEECH_VOICES = window.speechSynthesis.getVoices(); };
+  loadSpeechVoices();
+  window.speechSynthesis.onvoiceschanged = loadSpeechVoices;
+}
+/* setting utterance.lang alone leaves voice choice entirely up to the browser's own default,
+   which on a language a device only half-supports (Albanian more often than Greek, say) can
+   mean a dated, low-quality "compact" voice even when a better one for that same language is
+   also installed. Picks explicitly instead: an exact locale match over a same-language/other-
+   region one, and within that, a voice whose own name flags it as the nicer of two installed
+   options (iOS/Android both sometimes ship an "Enhanced"/"Premium" voice alongside a default
+   compact one) before falling back to whatever's first. Still entirely bounded by what the
+   device itself has installed - nothing here can add a voice that isn't already on it. */
+function bestVoiceFor(localeTag){
+  const short = (localeTag||'').split('-')[0];
+  const exact = SPEECH_VOICES.filter(v => v.lang === localeTag);
+  const sameLang = SPEECH_VOICES.filter(v => v.lang.split('-')[0] === short);
+  const pool = exact.length ? exact : sameLang;
+  if(!pool.length) return null;
+  return pool.find(v => /premium|enhanced|neural/i.test(v.name))
+      || pool.find(v => v.localService)
+      || pool[0];
+}
 App.speakPhrase = (btn) => {
   if(!('speechSynthesis' in window)) return;
   const text = btn.dataset.phrase, lang = btn.dataset.lang;
@@ -12456,6 +12483,8 @@ App.speakPhrase = (btn) => {
     window.speechSynthesis.cancel();   // a second tap replaces the last one instead of queuing
     const u = new SpeechSynthesisUtterance(text);
     u.lang = LANG_SPEECH_LOCALE[lang] || lang;
+    const voice = bestVoiceFor(u.lang);
+    if(voice) u.voice = voice;
     window.speechSynthesis.speak(u);
   }catch(e){}
 };

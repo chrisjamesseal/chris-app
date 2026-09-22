@@ -1841,6 +1841,12 @@ body.kb-open .tabbar.on{display:none;}
 /* full-bleed, no radius of its own - .plan-card-photo clips it back to the card's own rounded
    corners via overflow instead, so it reads as one continuous edge rather than a photo with a
    frame around it */
+/* padding-top was left at the old 9px when the card padding doubled to 18px above (.route-days
+   .card.plan-card:not(.plan-card-photo)) - excluded there for its full-bleed image edges, but
+   that exclusion also skipped the top, leaving the header text sat noticeably closer to the top
+   edge than every other card's own 18px. Needs .route-days .card in the selector too, to outrank
+   that same rule's own specificity (three classes) rather than losing to it. */
+.route-days .card.plan-card.plan-card-photo{padding-top:18px;}
 .plan-card.plan-card-photo{padding-left:0; padding-right:0; padding-bottom:0; overflow:hidden;}
 .plan-card-photo .section-head,.plan-card-photo>p,.plan-card-photo>.small,.plan-card-photo>.btn-row{padding-left:18px; padding-right:18px;}
 .plan-card-photo>.btn-row{padding-bottom:18px;}

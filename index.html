@@ -1254,11 +1254,12 @@ input[list]::-webkit-calendar-picker-indicator, input[list]::-webkit-list-button
 /* the back-to-all-trips button sits left of the trip name, same plain icon button as every
    other back arrow in the app (see .crumb-backbtn), just placed inline with a serif <h1> here
    instead of a breadcrumb bar */
-/* top-aligned rather than centred - a short trip name looked the same either way, but a longer
-   one that wraps onto two or three lines was centring the back arrow against the whole wrapped
-   block, floating it well below where the Itinerary crumb's own back arrow sits (that title's
-   never more than one short word, so it never had this problem to begin with) */
-.trip-title-main{display:flex; align-items:flex-start; gap:6px;}
+.trip-title-main{display:flex; align-items:center; gap:6px;}
+/* .crumb-backbtn's own icon defaults to a smaller 1.05rem (right for the plain single-line
+   headings it sits next to everywhere else) - this is the one spot it sits beside a much bigger
+   trip-name heading, so it needs the same bump .crumb-here already gives it to actually match
+   the Itinerary page's own back arrow instead of reading noticeably smaller next to it. */
+.trip-title-main .icon{font-size:1.5rem; color:var(--brand); flex-shrink:0;}
 .trip-meta{margin-top:4px; display:flex; align-items:center; gap:6px 18px; flex-wrap:wrap;}
 .trip-meta > span{display:inline-flex; align-items:center; gap:7px;}
 .meta-emoji{font-size:.8rem; line-height:1;
@@ -12405,7 +12406,7 @@ function tabAllergy(t){
       <div class="allergy-card-lang">${esc(tr.title)}</div>
       <div class="allergy-section severe">
         <div class="allergy-section-head">
-          <span class="allergy-section-emoji" aria-hidden="true">🌾🚫</span>
+          <span class="allergy-section-emoji" aria-hidden="true">🌾</span>
           <span class="allergy-section-title">${esc(tr.coeliacTitle)}</span>
         </div>
         ${bullets(tr.coeliacBullets)}

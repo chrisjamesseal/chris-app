@@ -11644,11 +11644,14 @@ function crumbAction(t){
     // Itinerary's add actions live in the sticky bar at the bottom of the screen instead
     // (see .add-bar in renderTrip and App.addMenu) - three buttons crammed into this row
     // wrapped awkwardly on a phone, and the sticky bar is reachable without scrolling back
-    // to the top of what can be a long page. This slot instead carries the List/Map toggle,
-    // only worth showing once there's actually a map to switch to (see tabPlan's own hasNumbered).
+    // to the top of what can be a long page. This slot instead carries the Detail/Summary
+    // toggle, only worth showing once there's actually a map to switch to (see tabPlan's own
+    // hasNumbered). Internally still PLAN_VIEW 'list'/'map' - only the visible labels changed,
+    // to read as what each view now actually is: Detail is the plain day-by-day list, Summary
+    // is the map plus each Location's own AI blurb (see locationsSummaryHTML/tabPlan).
     case 'plan':   return mapRouteStops(t).length ? `<div class="view-toggle">
-      <button type="button" class="view-toggle-btn${PLAN_VIEW==='list'?' active':''}" onclick="App.setPlanView('list')" aria-label="List view">${fa('list')} List</button>
-      <button type="button" class="view-toggle-btn${PLAN_VIEW==='map'?' active':''}" onclick="App.setPlanView('map')" aria-label="Map view">${fa('map')} Map</button>
+      <button type="button" class="view-toggle-btn${PLAN_VIEW==='list'?' active':''}" onclick="App.setPlanView('list')" aria-label="Detail view">${fa('list')} Detail</button>
+      <button type="button" class="view-toggle-btn${PLAN_VIEW==='map'?' active':''}" onclick="App.setPlanView('map')" aria-label="Summary view">${fa('map')} Summary</button>
     </div>` : '';
     case 'mood':   return `<button class="btn sm primary" onclick="App.moodForm()">${ICONS.add}New Idea</button>`;
     case 'contacts': return `<button class="btn sm primary" onclick="App.contactForm()">+ Add</button>`;
@@ -14359,7 +14362,9 @@ function tabPlan(t, ro){
   const showMap = hasNumbered && PLAN_VIEW === 'map';
   const mapHTML = showMap ? `<div class="route-map-wrap"><div id="route-map" class="route-map"></div></div>` : '';
   const listHTML = showMap ? '' : `<div class="route-list">${keys.map(dayRow).join('')}</div>`;
-  return `${mapHTML}${locationsSummaryHTML(t, ro)}${listHTML}`;
+  // the Locations row (with each place's own AI summary) is what makes Summary view a summary -
+  // Detail view is just the plain day-by-day list, so it's left out there rather than shown twice
+  return `${mapHTML}${showMap ? locationsSummaryHTML(t, ro) : ''}${listHTML}`;
 }
 /* the trip's own manually-defined Locations (App.locationForm) - a date range with a name and,
    optionally, a country for the flag, so a stretch with nothing else booked yet still names
@@ -14475,11 +14480,12 @@ async function aiRequestLocSummary(t, loc, key){
 }
 /* called after every render of the Itinerary tab, same spot as initAiSummaries - unlike a day's
    own summary (which waits for that day to be opened first), every Location is already on
-   screen, so this fires for all of them straight away instead of waiting on anything to expand.
-   Skips a location with nothing real planned in it yet - "nothing planned yet" isn't worth an
-   API call or a callout, the empty day list underneath it already says that. */
+   screen once Summary view is, so this fires for all of them straight away instead of waiting on
+   anything to expand. Skips entirely on Detail view (see tabPlan/locationsSummaryHTML) - no
+   point spending an API call on a callout that isn't even shown, and a location with nothing
+   real planned in it yet is skipped too, same reasoning. */
 function initLocationSummaries(t){
-  if(readOnly(t)) return;
+  if(readOnly(t) || PLAN_VIEW !== 'map') return;
   (t.locations||[]).forEach(loc => {
     const key = locSummaryKey(t, loc);
     if((t.aiSummaries||{})[key]) return;

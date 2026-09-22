@@ -891,6 +891,10 @@ a{color:var(--brand-dark);}
    Palaiokastritsa") - see planConnectorHTML/autoFlightCard/autoStayCard */
 .plan-connector{display:flex; align-items:center; justify-content:center; gap:6px; color:var(--ink);
   font-size:.9rem; margin:0 0 20px;}
+/* the plain duration connector ("✈️ 3 Hours") only - a small, even gap above and below instead
+   of sitting flush against the card above it, unlike the leg variant just below (which keeps its
+   card-sized bottom margin to match the real card it's chained next to). */
+.plan-connector:not(.plan-connector-leg){margin:10px 0;}
 /* a plain travel leg (train/bus/taxi/drive - see routeStopHTML) uses this same .plan-connector
    class but reads oddly next to a booked flight's own full-width card right below it on the same
    day - centred, no background, only as wide as its own text. A slight background and full-width
@@ -955,7 +959,7 @@ a{color:var(--brand-dark);}
 .loc-timeline-body{flex:1; min-width:0; display:flex; flex-direction:column; text-align:left;
   background:none; border:none; padding:0; font:inherit; cursor:pointer;}
 .loc-timeline-body strong{font-weight:700; font-size:.95rem; color:var(--ink);}
-.loc-timeline-body .muted{font-size:.95rem; margin-top:8px;}
+.loc-timeline-body .muted{font-size:.95rem; margin-top:4px;}
 .loc-timeline-body:disabled{cursor:default;}
 /* the AI stop summary (aiSummaryHTML) - a tinted callout so it reads as an added extra sat
    above the day-by-day cards, not just another card in the same list */
@@ -1837,6 +1841,12 @@ body.kb-open .tabbar.on{display:none;}
 /* full-bleed, no radius of its own - .plan-card-photo clips it back to the card's own rounded
    corners via overflow instead, so it reads as one continuous edge rather than a photo with a
    frame around it */
+/* padding-top was left at the old 9px when the card padding doubled to 18px above (.route-days
+   .card.plan-card:not(.plan-card-photo)) - excluded there for its full-bleed image edges, but
+   that exclusion also skipped the top, leaving the header text sat noticeably closer to the top
+   edge than every other card's own 18px. Needs .route-days .card in the selector too, to outrank
+   that same rule's own specificity (three classes) rather than losing to it. */
+.route-days .card.plan-card.plan-card-photo{padding-top:18px;}
 .plan-card.plan-card-photo{padding-left:0; padding-right:0; padding-bottom:0; overflow:hidden;}
 .plan-card-photo .section-head,.plan-card-photo>p,.plan-card-photo>.small,.plan-card-photo>.btn-row{padding-left:18px; padding-right:18px;}
 .plan-card-photo>.btn-row{padding-bottom:18px;}
@@ -12894,9 +12904,9 @@ function exactDurationWords(mins){
    duration (durationH/M) wins when it has one, since that's a fact rather than a guess;
    otherwise it's worked out from the two clock times either side, when both are known. Returns
    '' when there's nothing to show rather than ever guessing at a number with nothing behind it.
-   dest, when given, reads the same "3 Hours to Corfu" way an unbooked travel leg's own
-   duration line already does (see travelCard's "way to X" line just below) - named rather than
-   left as a bare duration, since more than one flight in the same day otherwise all read alike. */
+   A flight's own connector is called with dest left out - just "3 Hours", not "3 Hours to
+   Corfu" - since the arrive pill right below it already names the destination. dest is still
+   supported for any other caller that wants the named form. */
 function planConnectorHTML(mins, iconHTML, dest){
   const label = hoursWordLabel(mins);
   if(!label) return '';
@@ -13166,7 +13176,7 @@ function planDaysHTML(t, ro, filterKeys){
     <div class="plan-auto${!ro?' plan-click':''}" ${clickAttrs(`App.flightForm(${s.fi})`)}>
       ${itinFlightCardHTML(s)}
     </div>
-    ${planConnectorHTML(dur, ICONS.flight, toName)}
+    ${planConnectorHTML(dur, ICONS.flight)}
     ${s.f.to?`<div class="plan-arrive-pill${!ro?' plan-click':''}" ${clickAttrs(`App.flightForm(${s.fi})`)}>${s.f.arrTime?`<span class="plan-arrive-time">${esc(s.f.arrTime)} -</span> `:''}${arriveFlag?arriveFlag+' ':''}Arrive in ${esc(toName)}</div>`:''}`;
   };
   const autoFerryCard = s => `
@@ -13746,25 +13756,30 @@ const CARTO_LATIN_LABEL_LAYERS = ['place_hamlet','place_suburbs','place_villages
    levels surfaces them sooner, without changing what shows once you are zoomed in on a stop. */
 const CARTO_MINZOOM_OVERRIDES = {place_city_r6:6, place_city_r5:6, place_city_dot_r7:4,
   place_city_dot_r4:3, place_town:6, place_villages:8, place_capital_dot_z7:5, place_state:3};
-/* the sea/ocean/lake fill layers, recoloured to the app's own --bg tone instead of Voyager's
-   baked-in light blue - ids checked against the style's own JSON
+/* the sea/ocean/lake fill layers, made genuinely transparent (not just recoloured to match the
+   page) - ids checked against the style's own JSON
    (github.com/CartoDB/basemap-styles/blob/master/mapboxgl/voyager.json), same as
    CARTO_LATIN_LABEL_LAYERS above. "water" is the sea/lake fill itself; "water_shadow" is a
    second, separately-coloured fill Voyager draws underneath it for a bevelled-edge look;
    "waterway" is rivers/streams (a line, not a fill).
-   This used to zero each layer's opacity instead, on the theory that would let the page's own
-   gradient wash show through the canvas - it didn't, because Voyager's style also paints its
-   own opaque "background" layer (a flat #fbf8f3 cream, background-opacity 1) underneath every
-   polygon, covering the whole canvas as its own base fill. That layer isn't shaped like water,
-   it's the canvas's blank page, so there's no way to zero it out without every semi-transparent
-   land layer (landuse, parks, ...) also turning washy against whatever's behind the canvas
-   instead of that cream base they're designed to sit on. Recolouring water to a flat tone
-   instead sidesteps that entirely - no canvas transparency involved, just a plain colour swap,
-   the same fix a raster-tile basemap would need too. Read from the CSS custom property at paint
-   time (not hardcoded) so it stays in sync with the token if the palette ever changes. Only
-   covers this GL vector path - the plain raster-tile fallback bakes water colour into the image
-   itself, nothing to override there. */
+   This used to just recolour water to the app's own --bg tone, because Voyager's "background"
+   layer is an opaque flat cream (#fbf8f3, background-opacity 1) underneath every polygon on the
+   canvas - zeroing water's own opacity back then only revealed that opaque cream, not the page
+   behind the map. The fix now goes one layer deeper: "background" itself is zeroed out too (see
+   below), so with both gone there's nothing left painting over the canvas in open water, and the
+   page's own gradient actually shows through. The real tradeoff: Voyager has no single polygon
+   for "all land" either, only specific tagged features (landcover's wood/grass/park, landuse's
+   residential/cemetery/stadium - see CARTO_LAND_LAYERS) - so unclassified land (open countryside,
+   bare mountainside, anything OSM hasn't tagged a land-use for) goes transparent right along with
+   the sea. Not a bug, just what "transparent sea" costs on this tile set without shipping a
+   separate land-mass polygon of our own. Only covers this GL vector path - the plain raster-tile
+   fallback bakes both colours into the image itself, nothing to override there. */
 const CARTO_WATER_LAYERS = ['water', 'water_shadow', 'waterway'];
+/* the only genuinely land-coloured polygons left once "background" goes transparent (see above) -
+   a flat, more saturated natural green instead of Voyager's own faint, zoom-interpolated wash
+   (barely-there at low zoom, fading in as you zoom past 8), so wherever land actually is tagged
+   it reads as solid ground rather than a watermark. */
+const CARTO_LAND_LAYERS = ['landcover', 'landuse_residential', 'landuse'];
 function tuneCartoLabels(glMap){
   CARTO_LATIN_LABEL_LAYERS.forEach(id => {
     if(!glMap.getLayer(id)) return;
@@ -13774,20 +13789,20 @@ function tuneCartoLabels(glMap){
     if(!glMap.getLayer(id)) return;
     try{ glMap.setLayerZoomRange(id, minzoom, 24); }catch(e){}
   });
-  const bg = (getComputedStyle(document.documentElement).getPropertyValue('--bg')||'').trim() || '#EFF3FA';
   CARTO_WATER_LAYERS.forEach(id => {
     if(!glMap.getLayer(id)) return;
     const type = glMap.getLayer(id).type;   // "fill" (water/water_shadow) or "line" (waterway)
-    try{ glMap.setPaintProperty(id, type+'-color', bg); }catch(e){}
+    try{ glMap.setPaintProperty(id, type+'-color', 'rgba(0,0,0,0)'); }catch(e){}
+    try{ glMap.setPaintProperty(id, type+'-opacity', 0); }catch(e){}
   });
-  /* Voyager's "background" layer is the map canvas's own opaque base fill - a flat, near-white
-     cream (#fbf8f3) that every land polygon (landuse, parks...) sits on, so it's the actual land
-     colour on this basemap rather than a separate tint. Darkened a shade so land reads with a
-     bit more definition against the route line and pins instead of nearly blending into the
-     page's own light background. */
   if(glMap.getLayer('background')){
-    try{ glMap.setPaintProperty('background', 'background-color', '#e4ddd0'); }catch(e){}
+    try{ glMap.setPaintProperty('background', 'background-opacity', 0); }catch(e){}
   }
+  CARTO_LAND_LAYERS.forEach(id => {
+    if(!glMap.getLayer(id)) return;
+    try{ glMap.setPaintProperty(id, 'fill-color', '#BFDDA4'); }catch(e){}
+    try{ glMap.setPaintProperty(id, 'fill-opacity', 0.65); }catch(e){}
+  });
 }
 /* the actual base layer every route map adds - MapLibre GL's vector rendering (via the
    maplibre-gl-leaflet bridge, so the rest of this file keeps using plain Leaflet markers/lines/

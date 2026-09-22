@@ -527,11 +527,12 @@ a{color:var(--brand-dark);}
    next to two lines of text */
 .dash-item-img-lg{display:block; width:64px; height:64px; object-fit:cover; border-radius:var(--radius-sm); margin-bottom:10px;}
 .dash-item-img-lg.round{border-radius:50%;}
-/* Theatre's own Next Show/Watch Next tiles: full tile width in the same 2:3 poster shape as
-   Films' Watch Next (.dash-watchnext-poster) instead of a small fixed square - the square left a
-   lot of empty letterboxing above/below a tall poster image, so this fills the space instead of
-   containing within it. */
-.theatre-dash-img{width:100%; height:auto; aspect-ratio:2/3; object-fit:cover;}
+/* Theatre's own Next Show/Watch Next tiles: full tile width, at whatever aspect ratio the image
+   actually is, instead of a small fixed square - the square left empty letterboxing around a
+   tall poster, but Ticketmaster's Arts & Theatre images aren't consistently tall posters (some
+   are wide promotional banners, like a show's own key art), so forcing a fixed 2:3 crop cut
+   those up instead. Full width with no forced ratio fills the space either way without cropping. */
+.theatre-dash-img{width:100%; height:auto;}
 /* Watch Next's provider logos sit below the title/sub, with a bit more breathing room above
    them than the tight 4px gap Watchlist's own cards use below their poster, see .film-providers-badge */
 .dash-watchnext-providers{margin-top:10px;}

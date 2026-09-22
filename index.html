@@ -939,8 +939,12 @@ a{color:var(--brand-dark);}
 .plan-connector-leg .travel-link-fav{margin-left:auto; flex-shrink:0;}
 .plan-connector-leg .travel-link-fav .fav{margin-right:0;}
 .plan-arrive-pill{background:#fff; border-radius:var(--radius); padding:11px 14px; margin:0 0 20px;
-  font-weight:700; font-size:.9rem; color:var(--ink);}
+  font-weight:700; font-size:.9rem; color:var(--ink); display:flex; align-items:center;
+  justify-content:space-between; gap:10px;}
 .plan-arrive-time{font-weight:400;}
+/* the destination's own weather, right-aligned on its "Arrive in X" pill (wxArriveHTML) - plain
+   weight so it doesn't compete with the pill's own bold place name */
+.wx-arrive-inline{font-weight:400; color:var(--muted); flex-shrink:0;}
 /* the route map (initRouteMap) - a Leaflet/OSM view sat above the stop list, its pins the only
    numbering left once the list below dropped its own (see the comment above .route-list).
    Only rendered once there's a real booked stop to plot; skipped rather than shown empty for a
@@ -12863,7 +12867,12 @@ function wxDayPlaces(t, dayKeys){
   const map = {};
   let cur = fallback, ei = 0;
   keys.forEach(k=>{
-    while(ei < events.length && events[ei].date <= k){
+    // strictly before k, not on it - a flight/ferry/check-in dated today only becomes "where you
+    // are" from tomorrow on. Today itself still starts wherever you were before it, which is what
+    // this day's own weather chip should show - the arrival's own destination weather instead
+    // shows right on its own "Arrive in X" pill (see autoFlightCard/wxArriveHTML), not smuggled
+    // into the whole day's chip
+    while(ei < events.length && events[ei].date < k){
       if(events[ei].cands.length) cur = [...new Set(events[ei].cands.concat(fallback))];
       ei++;
     }
@@ -12970,16 +12979,42 @@ function wxDayHTML(dateKey){
   const where = geo.label ? ' in '+geo.label : '';
   return ` - <span class="wx-inline" title="${esc(label+where)}">${emoji}${Math.round(d.max)}°/${Math.round(d.min)}°${rain}</span>`;
 }
+/* the weather right on a flight's own "Arrive in X" pill (see autoFlightCard) - unlike
+   wxDayHTML's day-wide chip (now the START of the day, wherever you were before any of today's
+   travel), this is always that flight's own destination on its own date, given directly rather
+   than read off WX_DAY_PLACES's cascade. Shares the same geocode/forecast cache (WX_LIST_GEO/
+   WX_STATE) as the day chips though, so a destination already resolved for one costs nothing to
+   reuse for the other. */
+function wxArriveHTML(dateKey, candsKey){
+  if(!dateKey || !candsKey) return '';
+  const geo = WX_LIST_GEO[candsKey];
+  if(!geo) return '';
+  const st = WX_STATE[geo.lat.toFixed(2)+','+geo.lon.toFixed(2)];
+  if(!st || st.status !== 'ok') return '';
+  const d = st.days[dateKey];
+  if(!d || typeof d.max !== 'number') return '';
+  const [label, emoji] = WX_CODES[d.code] || ['', '☁️'];
+  const rain = (typeof d.pop === 'number' && d.pop >= 20) ? ` · 💧${Math.round(d.pop)}%` : '';
+  const where = geo.label ? ' in '+geo.label : '';
+  return `<span class="wx-inline wx-arrive-inline" title="${esc(label+where)}">${emoji}${Math.round(d.max)}°/${Math.round(d.min)}°${rain}</span>`;
+}
 function paintWeather(){
   document.querySelectorAll('#tab-body [data-wx-date]').forEach(el=>{
     el.innerHTML = wxDayHTML(el.dataset.wxDate);
+  });
+  document.querySelectorAll('#tab-body [data-arr-date]').forEach(el=>{
+    el.innerHTML = wxArriveHTML(el.dataset.arrDate, el.dataset.arrCands);
   });
 }
 function initWeather(t){
   const keys = [...document.querySelectorAll('#tab-body [data-wx-date]')].map(el=>el.dataset.wxDate);
   WX_DAY_PLACES = wxDayPlaces(t, keys);
   const repaint = () => { if(CUR_TAB==='plan' && CUR_TRIP_ID===t.id) paintWeather(); };
-  [...new Set(Object.values(WX_DAY_PLACES).map(c=>c.join('|')))].forEach(listKey=>{
+  const listKeys = new Set(Object.values(WX_DAY_PLACES).map(c=>c.join('|')));
+  document.querySelectorAll('#tab-body [data-arr-cands]').forEach(el=>{
+    if(el.dataset.arrCands) listKeys.add(el.dataset.arrCands);
+  });
+  [...listKeys].forEach(listKey=>{
     if(!listKey) return;
     const known = WX_LIST_GEO[listKey];
     if(known){ wxForecast(known, repaint); return; }
@@ -13343,7 +13378,10 @@ function planDaysHTML(t, ro, filterKeys){
       ${itinFlightCardHTML(s)}
     </div>
     ${planConnectorHTML(dur, ICONS.flight)}
-    ${s.f.to?`<div class="plan-arrive-pill${!ro?' plan-click':''}" ${clickAttrs(`App.flightForm(${s.fi})`)}>${s.f.arrTime?`<span class="plan-arrive-time">${esc(s.f.arrTime)} -</span> `:''}${arriveFlag?arriveFlag+' ':''}Arrive in ${esc(toName)}</div>`:''}`;
+    ${s.f.to?`<div class="plan-arrive-pill${!ro?' plan-click':''}" ${clickAttrs(`App.flightForm(${s.fi})`)}>
+      <span>${s.f.arrTime?`<span class="plan-arrive-time">${esc(s.f.arrTime)} -</span> `:''}${arriveFlag?arriveFlag+' ':''}Arrive in ${esc(toName)}</span>
+      <span class="wx-slot" data-arr-date="${esc(s.f.date||'')}" data-arr-cands="${esc(wxAirportPlaces(s.f.to).join('|'))}"></span>
+    </div>`:''}`;
   };
   const autoFerryCard = s => `
     <div class="plan-auto${!ro?' plan-click':''}" ${clickAttrs(`App.ferryForm(${s.fi})`)}>

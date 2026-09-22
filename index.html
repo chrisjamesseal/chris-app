@@ -7007,7 +7007,8 @@ function gigFormImpl(i, prefillArtist){
       </div>
       <div class="chips" id="gig-people-pills" style="margin-top:10px"></div>
     </div>
-    <button class="btn primary" style="width:100%" onclick="App.saveGig(${i>=0?i:-1})">${i>=0?'Save':'Add Gig'}</button>`);
+    <button class="btn primary" style="width:100%" onclick="App.saveGig(${i>=0?i:-1})">${i>=0?'Save':'Add Gig'}</button>
+    ${i>=0?`<button class="btn danger" style="width:100%;margin-top:10px" onclick="App.deleteGigFromForm(${i})">Delete Gig</button>`:''}`);
   const picked = $('#gig-picked'); if(picked) picked.innerHTML = gigPickedHTML();
   drawGigPeoplePills();
 }
@@ -10471,6 +10472,13 @@ App.gigArtistInput = gigArtistInputImpl;
 App.gigArtistPick = gigArtistPickImpl;
 App.saveGig = saveGigImpl;
 App.delGig = delGigImpl;
+/* Edit Gig's own Delete button - App.delGig itself (the list's small trash icon) deletes
+   outright with no confirmation; a full-width Delete button inside the form is a much easier
+   target to hit by mistake mid-scroll, so this one guards it with the same confirm dialog
+   delTheatreImpl already uses for the equivalent Theatre button. */
+App.deleteGigFromForm = i => {
+  confirmModal('Remove This Gig?', "This removes it from your log. This can't be undone.", 'Remove', () => App.delGig(i));
+};
 /* People names get their first letter capitalised as they're added, so "cal" reads the same
    as "Cal". Only the first letter of each word is touched (words split on spaces and hyphens),
    leaving the rest of each word as typed so intentional casing like "McCartney" survives. */

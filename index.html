@@ -891,6 +891,10 @@ a{color:var(--brand-dark);}
    Palaiokastritsa") - see planConnectorHTML/autoFlightCard/autoStayCard */
 .plan-connector{display:flex; align-items:center; justify-content:center; gap:6px; color:var(--ink);
   font-size:.9rem; margin:0 0 20px;}
+/* the plain duration connector ("✈️ 3 Hours") only - a small, even gap above and below instead
+   of sitting flush against the card above it, unlike the leg variant just below (which keeps its
+   card-sized bottom margin to match the real card it's chained next to). */
+.plan-connector:not(.plan-connector-leg){margin:10px 0;}
 /* a plain travel leg (train/bus/taxi/drive - see routeStopHTML) uses this same .plan-connector
    class but reads oddly next to a booked flight's own full-width card right below it on the same
    day - centred, no background, only as wide as its own text. A slight background and full-width
@@ -12894,9 +12898,9 @@ function exactDurationWords(mins){
    duration (durationH/M) wins when it has one, since that's a fact rather than a guess;
    otherwise it's worked out from the two clock times either side, when both are known. Returns
    '' when there's nothing to show rather than ever guessing at a number with nothing behind it.
-   dest, when given, reads the same "3 Hours to Corfu" way an unbooked travel leg's own
-   duration line already does (see travelCard's "way to X" line just below) - named rather than
-   left as a bare duration, since more than one flight in the same day otherwise all read alike. */
+   A flight's own connector is called with dest left out - just "3 Hours", not "3 Hours to
+   Corfu" - since the arrive pill right below it already names the destination. dest is still
+   supported for any other caller that wants the named form. */
 function planConnectorHTML(mins, iconHTML, dest){
   const label = hoursWordLabel(mins);
   if(!label) return '';
@@ -13166,7 +13170,7 @@ function planDaysHTML(t, ro, filterKeys){
     <div class="plan-auto${!ro?' plan-click':''}" ${clickAttrs(`App.flightForm(${s.fi})`)}>
       ${itinFlightCardHTML(s)}
     </div>
-    ${planConnectorHTML(dur, ICONS.flight, toName)}
+    ${planConnectorHTML(dur, ICONS.flight)}
     ${s.f.to?`<div class="plan-arrive-pill${!ro?' plan-click':''}" ${clickAttrs(`App.flightForm(${s.fi})`)}>${s.f.arrTime?`<span class="plan-arrive-time">${esc(s.f.arrTime)} -</span> `:''}${arriveFlag?arriveFlag+' ':''}Arrive in ${esc(toName)}</div>`:''}`;
   };
   const autoFerryCard = s => `

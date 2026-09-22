@@ -384,8 +384,8 @@ a{color:var(--brand-dark);}
    titles sits shorter than its neighbours and the posters below it in the next row creep up to
    meet them, breaking the strict poster-grid look one flexible-height title would give it */
 .film-title{margin-top:6px; font-family:var(--font-head); font-weight:700; font-size:.78rem; color:var(--ink);
-  line-height:1.25; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical;
-  -webkit-line-clamp:2; overflow:hidden; height:2.5em;}
+  line-height:1.1; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical;
+  -webkit-line-clamp:2; overflow:hidden; height:2.2em;}
 .film-rewatch-badge{color:var(--muted); font-weight:400;}
 .film-meta{margin-top:2px; font-size:.68rem; color:var(--muted);}
 /* UK streaming logos - see fetchFilmProviders/filmProvidersHTML. A plain wrapping row under
@@ -483,19 +483,15 @@ a{color:var(--brand-dark);}
 /* Places Been / Gigs Seen / This Year / Games - four counts up top, fixed to two columns
    regardless of height (unlike the masonry below, which balances by measured height) so they
    read as one glanceable block rather than being scattered wherever the balancer lands them */
-.dash-stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px;}
-/* a bare "🌍16" pill - four to a row, so each tile drops the "N Label" wording the same shape
-   gets everywhere else on the dashboard (the label still reaches a screen reader via aria-label
-   on the tile itself) and shrinks its padding/gap to actually fit four across on a phone. */
+.dash-stat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;}
+/* a bare "🌍16" pill - three to a row (two full rows of three for today's six), so each tile
+   drops the "N Label" wording the same shape gets everywhere else on the dashboard (the label
+   still reaches a screen reader via aria-label on the tile itself) and shrinks its padding/gap to
+   fit comfortably across on a phone. */
 .dash-stat-grid .dash-widget{padding:12px 10px;}
 .dash-stat-grid .dash-widget-row{gap:6px; justify-content:center;}
 .dash-stat-grid .dash-item-flags{font-size:1.15rem;}
 .dash-stat-grid .dash-item-title{font-size:.95rem;}
-/* the Plants tile's text ("Watering Needed"/"Watering Done"/"Start Growing") is a full phrase,
-   not a bare count like its five neighbours - a single column crushes it onto two cramped lines,
-   so it gets the width of three, filling out the second row exactly (5 bare-count tiles + this
-   one 3-wide tile = 8 grid units, two full rows of 4, no leftover gap) */
-.dash-stat-grid #dash-plants-slot{grid-column:span 3;}
 /* Branch's earnings card - full width rather than squeezed into the 2-column stat grid above,
    since it's carrying two figures (today/this week) side by side, not one. Reuses the same
    .dash-stat-num/.dash-stat-label look each stat tile already has, just two of them sharing one
@@ -531,11 +527,11 @@ a{color:var(--brand-dark);}
    next to two lines of text */
 .dash-item-img-lg{display:block; width:64px; height:64px; object-fit:cover; border-radius:var(--radius-sm); margin-bottom:10px;}
 .dash-item-img-lg.round{border-radius:50%;}
-/* Theatre's own Next Show/Watch Next tiles: no .round (a show's own art isn't a face, same
-   reasoning as .theatre-cover) and object-fit:contain instead of the default cover - see
-   .theatre-cover's own comment on why a fixed crop doesn't suit Ticketmaster's inconsistent
-   aspect ratios here. */
-.theatre-dash-img{object-fit:contain;}
+/* Theatre's own Next Show/Watch Next tiles: full tile width in the same 2:3 poster shape as
+   Films' Watch Next (.dash-watchnext-poster) instead of a small fixed square - the square left a
+   lot of empty letterboxing above/below a tall poster image, so this fills the space instead of
+   containing within it. */
+.theatre-dash-img{width:100%; height:auto; aspect-ratio:2/3; object-fit:cover;}
 /* Watch Next's provider logos sit below the title/sub, with a bit more breathing room above
    them than the tight 4px gap Watchlist's own cards use below their poster, see .film-providers-badge */
 .dash-watchnext-providers{margin-top:10px;}
@@ -601,7 +597,7 @@ a{color:var(--brand-dark);}
    visits shouldn't need a tap into the detail page at all - a narrow grid column had no room for
    any of that. */
 .plants-list{display:flex; flex-direction:column; gap:4px;}
-.plant-card-wide{cursor:pointer; padding:14px 18px;}
+.plant-card-wide{cursor:pointer; padding:14px 18px; background:#fff;}
 /* a vegetable still on "Not Planted" isn't actually being grown yet - fading the whole card
    makes that read at a glance down the list, without needing to open it to check */
 .plant-card-wide.plant-unplanted{opacity:.55;}
@@ -631,7 +627,7 @@ a{color:var(--brand-dark);}
    the word "Watered" read as a status either way, tappable or not, so leaving it tappable made an
    already-watered plant look like it still needed a tap. */
 .plant-water-action-btn{display:flex; flex-direction:row; align-items:center; justify-content:center;
-  gap:8px; width:100%; border:1px solid #2E86DE; border-radius:var(--radius-sm);
+  gap:8px; width:100%; border:1px solid #2E86DE; border-radius:999px;
   background:var(--paper); cursor:pointer; padding:11px 20px; font:inherit; font-weight:700;
   font-size:.8rem; color:var(--ink); white-space:nowrap;}
 /* "Mark as Planted" is longer than "Watered"/"Undo Watering" ever needed to be at the usual
@@ -680,7 +676,7 @@ a{color:var(--brand-dark);}
 /* styled as the mock's own bordered "Change Stage" button rather than a plain text link -
    opens into the full stage-picker list (plantStagePickerHTML) underneath it when tapped. */
 .plant-journey-change summary{display:flex; align-items:center; justify-content:center; width:100%;
-  height:36px; background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-sm);
+  height:36px; background:var(--paper); border:1px solid var(--line); border-radius:999px;
   color:var(--brand); font-weight:700; font-size:.8rem; cursor:pointer; list-style:none;}
 .plant-journey-change summary::-webkit-details-marker{display:none;}
 .plant-journey-change[open] summary{margin-bottom:8px;}
@@ -901,7 +897,16 @@ a{color:var(--brand-dark);}
    real booking's card carries, so the two still read as different weights of information. */
 .plan-connector.plan-connector-leg{justify-content:flex-start; background:var(--paper);
   border-radius:var(--radius); padding:11px 14px;}
-.plan-arrive-pill{background:#fff; border-radius:var(--radius); padding:11px 12px; margin:0 0 20px;
+/* the leg's own time prefix ("12:00 -") reused the app-wide .small class, which set a smaller
+   font-size than the rest of the row - shrinking it out of step with .plan-arrive-time on the
+   pill right above/below it even though both mark the same kind of moment */
+.plan-connector-leg .small{font-size:inherit;}
+/* the leg's own link (travelLinkHTML) sits at the far right of the row rather than inline after
+   the text, and shows just the linked site's favicon - no "Link" label - so it reads as an
+   attachment icon rather than competing with the leg's own description text */
+.plan-connector-leg .travel-link-fav{margin-left:auto; flex-shrink:0;}
+.plan-connector-leg .travel-link-fav .fav{margin-right:0;}
+.plan-arrive-pill{background:#fff; border-radius:var(--radius); padding:11px 14px; margin:0 0 20px;
   font-weight:700; font-size:.9rem; color:var(--ink);}
 .plan-arrive-time{font-weight:400;}
 /* the route map (initRouteMap) - a Leaflet/OSM view sat above the stop list, its pins the only
@@ -937,6 +942,20 @@ a{color:var(--brand-dark);}
    and its date range read at two different sizes here - pin the date range down to match */
 .chip.location-chip .muted{font-size:.8rem;}
 .chip.location-chip-add{color:var(--brand); border-color:var(--brand-tint); background:var(--brand-ghost);}
+/* the Itinerary page's own Locations display (locationsSummaryHTML, the !nested branch) - a
+   timeline rather than a row of pills, same dot-and-connecting-line shape as the Plant history
+   log. Location name and date range are pinned to the same font-size explicitly (rather than one
+   inheriting a chip's size and the other .muted's own, which used to leave them visibly
+   mismatched) and stacked with a generous gap between them instead of sitting side by side. */
+.loc-timeline{display:flex; flex-direction:column; margin-bottom:18px;}
+.loc-timeline-item{display:flex; gap:12px; position:relative; padding-bottom:16px;}
+.loc-timeline-item:not(:last-child)::before{content:''; position:absolute; left:11px; top:26px; bottom:0; width:2px; background:var(--line);}
+.loc-timeline-dot{flex-shrink:0; width:24px; height:24px; z-index:1; display:flex; align-items:center; justify-content:center; font-size:1.1rem; line-height:1;}
+.loc-timeline-body{flex:1; min-width:0; display:flex; flex-direction:column; text-align:left;
+  background:none; border:none; padding:0; font:inherit; cursor:pointer;}
+.loc-timeline-body strong{font-weight:700; font-size:.95rem; color:var(--ink);}
+.loc-timeline-body .muted{font-size:.95rem; margin-top:8px;}
+.loc-timeline-body:disabled{cursor:default;}
 /* the AI stop summary (aiSummaryHTML) - a tinted callout so it reads as an added extra sat
    above the day-by-day cards, not just another card in the same list */
 .ai-summary{background:var(--brand-ghost); border:1px solid var(--brand-tint); border-radius:var(--radius);
@@ -1801,12 +1820,12 @@ body.kb-open .tabbar.on{display:none;}
 /* a light tint rather than the solid brand blue - reads as a bubble shape without the heavy
    block-of-colour look, so text goes back to the app's normal ink/brand-dark tones instead of
    white now that it's no longer sitting on a dark fill */
-.phrase-bubble{position:relative; width:100%; background:var(--brand-tint); color:var(--ink);
+.phrase-bubble{position:relative; width:100%; background:#D3E7FB; color:var(--ink);
   border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 44px 14px 16px;}
 /* the tail, pointing down from the bubble's lower-left - a plain CSS triangle rather than an
    image, so it always matches the bubble's own background colour exactly */
-.phrase-bubble::after{content:""; position:absolute; left:22px; bottom:-9px; width:0; height:0;
-  border-left:9px solid transparent; border-right:9px solid transparent; border-top:9px solid var(--brand-tint);}
+.phrase-bubble::after{content:""; position:absolute; left:11px; bottom:-9px; width:0; height:0;
+  border-left:9px solid transparent; border-right:9px solid transparent; border-top:9px solid #D3E7FB;}
 .phrase-native{font-family:var(--font-head); font-weight:700; font-size:1.4rem; line-height:1.25; color:var(--ink); display:block;}
 .phrase-pron{color:var(--brand-dark); font-size:.92rem; font-style:italic; display:block; margin-top:4px;}
 /* brand-dark now that the bubble's light rather than a solid fill - still sat in its bottom-right
@@ -1902,8 +1921,8 @@ body.kb-open .tabbar.on{display:none;}
   .gig-list-artists{grid-template-columns:repeat(6,1fr);}
   .plants-list{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
   .places-grid.dense{grid-template-columns:repeat(4,1fr);}
-  /* Home's top stat row sits on one line (five single tiles + the triple-width Watering tile) */
-  .dash-stat-grid{grid-template-columns:repeat(8,1fr);}
+  /* Home's top stat row sits on one line - six equal bare-count tiles */
+  .dash-stat-grid{grid-template-columns:repeat(6,1fr);}
   /* a plant's own page: actions + growing conditions pinned on the left, only the timeline/log
      on the right scrolls with the page */
   .plant-detail-cols{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); gap:28px; align-items:start;}
@@ -3681,11 +3700,11 @@ function ordinalSuffix(n){
   if(n%100>=11 && n%100<=13) return 'th';
   switch(n%10){ case 1: return 'st'; case 2: return 'nd'; case 3: return 'rd'; default: return 'th'; }
 }
-function fmtDateOrdinal(d){
+function fmtDateOrdinal(d, noYear){
   if(!d) return '';
   const dt = new Date(d + 'T00:00:00');
   const day = dt.getDate();
-  return `${day}${ordinalSuffix(day)} ${dt.toLocaleDateString(undefined, {month:'long'})} ${dt.getFullYear()}`;
+  return `${day}${ordinalSuffix(day)} ${dt.toLocaleDateString(undefined, {month:'long'})}${noYear?'':' '+dt.getFullYear()}`;
 }
 /* an ordinal date range for a stretch of days on the Tasks page (a run of nights with nowhere
    booked) - same "year said once, at the end" idea as rangeParts, but written out day by day
@@ -3748,12 +3767,29 @@ function statusPhrase(t){
   if(s) return 'happening now';
   return '';
 }
-/* the trip's start date, but only when it's genuinely still ahead of us, used to decide
-   whether the header shows the live countdown card instead of the "N to go" phrase */
+/* the earliest dated item actually on the itinerary - a booked flight/ferry/car pickup or an
+   accommodation check-in - rather than the trip's own startDate field, which is often just a
+   placeholder guess set before anything was booked and can drift out of sync with what the
+   day-by-day plan actually starts with. Falls back to startDate once nothing's booked yet. */
+function tripFirstMoment(t){
+  const candidates = [];
+  (t.flights||[]).forEach(f=>{ if(f.date) candidates.push({date:f.date, time:f.depTime||''}); });
+  (t.ferries||[]).forEach(f=>{ if(f.date) candidates.push({date:f.date, time:f.depTime||''}); });
+  (t.carHire||[]).forEach(c=>{ if(c.pickupDate) candidates.push({date:c.pickupDate, time:c.pickupTime||''}); });
+  (t.accommodations||[]).forEach(a=>{ if(a.checkin) candidates.push({date:a.checkin, time:a.checkinTime||''}); });
+  if(!candidates.length) return t.startDate ? {date:t.startDate, time:''} : null;
+  candidates.sort((a,b)=>(a.date+' '+(a.time||'00:00')).localeCompare(b.date+' '+(b.time||'00:00')));
+  return candidates[0];
+}
+/* the trip's first itinerary moment (see tripFirstMoment), but only when it's genuinely still
+   ahead of us, used to decide whether the header shows the live countdown card instead of the
+   "N to go" phrase */
 function upcomingStartDate(t){
-  if(isArchived(t) || !t.startDate) return null;
+  if(isArchived(t)) return null;
+  const first = tripFirstMoment(t);
+  if(!first || !first.date) return null;
   const today = new Date(); today.setHours(0,0,0,0);
-  return today < new Date(t.startDate+'T00:00:00') ? t.startDate : null;
+  return today < new Date(first.date+'T00:00:00') ? first.date : null;
 }
 /* the trip to jump straight into from the bottom bar's Travel button, when one's close enough
    that "which trip" isn't really a question: already happening (including one running with no
@@ -4033,7 +4069,8 @@ function tripStatus(t){
      instead of pretending to know a date */
   if(hasRoughWhen(t)) return {label:'Being Planned', cls:'soon'};
   const day = 86400000, today = new Date(); today.setHours(0,0,0,0);
-  const s = t.startDate ? new Date(t.startDate+'T00:00:00') : null;
+  const first = tripFirstMoment(t);
+  const s = first && first.date ? new Date(first.date+'T00:00:00') : null;
   const e = t.endDate ? new Date(t.endDate+'T00:00:00') : null;
   if(s && today < s){
     const n = Math.round((s-today)/day);
@@ -4927,7 +4964,7 @@ function placesHubCardsHTML(){
    trips (shuffled) rather than just the next one, mainly to give the masonry more to work with. */
 function dashUpcomingTrips(){
   const withDates = DB.trips.filter(t=>upcomingStartDate(t));
-  withDates.sort((a,b)=>a.startDate.localeCompare(b.startDate));
+  withDates.sort((a,b)=>(tripFirstMoment(a).date).localeCompare(tripFirstMoment(b).date));
   return withDates;
 }
 /* each flag gets its own equal-width cell (rather than one run of text at a fixed size) so
@@ -4940,6 +4977,7 @@ function flagCellsHTML(arr){
 }
 function dashTripItemHTML(t){
   const flags = tripFlagsArr(t);
+  const first = tripFirstMoment(t);
   return `
     <div class="dash-widget dash-widget-item" role="button" tabindex="0" onclick="location.hash='#/trip/${esc(t.id)}'"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();location.hash='#/trip/${esc(t.id)}'}">
@@ -4947,7 +4985,7 @@ function dashTripItemHTML(t){
       <div class="dash-item-flags dash-item-flags-boxed" aria-hidden="true">${flagCellsHTML(flags.length?flags:['✈️'])}</div>
       <div class="dash-item-title">${esc(t.name)}</div>
       <div class="dash-item-sub">Next Trip</div>
-      ${miniCountdownHTML(t.startDate)}
+      ${first ? miniCountdownHTML(first.date, first.time) : ''}
     </div>`;
 }
 function dashTripWidgetsHTML(){
@@ -5571,10 +5609,10 @@ function renderDashboard(){
   $('#app').innerHTML = `
     <div class="dash-stat-grid">
       <div id="dash-places-slot">${dashPlacesBeenWidgetHTML()}</div>
-      <div id="dash-gigs-slot">${dashGigsStatWidgetHTML()}</div>
       <div id="dash-films-slot">${dashFilmsSeenWidgetHTML()}</div>
-      <div id="dash-games-stat-slot">${dashGamesStatPlaceholderHTML()}</div>
       <div id="dash-theatre-stat-slot">${dashTheatreSeenWidgetHTML()}</div>
+      <div id="dash-gigs-slot">${dashGigsStatWidgetHTML()}</div>
+      <div id="dash-games-stat-slot">${dashGamesStatPlaceholderHTML()}</div>
       <div id="dash-plants-slot">${dashPlantsWidgetHTML()}</div>
     </div>
     <div class="dash-masonry">
@@ -8988,6 +9026,15 @@ function drawTheatreList(){
     ? `<div class="theatre-poster-grid">${ordered.map(o=>theatreCardHTML(o.t,o.i)).join('')}</div>`
     : `<div class="empty">No shows logged yet.<br>Tap + Log Show to log the first one.</div>`;
 }
+/* Ticketmaster's venue string is "Venue Name, City" - useful while picking a result apart from
+   others of the same name in the search dropdown, but redundant clutter once it's saved to a
+   list you're only ever looking at one trip/city's worth of shows in, so the list views below
+   drop everything from the last comma on. */
+function venueNoCity(venue){
+  if(!venue) return venue;
+  const i = venue.lastIndexOf(',');
+  return i===-1 ? venue : venue.slice(0, i).trim();
+}
 function theatreCardHTML(t, i){
   // venue and date/time are two different kinds of fact (where vs when) - forced onto their own
   // lines rather than one joined string, which used to wrap wherever the text happened to run
@@ -8999,7 +9046,7 @@ function theatreCardHTML(t, i){
       ${t.image ? `<img class="theatre-poster" src="${esc(t.image)}" alt="" loading="lazy">`
                  : `<span class="theatre-poster theatre-poster-fallback" aria-hidden="true">🎭</span>`}
       <div class="theatre-poster-title">${esc(t.title||'Untitled')}</div>
-      ${t.venue?`<div class="theatre-poster-venue muted small">${esc(t.venue)}</div>`:''}
+      ${t.venue?`<div class="theatre-poster-venue muted small">${esc(venueNoCity(t.venue))}</div>`:''}
       ${when?`<div class="theatre-poster-venue muted small">${esc(when)}</div>`:''}
       ${theatreStarsHTML(t.rating)}
       ${t.notes?`<div class="small muted" style="margin-top:8px">${esc(t.notes)}</div>`:''}
@@ -9168,7 +9215,7 @@ function theatreWatchlistCardHTML(t){
       ${t.image ? `<img class="theatre-poster" src="${esc(t.image)}" alt="" loading="lazy">`
                  : `<span class="theatre-poster theatre-poster-fallback" aria-hidden="true">🎭</span>`}
       <div class="theatre-poster-title">${esc(t.title||'Untitled')}</div>
-      ${t.venue?`<div class="theatre-poster-venue muted small">${esc(t.venue)}</div>`:''}
+      ${t.venue?`<div class="theatre-poster-venue muted small">${esc(venueNoCity(t.venue))}</div>`:''}
       ${t.notes?`<div class="small muted" style="margin-top:6px">${esc(t.notes)}</div>`:''}
     </div>`;
 }
@@ -10315,16 +10362,11 @@ function delPlantImpl(id){
     toast('Vegetable removed');
   });
 }
-/* a bare stat tile like the rest of the top row (see dashStatTileHTML) rather than a per-plant
-   chip grid - Home is a glance, not a watering console, so it just needs to say whether
-   anything is waiting for you on the Plants page or not. */
+/* a bare stat tile like the rest of the top row (see dashStatTileHTML) - just how many
+   vegetables you've grown, same lifetime-count shape as Places Been/Gigs Seen/Films Seen rather
+   than a live watering-status readout. */
 function dashPlantsWidgetHTML(){
-  const list = DB.plants||[];
-  if(!list.length) return dashStatTileHTML('🥕', 'Start Growing', '', 'App.goPlants()');
-  const due = plantsSorted().filter(p => p.stage!==PLANT_STAGE_DEFAULT && plantOverdue(p));
-  return due.length
-    ? dashStatTileHTML('💧', 'Watering Needed', '', 'App.goPlants()')
-    : dashStatTileHTML('🌱', 'Watering Done', '', 'App.goPlants()');
+  return dashStatTileHTML('🌱', (DB.plants||[]).length, 'Plants Grown', 'App.goPlants()');
 }
 function drawDashPlantsSlot(){
   const slot = $('#dash-plants-slot'); if(slot) slot.innerHTML = dashPlantsWidgetHTML();
@@ -11233,16 +11275,9 @@ function renderTrip(t){
   // describes, instead of reading ROUTE_OPEN before anything's been defaulted into it
   const planDayKeys = CUR_TAB==='plan' && !ro ? planDayGroups(t).keys : [];
   if(planDayKeys.length) routeOpenAllDaysByDefault(t, planDayKeys);
-  // the same route map the Itinerary tab shows above its own stop list (see routeMapHTML/
-  // initRouteMap) - repeated here above the trip name too, since a trip's shape at a glance is
-  // useful right where you land on the trip, not just once you're already on Itinerary. Itinerary
-  // keeps its own copy for now rather than this one replacing it.
-  const overviewMapHTML = (CUR_TAB==='home' && mapRouteStops(t).length > 0)
-    ? `<div class="route-map-wrap"><div id="route-map" class="route-map"></div></div>` : '';
   $('#app').innerHTML = `
-    ${overviewMapHTML}
     ${CUR_TAB==='home' ? `
-    <div class="page-head" style="margin-bottom:22px; ${overviewMapHTML?'padding-top:0':''}">
+    <div class="page-head" style="margin-bottom:22px">
       <div class="trip-title-row">
         <div class="trip-title-main">
           <button class="crumb-backbtn" onclick="App.goHome()" aria-label="Back to all trips">${ICONS.back}</button>
@@ -11277,7 +11312,6 @@ function renderTrip(t){
     </div></div>`:''}`;
   $('#app').classList.toggle('has-sticky-add', CUR_TAB==='plan' && !ro);
   renderTab(t);
-  if(overviewMapHTML) initRouteMap(t);
 }
 /* Edit Trip screen: name, dates, countries and people (trip settings) */
 App.tripForm = () => {
@@ -13190,8 +13224,8 @@ function planDaysHTML(t, ro, filterKeys){
       </div>
       ${ac.address && ac.address!==cityName?`<div class="itin-route-name">${esc(ac.address)}</div>`:''}
       ${ac.checkin?`<div class="itin-stay-dates" style="margin-bottom:${hasBelow?'12px':'0'}${BOOKING_SERVICE_COLORS[detectBookingService(ac.bookingUrl)]?`;--stay-icon-color:${BOOKING_SERVICE_COLORS[detectBookingService(ac.bookingUrl)]}`:''}">
-        <span>${ICONS.calendar}${esc(fmtDateOrdinal(ac.checkin))}${ac.checkinTime?` ${fa('clock')}Check In: ${esc(ac.checkinTime)}`:''}</span>
-        ${ac.checkout?`<span class="itin-date-to">to ${ICONS.calendar}${esc(fmtDateOrdinal(ac.checkout))}${ac.checkoutTime?` ${fa('clock')}Check Out: ${esc(ac.checkoutTime)}`:''}</span>`:''}
+        <span>${ICONS.calendar}${esc(fmtDateOrdinal(ac.checkin, true))}${ac.checkinTime?` ${fa('clock')}Check In: ${esc(ac.checkinTime)}`:''}</span>
+        ${ac.checkout?`<span class="itin-date-to">to ${ICONS.calendar}${esc(fmtDateOrdinal(ac.checkout, true))}${ac.checkoutTime?` ${fa('clock')}Check Out: ${esc(ac.checkoutTime)}`:''}</span>`:''}
       </div>`:''}
       ${ac.ref?`<div class="itin-ref">Booking Reference: <strong>${esc(ac.ref)}</strong></div>`:''}
       ${mapsUrl||ac.bookingUrl?`<div class="itin-actions">
@@ -14175,20 +14209,30 @@ function locationsSummaryHTML(t, ro, nested){
   // earliest first - the order they were added in isn't necessarily the order they fall in
   const sorted = locs.map((loc,i) => ({loc,i}))
     .sort((a,b) => (rough ? a.loc.fromDay-b.loc.fromDay : (a.loc.fromDate||'').localeCompare(b.loc.fromDate||'')));
-  // nested (true when this chip row is shown inside the Edit Trip modal rather than directly on
-  // the Itinerary page) so App.locationForm knows to push a way back onto MODAL_STACK - see
-  // openModal/closeModal
-  const chips = sorted.map(({loc,i}) => `
-    <button type="button" class="chip location-chip" ${ro?'disabled':`onclick="App.locationForm(${i}, ${!!nested})"`}>
-      ${loc.country ? esc((countryByCode(loc.country)||{}).flag||'')+' ' : ''}<strong>${esc(loc.name)}</strong>
-      <span class="muted">${esc(rangeLabel(loc))}</span>
-    </button>`).join('');
-  // only offered from the Edit Trip modal's own Locations field (nested) - the Itinerary page
-  // itself just reads the list back, the same way it doesn't offer to edit the trip's dates or
-  // countries either; App.locationForm(-1) is still one tap away for anyone who taps an
-  // existing chip there, since Edit Trip already sits behind the trip overview's own edit icon
-  const addChip = (!ro && nested) ? `<button type="button" class="chip location-chip location-chip-add" onclick="App.locationForm(-1, ${!!nested})">${fa('plus')} New Location</button>` : '';
-  return locs.length || addChip ? `<div class="location-chips">${chips}${addChip}</div>` : '';
+  if(nested){
+    // inside the Edit Trip modal's own Locations field - a plain row of pill chips, same shape
+    // as every other tag-like field in this form (Countries, etc); App.locationForm's own
+    // `true` here tells it to push a way back onto MODAL_STACK - see openModal/closeModal
+    const chips = sorted.map(({loc,i}) => `
+      <button type="button" class="chip location-chip" ${ro?'disabled':`onclick="App.locationForm(${i}, true)"`}>
+        ${loc.country ? esc((countryByCode(loc.country)||{}).flag||'')+' ' : ''}<strong>${esc(loc.name)}</strong>
+        <span class="muted">${esc(rangeLabel(loc))}</span>
+      </button>`).join('');
+    const addChip = !ro ? `<button type="button" class="chip location-chip location-chip-add" onclick="App.locationForm(-1, true)">${fa('plus')} New Location</button>` : '';
+    return locs.length || addChip ? `<div class="location-chips">${chips}${addChip}</div>` : '';
+  }
+  // the Itinerary page's own display - a timeline rather than a row of pills, same dot-and-line
+  // shape the Plant history log already uses, since this reads as a chronological sequence of
+  // places rather than a set of interchangeable tags the way Edit Trip's own field does
+  const items = sorted.map(({loc,i}) => `
+    <div class="loc-timeline-item">
+      <span class="loc-timeline-dot" aria-hidden="true">${loc.country ? esc((countryByCode(loc.country)||{}).flag||'') : '📍'}</span>
+      <button type="button" class="loc-timeline-body" ${ro?'disabled':`onclick="App.locationForm(${i}, false)"`}>
+        <strong>${esc(loc.name)}</strong>
+        <span class="muted">${esc(rangeLabel(loc))}</span>
+      </button>
+    </div>`).join('');
+  return `<div class="loc-timeline">${items}</div>`;
 }
 /* A stop or travel leg is pinned to a date on a normal trip and to a day number on one
    that's still only "next summer". Same slot in the form either way, so the layout doesn't
@@ -14956,7 +15000,7 @@ function googleMapsUrl(q){ return 'https://www.google.com/maps/search/?api=1&que
    typed without a scheme ("aircanada.com/booking") still needs to actually work as an href */
 function normalizeUrl(url){ return url && !/^https?:\/\//i.test(url) ? 'https://'+url : url; }
 function travelLinkHTML(url){
-  return url ? `<a class="doc-attach" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${fa('link')}Link</a>` : '';
+  return url ? `<a class="doc-attach travel-link-fav" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${faviconFor(url) || fa('link')}</a>` : '';
 }
 /* a Google Maps link gets Google's own icon, the same way a booking link gets the site's;
    anything else (a maps.apple.com or what3words link somebody pasted) keeps the emoji.

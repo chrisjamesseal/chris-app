@@ -146,6 +146,11 @@ a{color:var(--brand-dark);}
 .btn:hover{border-color:var(--brand); color:#fff; background:var(--brand);}
 .btn.primary{background:var(--brand); border-color:var(--brand); color:#fff;}
 .btn.primary:hover{background:var(--brand-dark); border-color:var(--brand-dark); color:#fff;}
+/* a plain neutral pill - same filled shape as .primary, just grey instead of brand blue, for an
+   action (like a page header's own Edit button) that shouldn't compete with the page's actual
+   primary action for attention */
+.btn.grey{background:#E5E5EA; border-color:#E5E5EA; color:var(--ink);}
+.btn.grey:hover{background:#D8D8DE; border-color:#D8D8DE; color:var(--ink);}
 .btn.sm{padding:6px 13px; font-size:.78rem;}
 /* a button that's just its icon/favicon, no label, for places (like the itinerary) where the
    icon alone is already clear, e.g. an Airbnb favicon on a booking link */
@@ -645,7 +650,7 @@ a{color:var(--brand-dark);}
    sits inside it, right under the label, since it's context for this exact button's action */
 .plant-water-btn-text{display:inline-flex; flex-direction:row; align-items:baseline; gap:5px;}
 .plant-water-btn-time{font-size:.72rem; font-weight:600; opacity:.7;}
-.plant-water-action-btn.overdue{background:#4895E1; border-color:#2E86DE; color:#fff;}
+.plant-water-action-btn.overdue{background:var(--brand); border-color:var(--brand-dark); color:#fff;}
 .plant-water-action-btn.done{background:var(--brand-tint);}
 /* the brief post-tap "did you mean that" state (see PLANT_UNDO_TIMERS) - dashed rather than a
    solid border so it doesn't read as just another status colour like overdue/done do */
@@ -10141,7 +10146,7 @@ function renderPlantDetail(id){
           ${plantIconHTML(p, 'plant-detail-title-emoji')}
           <span class="plant-name">${esc(p.name||'Untitled')}</span>
         </div>
-        <button class="btn sm primary" onclick="App.plantForm('${esc(p.id)}')">Edit</button>
+        <button class="btn sm grey" onclick="App.plantForm('${esc(p.id)}')">Edit</button>
       </div>
     </div>
     <div id="plant-detail-content">${plantDetailContentHTML(p)}</div>`;

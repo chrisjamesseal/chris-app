@@ -992,9 +992,11 @@ a{color:var(--brand-dark);}
 .loc-timeline-edit .muted{font-size:.95rem; margin-top:4px;}
 .loc-timeline-edit:disabled{cursor:default;}
 /* the plain-text line under a Location naming what's actually happening there (locActivitiesHTML)
-   - deterministic, straight off the itinerary's own stop names, so it's just one more muted line
-   under the name/range rather than a separate tinted callout the way the AI day summary is */
-.loc-activities{font-size:.9rem; line-height:1.4; color:var(--muted); margin:6px 0 0;}
+   - deterministic, straight off the itinerary's own stop names, so it's just one more line under
+   the name/range rather than a separate tinted callout the way the AI day summary is. Plain body
+   ink rather than the range line's own --muted grey - readable as real content, not metadata -
+   but not full --ink either, so the Location's own name above still reads as the heading of the two */
+.loc-activities{font-size:.9rem; line-height:1.4; color:var(--body-c); margin:6px 0 0;}
 /* the AI stop summary (aiSummaryHTML) - a tinted callout so it reads as an added extra sat
    above the day-by-day cards, not just another card in the same list */
 .ai-summary{background:var(--brand-ghost); border:1px solid var(--brand-tint); border-radius:var(--radius);
@@ -14442,24 +14444,32 @@ function locationsSummaryHTML(t, ro, nested){
           <strong>${esc(loc.name)}</strong>
           <span class="muted">${esc(weekdayRangeLabel(loc))}</span>
         </button>
-        ${locActivitiesHTML(t, loc)}
+        ${locActivitiesHTML(t, loc, locs)}
       </div>
     </div>`).join('');
   return `<div class="loc-timeline">${items}</div>`;
 }
 /* what's actually happening in a Location, straight off the itinerary - every real stop that
-   falls inside its own date/day range, joined into one plain line ("Snorkeling and a castle
-   sunset visit"). No AI call: it's deterministic and always in sync with the itinerary rather
+   falls inside its own date/day range, joined into one plain line ("🥾 Hike, 🤿 Snorkel and 🏛️
+   History Walk"). No AI call: it's deterministic and always in sync with the itinerary rather
    than depending on a worker that may not even be configured (see aiRequestSummary above for
    that one, which this deliberately doesn't reuse). Travel legs are left out - the point is what
-   you're doing once you're there, not how you got there or between stops within it. */
-function locItems(t, loc){
+   you're doing once you're there, not how you got there or between stops within it.
+   `to` is exclusive when another Location's own `from` picks up exactly there - a checkout/
+   check-in day belongs to wherever you're headed, not where you're leaving, so a stop dated on
+   that shared boundary only ever shows up once, under the later Location. Kept inclusive for
+   whichever Location is actually last (nothing picks up after it) and for a single-day Location
+   (from===to - excluding would leave it with nothing at all). */
+function locItems(t, loc, allLocs){
   const rough = hasRoughWhen(t);
-  const from = rough ? loc.fromDay : loc.fromDate, to = rough ? (loc.toDay||loc.fromDay) : (loc.toDate||loc.fromDate);
+  const from = rough ? loc.fromDay : loc.fromDate;
+  const to = rough ? (loc.toDay||loc.fromDay) : (loc.toDate||loc.fromDate);
+  const hasSuccessor = to !== from && (allLocs||[]).some(o => o!==loc && (rough ? o.fromDay : o.fromDate) === to);
   return (t.itinerary||[]).filter(itm => {
     if(itm.kind==='travel') return false;
     const k = rough ? itm.day : itm.date;
-    return !!k && k>=from && k<=to;
+    if(!k || k<from) return false;
+    return hasSuccessor ? k<to : k<=to;
   }).sort((a,b) => {
     const ak = rough ? a.day : a.date, bk = rough ? b.day : b.date;
     if(ak !== bk) return rough ? ak-bk : String(ak).localeCompare(String(bk));
@@ -14473,10 +14483,12 @@ function naturalJoin(items){
   if(items.length === 2) return items[0]+' and '+items[1];
   return items.slice(0,-1).join(', ')+' and '+items[items.length-1];
 }
-function locActivitiesHTML(t, loc){
-  const names = locItems(t, loc).map(itm => itm.name).filter(Boolean);
-  if(!names.length) return '';
-  return `<p class="loc-activities">${esc(naturalJoin(names))}</p>`;
+function locActivitiesHTML(t, loc, allLocs){
+  const withEmoji = locItems(t, loc, allLocs)
+    .filter(itm => itm.name)
+    .map(itm => (itm.emoji || ideaEmojiFor(itm.name))+' '+itm.name);
+  if(!withEmoji.length) return '';
+  return `<p class="loc-activities">${esc(naturalJoin(withEmoji))}</p>`;
 }
 /* A stop or travel leg is pinned to a date on a normal trip and to a day number on one
    that's still only "next summer". Same slot in the form either way, so the layout doesn't

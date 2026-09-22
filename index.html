@@ -6538,7 +6538,12 @@ function loadGameSearch(q){
     .then(data => {
       if(!$('#wl-grid')) return;   // modal closed while it was in flight
       WL_LAST_GAMES = data.games||[];
-      const games = WL_LAST_GAMES.filter(g=>!isWishlisted(g.id));
+      // matched to your PS5/PS4 library by plain name equality, same trick drawGamesList's own
+      // wishlistExtra already uses - RAWG and PSN don't share a product id, so this is the only
+      // way to tell "you already own this" apart from "you haven't tried it yet" here. A false
+      // miss just means a harmless duplicate still shows up, never a wrongly-hidden real result.
+      const ownedNames = new Set(PSN_TITLES.map(g => (g.name||'').trim().toLowerCase()));
+      const games = WL_LAST_GAMES.filter(g=>!isWishlisted(g.id) && !ownedNames.has((g.name||'').trim().toLowerCase()));
       $('#wl-grid').innerHTML = games.length
         ? `<div class="wl-list">${games.map(wlCardHTML).join('')}</div>`
         : `<div class="empty">${q?`No games match "${esc(q)}"`:'No games to show right now.'}</div>`;

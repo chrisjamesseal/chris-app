@@ -1762,26 +1762,31 @@ body.kb-open .tabbar.on{display:none;}
 .allergy-section.caution{background:var(--brand-tint); border:1px solid var(--line-strong);}
 .allergy-section.caution .allergy-section-title{color:var(--rag-yellow);}
 .allergy-thanks{margin-top:6px; color:var(--muted); font-style:italic; font-size:.9rem;}
-/* Phrases' own single-column card list - the English meaning sits above as a plain label (what
-   you're actually looking for), then the local-language word/phrase and its pronunciation live
-   together inside a speech-bubble shape, since both are "how do I actually say this" and reads
-   as someone speaking the phrase rather than just a card of text */
-.phrase-grid{display:flex; flex-direction:column; gap:20px;}
+/* Phrases' own single-column card list - the local-language word/phrase and its pronunciation
+   live together inside a speech-bubble shape (since both are "how do I actually say this" and
+   reads as someone speaking the phrase), with the English meaning underneath as a plain caption
+   rather than a card of text. A generous gap between cards (rather than relying on each card's
+   own bottom margin) keeps one phrase's caption from reading like it belongs to the next
+   bubble down. */
+.phrase-grid{display:flex; flex-direction:column; gap:28px;}
 .phrase-card{display:flex; flex-direction:column; align-items:flex-start; gap:6px;}
 .phrase-local{font-family:var(--font-head); font-weight:600; font-size:.85rem; color:var(--ink); opacity:.7;}
-.phrase-bubble{position:relative; width:100%; background:var(--brand); color:#fff;
+/* a light tint rather than the solid brand blue - reads as a bubble shape without the heavy
+   block-of-colour look, so text goes back to the app's normal ink/brand-dark tones instead of
+   white now that it's no longer sitting on a dark fill */
+.phrase-bubble{position:relative; width:100%; background:var(--brand-tint); color:var(--ink);
   border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 44px 14px 16px;}
 /* the tail, pointing down from the bubble's lower-left - a plain CSS triangle rather than an
    image, so it always matches the bubble's own background colour exactly */
 .phrase-bubble::after{content:""; position:absolute; left:22px; bottom:-9px; width:0; height:0;
-  border-left:9px solid transparent; border-right:9px solid transparent; border-top:9px solid var(--brand);}
-.phrase-native{font-family:var(--font-head); font-weight:700; font-size:1.4rem; line-height:1.25; color:#fff; display:block;}
-.phrase-pron{color:rgba(255,255,255,.85); font-size:.92rem; font-style:italic; display:block; margin-top:4px;}
-/* white so it reads against the bubble's blue, sat in its bottom-right corner rather than in a
-   row of its own now that the pronunciation already lives inside the bubble */
-.phrase-speak{position:absolute; right:12px; bottom:10px; border:none; background:none; color:#fff;
+  border-left:9px solid transparent; border-right:9px solid transparent; border-top:9px solid var(--brand-tint);}
+.phrase-native{font-family:var(--font-head); font-weight:700; font-size:1.4rem; line-height:1.25; color:var(--ink); display:block;}
+.phrase-pron{color:var(--brand-dark); font-size:.92rem; font-style:italic; display:block; margin-top:4px;}
+/* brand-dark now that the bubble's light rather than a solid fill - still sat in its bottom-right
+   corner rather than in a row of its own, since the pronunciation already lives in the bubble */
+.phrase-speak{position:absolute; right:12px; bottom:10px; border:none; background:none; color:var(--brand-dark);
   cursor:pointer; padding:4px; font-size:1.05rem; display:inline-flex; align-items:center; justify-content:center;}
-.phrase-speak:hover{opacity:.8;}
+.phrase-speak:hover{opacity:.7;}
 /* full-bleed, no radius of its own - .plan-card-photo clips it back to the card's own rounded
    corners via overflow instead, so it reads as one continuous edge rather than a photo with a
    frame around it */
@@ -12243,12 +12248,12 @@ function tabPhrases(t){
     }
     return `
     <div class="phrase-card">
-      <span class="phrase-local">${esc(PHRASES_EN[i])}</span>
       <div class="phrase-bubble">
         <span class="phrase-native">${esc(phrase)}</span>
         ${pron ? `<span class="phrase-pron">${esc(pron[i])}</span>` : ''}
         ${speakBtn}
       </div>
+      <span class="phrase-local">${esc(PHRASES_EN[i])}</span>
     </div>`;
   }).join('');
   return `

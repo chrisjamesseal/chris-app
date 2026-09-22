@@ -745,6 +745,9 @@ a{color:var(--brand-dark);}
    that day shouldn't itself look greyed out */
 .route-item.day-past{opacity:.6;}
 .route-body{display:block; padding:14px 2px;}
+/* half the usual top padding on the very first day only - the gap above it (crumb's own margin
+   plus this) was reading taller than it needed to, without touching every other day's spacing */
+.route-list .route-item:first-child .route-body{padding-top:7px;}
 .route-body strong{display:block; font-weight:700; color:var(--ink); font-size:.95rem;}
 .route-body strong.text-undecided{color:var(--danger-dark);}
 /* .head-with-logo (a card's own logo-plus-title header, also a <strong>) needs to stay the flex

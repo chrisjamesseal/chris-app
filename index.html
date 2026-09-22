@@ -947,7 +947,7 @@ a{color:var(--brand-dark);}
 /* ---------- gigs (live music) ---------- */
 .gig-list{display:flex; flex-direction:column; gap:10px;}
 .gig-people-filter{margin-bottom:14px; max-width:340px;}
-.gig-card{padding:14px; margin-bottom:0;}
+.gig-card{padding:14px; margin-bottom:0; cursor:pointer;}
 .gig-top{display:flex; gap:12px; align-items:center;}
 .gig-cover{width:56px; height:56px; flex-shrink:0; border-radius:50%; object-fit:cover;
   border:1px solid var(--line); background:var(--bg);}
@@ -6935,7 +6935,8 @@ function gigPeopleLineHTML(g){
 function gigCardHTML(g, i){
   const facts = [g.city, g.date?fmtShortDate(g.date):''].filter(Boolean).join(' · ');
   return `
-    <div class="card gig-card">
+    <div class="card gig-card" role="button" tabindex="0" onclick="App.gigForm(${i})"
+      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.gigForm(${i})}">
       <div class="gig-top">
         ${g.image ? `<img class="gig-cover" src="${esc(g.image)}" alt="" loading="lazy">`
                    : `<span class="gig-cover gig-cover-fallback" aria-hidden="true">${fa('microphone')}</span>`}
@@ -6943,10 +6944,6 @@ function gigCardHTML(g, i){
           <div class="gig-name">${esc(g.artist||'Untitled')}</div>
           ${facts?`<div class="gig-facts muted small">${esc(facts)}</div>`:''}
           ${gigPeopleLineHTML(g)}
-        </div>
-        <div class="gig-actions">
-          <button class="iconbtn edit" aria-label="Edit gig" title="Edit" onclick="App.gigForm(${i})">${ICONS.edit}</button>
-          <button class="iconbtn del" aria-label="Remove gig" title="Remove" onclick="App.delGig(${i})">${ICONS.trash}</button>
         </div>
       </div>
     </div>`;

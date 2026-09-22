@@ -1254,7 +1254,11 @@ input[list]::-webkit-calendar-picker-indicator, input[list]::-webkit-list-button
 /* the back-to-all-trips button sits left of the trip name, same plain icon button as every
    other back arrow in the app (see .crumb-backbtn), just placed inline with a serif <h1> here
    instead of a breadcrumb bar */
-.trip-title-main{display:flex; align-items:center; gap:6px;}
+/* top-aligned rather than centred - a short trip name looked the same either way, but a longer
+   one that wraps onto two or three lines was centring the back arrow against the whole wrapped
+   block, floating it well below where the Itinerary crumb's own back arrow sits (that title's
+   never more than one short word, so it never had this problem to begin with) */
+.trip-title-main{display:flex; align-items:flex-start; gap:6px;}
 .trip-meta{margin-top:4px; display:flex; align-items:center; gap:6px 18px; flex-wrap:wrap;}
 .trip-meta > span{display:inline-flex; align-items:center; gap:7px;}
 .meta-emoji{font-size:.8rem; line-height:1;
@@ -1863,7 +1867,7 @@ body.kb-open .tabbar.on{display:none;}
    would wrongly suggest the same severity as the gluten section above it */
 .allergy-section.severe{background:var(--danger-tint); border:1px solid rgba(255,59,48,.28);}
 .allergy-section.severe .allergy-section-title{color:var(--rag-red);}
-.allergy-section.caution{background:var(--brand-tint); border:1px solid var(--line-strong);}
+.allergy-section.caution{background:#FFF3E0; border:1px solid rgba(255,159,10,.28);}
 .allergy-section.caution .allergy-section-title{color:var(--rag-yellow);}
 .allergy-thanks{margin-top:6px; color:var(--muted); font-style:italic; font-size:.9rem;}
 /* Phrases' own single-column card list - the local-language word/phrase and its pronunciation

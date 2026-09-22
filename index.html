@@ -980,11 +980,15 @@ a{color:var(--brand-dark);}
 .loc-timeline-item{display:flex; gap:12px; position:relative; padding-bottom:16px;}
 .loc-timeline-item:not(:last-child)::before{content:''; position:absolute; left:11px; top:26px; bottom:0; width:2px; background:var(--line);}
 .loc-timeline-dot{flex-shrink:0; width:24px; height:24px; z-index:1; display:flex; align-items:center; justify-content:center; font-size:1.1rem; line-height:1;}
-.loc-timeline-body{flex:1; min-width:0; display:flex; flex-direction:column; text-align:left;
-  background:none; border:none; padding:0; font:inherit; cursor:pointer;}
-.loc-timeline-body strong{font-weight:700; font-size:.95rem; color:var(--ink);}
-.loc-timeline-body .muted{font-size:.95rem; margin-top:4px;}
-.loc-timeline-body:disabled{cursor:default;}
+.loc-timeline-body{flex:1; min-width:0; display:flex; flex-direction:column; text-align:left;}
+/* the tappable name/range part of a timeline entry - the AI summary below it (see
+   locationsSummaryHTML) isn't part of this button, so tapping it can't also trigger Edit Location */
+.loc-timeline-edit{background:none; border:none; padding:0; font:inherit; cursor:pointer; text-align:left;
+  display:flex; flex-direction:column;}
+.loc-timeline-edit strong{font-weight:700; font-size:.95rem; color:var(--ink);}
+.loc-timeline-edit .muted{font-size:.95rem; margin-top:4px;}
+.loc-timeline-edit:disabled{cursor:default;}
+.loc-timeline-body .ai-summary{margin:8px 0 0;}
 /* the AI stop summary (aiSummaryHTML) - a tinted callout so it reads as an added extra sat
    above the day-by-day cards, not just another card in the same list */
 .ai-summary{background:var(--brand-ghost); border:1px solid var(--brand-tint); border-radius:var(--radius);
@@ -11623,7 +11627,7 @@ function renderTab(t){
   if(CUR_TAB==='home')     el.innerHTML = tabHome(t,ro);
   if(CUR_TAB==='travel')   el.innerHTML = tabTravel(t,ro);
   if(CUR_TAB==='stay')     el.innerHTML = tabStay(t,ro);
-  if(CUR_TAB==='plan')   { el.innerHTML = tabPlan(t,ro); initWeather(t); initRouteMap(t); initAiSummaries(t); }
+  if(CUR_TAB==='plan')   { el.innerHTML = tabPlan(t,ro); initWeather(t); initRouteMap(t); initAiSummaries(t); initLocationSummaries(t); }
   if(CUR_TAB==='docs')     el.innerHTML = tabDocs(t,ro);
   if(CUR_TAB==='money')    el.innerHTML = tabMoney(t,ro);
   if(CUR_TAB==='photos')   el.innerHTML = tabPhotos(t,ro);
@@ -14308,9 +14312,9 @@ App.aiRegenSummary = key => {
 function tabPlan(t, ro){
   const {groups, keys, rough, hasAny} = planDayGroups(t);
   if(hasAny) routeOpenAllDaysByDefault(t, keys);
-  // a trip with Locations set up but nothing else booked or planned yet still has a map worth
-  // showing (see mapHTML/hasNumbered below) - only a trip with truly nothing at all, Locations
-  // included, falls back to the plain empty state
+  // a trip with Locations set up but nothing else booked or planned yet still has a map and a
+  // Locations row worth showing (see mapHTML/locationsSummaryHTML below) - only a trip with
+  // truly nothing at all, Locations included, falls back to the plain empty state
   if(!hasAny && !(t.locations||[]).length){
     return `<div class="empty">Nothing planned yet.${!ro?`<br><br><span class="btn-row" style="justify-content:center">
       <button class="btn" onclick="App.tab('mood')">Browse Ideas</button>
@@ -14355,7 +14359,7 @@ function tabPlan(t, ro){
   const showMap = hasNumbered && PLAN_VIEW === 'map';
   const mapHTML = showMap ? `<div class="route-map-wrap"><div id="route-map" class="route-map"></div></div>` : '';
   const listHTML = showMap ? '' : `<div class="route-list">${keys.map(dayRow).join('')}</div>`;
-  return `${mapHTML}${listHTML}`;
+  return `${mapHTML}${locationsSummaryHTML(t, ro)}${listHTML}`;
 }
 /* the trip's own manually-defined Locations (App.locationForm) - a date range with a name and,
    optionally, a country for the flag, so a stretch with nothing else booked yet still names
@@ -14399,13 +14403,100 @@ function locationsSummaryHTML(t, ro, nested){
   const items = sorted.map(({loc,i}) => `
     <div class="loc-timeline-item">
       <span class="loc-timeline-dot" aria-hidden="true">${loc.country ? esc((countryByCode(loc.country)||{}).flag||'') : '📍'}</span>
-      <button type="button" class="loc-timeline-body" ${ro?'disabled':`onclick="App.locationForm(${i}, false)"`}>
-        <strong>${esc(loc.name)}</strong>
-        <span class="muted">${esc(rangeLabel(loc))}</span>
-      </button>
+      <div class="loc-timeline-body">
+        <button type="button" class="loc-timeline-edit" ${ro?'disabled':`onclick="App.locationForm(${i}, false)"`}>
+          <strong>${esc(loc.name)}</strong>
+          <span class="muted">${esc(rangeLabel(loc))}</span>
+        </button>
+        ${locSummaryHTML(t, loc, locSummaryKey(t, loc), ro)}
+      </div>
     </div>`).join('');
   return `<div class="loc-timeline">${items}</div>`;
 }
+/* the AI summary for a whole Location - mirrors aiSummaryHTML/aiRequestSummary above (same
+   worker endpoint, same cache shape on t.aiSummaries, same 503-if-unconfigured quiet failure),
+   just bundling every real stop across the location's own date/day range into one request
+   instead of a single day's. Travel legs are deliberately left out - the point is what you're
+   doing once you're there, not how you got there or between stops within it. */
+function locSummaryKey(t, loc){
+  const rough = hasRoughWhen(t);
+  return 'loc:'+(loc.name||'')+'|'+(rough ? loc.fromDay : loc.fromDate);
+}
+function locItems(t, loc){
+  const rough = hasRoughWhen(t);
+  const from = rough ? loc.fromDay : loc.fromDate, to = rough ? (loc.toDay||loc.fromDay) : (loc.toDate||loc.fromDate);
+  return (t.itinerary||[]).filter(itm => {
+    if(itm.kind==='travel') return false;
+    const k = rough ? itm.day : itm.date;
+    return !!k && k>=from && k<=to;
+  });
+}
+function locSummaryHTML(t, loc, key, ro){
+  const cached = (t.aiSummaries||{})[key];
+  if(!cached || !cached.text) return '';
+  return `<div class="ai-summary">
+    <p>${esc(cached.text)}</p>
+    ${ro?'':`<button type="button" class="ai-summary-refresh" onclick="App.aiRegenLocSummary('${jsArg(key)}')">${fa('rotate-right')} Regenerate</button>`}
+  </div>`;
+}
+async function aiRequestLocSummary(t, loc, key){
+  AI_SUMMARY_PENDING.add(key);
+  AI_SUMMARY_FAILED.delete(key);
+  try{
+    const rough = hasRoughWhen(t);
+    const byKey = {};
+    locItems(t, loc).forEach(itm => {
+      const k = rough ? 'Day '+itm.day : itm.date;
+      (byKey[k]=byKey[k]||[]).push({label: itm.name || 'a stop',
+        time: itm.time || (itm.period && PLAN_PERIODS[itm.period] && PLAN_PERIODS[itm.period][0]) || ''});
+    });
+    const days = Object.keys(byKey).sort().map(k => ({date:k, items:byKey[k]}));
+    const toKey = rough ? (loc.toDay||loc.fromDay) : (loc.toDate||loc.fromDate);
+    const nights = rough ? Math.max(toKey - loc.fromDay, 0)
+      : Math.max(Math.round((new Date(toKey+'T00:00:00') - new Date(loc.fromDate+'T00:00:00'))/DAY_MS), 0);
+    const when = rough ? `Day ${loc.fromDay}${loc.toDay && loc.toDay!==loc.fromDay ? '–'+loc.toDay : ''}`
+      : fmtRange(loc.fromDate, loc.toDate || loc.fromDate);
+    const res = await fetch(psnUrl('/ai-stop-summary'), {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({place: loc.name, when, nights, days}),
+    });
+    if(!res.ok) throw new Error('request failed');
+    const data = await res.json();
+    if(!data.summary) throw new Error('empty summary');
+    if(!t.aiSummaries) t.aiSummaries = {};
+    t.aiSummaries[key] = {text: data.summary, at: Date.now()};
+    AI_SUMMARY_PENDING.delete(key);
+    save();
+  }catch(e){
+    AI_SUMMARY_PENDING.delete(key);
+    AI_SUMMARY_FAILED.add(key);
+  }
+  if(CUR_TAB==='plan' && CUR_TRIP_ID===t.id) renderTab(t);
+}
+/* called after every render of the Itinerary tab, same spot as initAiSummaries - unlike a day's
+   own summary (which waits for that day to be opened first), every Location is already on
+   screen, so this fires for all of them straight away instead of waiting on anything to expand.
+   Skips a location with nothing real planned in it yet - "nothing planned yet" isn't worth an
+   API call or a callout, the empty day list underneath it already says that. */
+function initLocationSummaries(t){
+  if(readOnly(t)) return;
+  (t.locations||[]).forEach(loc => {
+    const key = locSummaryKey(t, loc);
+    if((t.aiSummaries||{})[key]) return;
+    if(AI_SUMMARY_PENDING.has(key) || AI_SUMMARY_FAILED.has(key)) return;
+    if(!locItems(t, loc).length) return;
+    aiRequestLocSummary(t, loc, key);
+  });
+}
+App.aiRegenLocSummary = key => {
+  const t = getTrip(CUR_TRIP_ID); if(!t) return;
+  key = decodeURIComponent(key);
+  const loc = (t.locations||[]).find(l => locSummaryKey(t, l) === key);
+  if(!loc) return;
+  if(t.aiSummaries) delete t.aiSummaries[key];
+  AI_SUMMARY_FAILED.delete(key);
+  aiRequestLocSummary(t, loc, key);
+};
 /* A stop or travel leg is pinned to a date on a normal trip and to a day number on one
    that's still only "next summer". Same slot in the form either way, so the layout doesn't
    shift about. The day list runs to the trip's length when one's been given, and to a

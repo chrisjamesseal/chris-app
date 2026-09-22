@@ -991,7 +991,10 @@ a{color:var(--brand-dark);}
 .loc-timeline-edit strong{font-weight:700; font-size:.95rem; color:var(--ink);}
 .loc-timeline-edit .muted{font-size:.95rem; margin-top:4px;}
 .loc-timeline-edit:disabled{cursor:default;}
-.loc-timeline-body .ai-summary{margin:8px 0 0;}
+/* the plain-text line under a Location naming what's actually happening there (locActivitiesHTML)
+   - deterministic, straight off the itinerary's own stop names, so it's just one more muted line
+   under the name/range rather than a separate tinted callout the way the AI day summary is */
+.loc-activities{font-size:.9rem; line-height:1.4; color:var(--muted); margin:6px 0 0;}
 /* the AI stop summary (aiSummaryHTML) - a tinted callout so it reads as an added extra sat
    above the day-by-day cards, not just another card in the same list */
 .ai-summary{background:var(--brand-ghost); border:1px solid var(--brand-tint); border-radius:var(--radius);
@@ -3798,6 +3801,22 @@ function fmtRange(a,b){
 /* kept as its own name because the trip header used to want something more compact; it now
    reads exactly like every other range */
 const fmtRangeLong = fmtRange;
+/* "Wed 23 Sep 2026" - a Location's own date range on the Itinerary page (see weekdayRangeLabel)
+   wants the day of week on both ends and a short month, unlike fmtRange's long-form single-year
+   style, so this doesn't try to share fmtDate/rangeParts's "year said once" compression - each
+   end is short enough to just say in full. */
+function fmtDateWeekday(d){
+  if(!d) return '';
+  const dt = new Date(d+'T00:00:00');
+  return dt.toLocaleDateString(undefined, {weekday:'short'})+' '+dt.getDate()+' '
+    +dt.toLocaleDateString(undefined, {month:'short'})+' '+dt.getFullYear();
+}
+function fmtRangeWeekday(a,b){
+  if(!a && !b) return 'Dates TBC';
+  if(!a || !b) return a ? 'From '+fmtDateWeekday(a) : 'Until '+fmtDateWeekday(b);
+  if(a===b) return fmtDateWeekday(a);
+  return fmtDateWeekday(a)+' - '+fmtDateWeekday(b);
+}
 /* months/weeks/days breakdown for the "to go" countdown, e.g. "1 month 2 weeks to go" */
 function daysToGoPhrase(n){
   if(n===0) return 'starts today';
@@ -11630,7 +11649,7 @@ function renderTab(t){
   if(CUR_TAB==='home')     el.innerHTML = tabHome(t,ro);
   if(CUR_TAB==='travel')   el.innerHTML = tabTravel(t,ro);
   if(CUR_TAB==='stay')     el.innerHTML = tabStay(t,ro);
-  if(CUR_TAB==='plan')   { el.innerHTML = tabPlan(t,ro); initWeather(t); initRouteMap(t); initAiSummaries(t); initLocationSummaries(t); }
+  if(CUR_TAB==='plan')   { el.innerHTML = tabPlan(t,ro); initWeather(t); initRouteMap(t); initAiSummaries(t); }
   if(CUR_TAB==='docs')     el.innerHTML = tabDocs(t,ro);
   if(CUR_TAB==='money')    el.innerHTML = tabMoney(t,ro);
   if(CUR_TAB==='photos')   el.innerHTML = tabPhotos(t,ro);
@@ -14390,6 +14409,13 @@ function locationsSummaryHTML(t, ro, nested){
   const rangeLabel = loc => rough
     ? `Day ${loc.fromDay}${loc.toDay && loc.toDay!==loc.fromDay ? '–'+loc.toDay : ''}`
     : fmtRange(loc.fromDate, loc.toDate || loc.fromDate);
+  // the Itinerary page's own version of the same range - leads with the day of week on each end
+  // ("Wed 23 Sep 2026 - Sun 27 Sep 2026") rather than fmtRange's "23 September - 27 September
+  // 2026", since knowing you land on a Wednesday is more useful here than in Edit Trip's own
+  // compact chip row, which keeps the plain rangeLabel above
+  const weekdayRangeLabel = loc => rough
+    ? rangeLabel(loc)
+    : fmtRangeWeekday(loc.fromDate, loc.toDate || loc.fromDate);
   // earliest first - the order they were added in isn't necessarily the order they fall in
   const sorted = locs.map((loc,i) => ({loc,i}))
     .sort((a,b) => (rough ? a.loc.fromDay-b.loc.fromDay : (a.loc.fromDate||'').localeCompare(b.loc.fromDate||'')));
@@ -14414,22 +14440,19 @@ function locationsSummaryHTML(t, ro, nested){
       <div class="loc-timeline-body">
         <button type="button" class="loc-timeline-edit" ${ro?'disabled':`onclick="App.locationForm(${i}, false)"`}>
           <strong>${esc(loc.name)}</strong>
-          <span class="muted">${esc(rangeLabel(loc))}</span>
+          <span class="muted">${esc(weekdayRangeLabel(loc))}</span>
         </button>
-        ${locSummaryHTML(t, loc, locSummaryKey(t, loc), ro)}
+        ${locActivitiesHTML(t, loc)}
       </div>
     </div>`).join('');
   return `<div class="loc-timeline">${items}</div>`;
 }
-/* the AI summary for a whole Location - mirrors aiSummaryHTML/aiRequestSummary above (same
-   worker endpoint, same cache shape on t.aiSummaries, same 503-if-unconfigured quiet failure),
-   just bundling every real stop across the location's own date/day range into one request
-   instead of a single day's. Travel legs are deliberately left out - the point is what you're
-   doing once you're there, not how you got there or between stops within it. */
-function locSummaryKey(t, loc){
-  const rough = hasRoughWhen(t);
-  return 'loc:'+(loc.name||'')+'|'+(rough ? loc.fromDay : loc.fromDate);
-}
+/* what's actually happening in a Location, straight off the itinerary - every real stop that
+   falls inside its own date/day range, joined into one plain line ("Snorkeling and a castle
+   sunset visit"). No AI call: it's deterministic and always in sync with the itinerary rather
+   than depending on a worker that may not even be configured (see aiRequestSummary above for
+   that one, which this deliberately doesn't reuse). Travel legs are left out - the point is what
+   you're doing once you're there, not how you got there or between stops within it. */
 function locItems(t, loc){
   const rough = hasRoughWhen(t);
   const from = rough ? loc.fromDay : loc.fromDate, to = rough ? (loc.toDay||loc.fromDay) : (loc.toDate||loc.fromDate);
@@ -14437,75 +14460,24 @@ function locItems(t, loc){
     if(itm.kind==='travel') return false;
     const k = rough ? itm.day : itm.date;
     return !!k && k>=from && k<=to;
+  }).sort((a,b) => {
+    const ak = rough ? a.day : a.date, bk = rough ? b.day : b.date;
+    if(ak !== bk) return rough ? ak-bk : String(ak).localeCompare(String(bk));
+    return itineraryTimeKey(a).localeCompare(itineraryTimeKey(b));
   });
 }
-function locSummaryHTML(t, loc, key, ro){
-  const cached = (t.aiSummaries||{})[key];
-  if(!cached || !cached.text) return '';
-  return `<div class="ai-summary">
-    <p>${esc(cached.text)}</p>
-    ${ro?'':`<button type="button" class="ai-summary-refresh" onclick="App.aiRegenLocSummary('${jsArg(key)}')">${fa('rotate-right')} Regenerate</button>`}
-  </div>`;
+/* "A, B and C" rather than a bare comma list - reads as a sentence fragment, not a raw dump of
+   field values, without needing an AI call to write it */
+function naturalJoin(items){
+  if(items.length <= 1) return items.join('');
+  if(items.length === 2) return items[0]+' and '+items[1];
+  return items.slice(0,-1).join(', ')+' and '+items[items.length-1];
 }
-async function aiRequestLocSummary(t, loc, key){
-  AI_SUMMARY_PENDING.add(key);
-  AI_SUMMARY_FAILED.delete(key);
-  try{
-    const rough = hasRoughWhen(t);
-    const byKey = {};
-    locItems(t, loc).forEach(itm => {
-      const k = rough ? 'Day '+itm.day : itm.date;
-      (byKey[k]=byKey[k]||[]).push({label: itm.name || 'a stop',
-        time: itm.time || (itm.period && PLAN_PERIODS[itm.period] && PLAN_PERIODS[itm.period][0]) || ''});
-    });
-    const days = Object.keys(byKey).sort().map(k => ({date:k, items:byKey[k]}));
-    const toKey = rough ? (loc.toDay||loc.fromDay) : (loc.toDate||loc.fromDate);
-    const nights = rough ? Math.max(toKey - loc.fromDay, 0)
-      : Math.max(Math.round((new Date(toKey+'T00:00:00') - new Date(loc.fromDate+'T00:00:00'))/DAY_MS), 0);
-    const when = rough ? `Day ${loc.fromDay}${loc.toDay && loc.toDay!==loc.fromDay ? '–'+loc.toDay : ''}`
-      : fmtRange(loc.fromDate, loc.toDate || loc.fromDate);
-    const res = await fetch(psnUrl('/ai-stop-summary'), {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({place: loc.name, when, nights, days}),
-    });
-    if(!res.ok) throw new Error('request failed');
-    const data = await res.json();
-    if(!data.summary) throw new Error('empty summary');
-    if(!t.aiSummaries) t.aiSummaries = {};
-    t.aiSummaries[key] = {text: data.summary, at: Date.now()};
-    AI_SUMMARY_PENDING.delete(key);
-    save();
-  }catch(e){
-    AI_SUMMARY_PENDING.delete(key);
-    AI_SUMMARY_FAILED.add(key);
-  }
-  if(CUR_TAB==='plan' && CUR_TRIP_ID===t.id) renderTab(t);
+function locActivitiesHTML(t, loc){
+  const names = locItems(t, loc).map(itm => itm.name).filter(Boolean);
+  if(!names.length) return '';
+  return `<p class="loc-activities">${esc(naturalJoin(names))}</p>`;
 }
-/* called after every render of the Itinerary tab, same spot as initAiSummaries - unlike a day's
-   own summary (which waits for that day to be opened first), every Location is already on
-   screen once Summary view is, so this fires for all of them straight away instead of waiting on
-   anything to expand. Skips entirely on Detail view (see tabPlan/locationsSummaryHTML) - no
-   point spending an API call on a callout that isn't even shown, and a location with nothing
-   real planned in it yet is skipped too, same reasoning. */
-function initLocationSummaries(t){
-  if(readOnly(t) || PLAN_VIEW !== 'map') return;
-  (t.locations||[]).forEach(loc => {
-    const key = locSummaryKey(t, loc);
-    if((t.aiSummaries||{})[key]) return;
-    if(AI_SUMMARY_PENDING.has(key) || AI_SUMMARY_FAILED.has(key)) return;
-    if(!locItems(t, loc).length) return;
-    aiRequestLocSummary(t, loc, key);
-  });
-}
-App.aiRegenLocSummary = key => {
-  const t = getTrip(CUR_TRIP_ID); if(!t) return;
-  key = decodeURIComponent(key);
-  const loc = (t.locations||[]).find(l => locSummaryKey(t, l) === key);
-  if(!loc) return;
-  if(t.aiSummaries) delete t.aiSummaries[key];
-  AI_SUMMARY_FAILED.delete(key);
-  aiRequestLocSummary(t, loc, key);
-};
 /* A stop or travel leg is pinned to a date on a normal trip and to a day number on one
    that's still only "next summer". Same slot in the form either way, so the layout doesn't
    shift about. The day list runs to the trip's length when one's been given, and to a

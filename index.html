@@ -244,7 +244,10 @@ a{color:var(--brand-dark);}
    the Edit Trip form itself (see App.tripForm), the same "Delete X" pattern every other edit
    form already uses (Delete Gig, Delete Show...) - so it no longer needs a third column here. */
 .trip-actions-row{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:40px;}
-.trip-actions-row .btn{width:100%;}
+/* solid neutral fill instead of the default pale tint - Edit/Share are equal-weight page
+   actions, so give them the same darker treatment as .btn.grey without picking one as primary */
+.trip-actions-row .btn{width:100%; background:#E5E5EA; border-color:#E5E5EA; color:var(--ink);}
+.trip-actions-row .btn:hover{background:#D8D8DE; border-color:#D8D8DE; color:var(--ink);}
 /* The front door: four cards, two by two, under the title, hugging their content rather than
    stretching to fill the screen. Grid rows already equalize the height of cards that sit
    side by side, and since every card holds the same shape (emoji, number, label) both rows
@@ -1144,6 +1147,15 @@ a{color:var(--brand-dark);}
 .home-mark-img{height:34px; width:auto;}
 .crumb-titlerow{display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; flex-wrap:wrap;}
 .crumb-action{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+/* the Itinerary's List/Map switch (see crumbAction's 'plan' case and PLAN_VIEW) - a two-way
+   segmented pill, same rounded shape as .btn but with both options always visible side by side
+   rather than one button whose label changes, since which view is current should be readable
+   at a glance rather than only discoverable by reading a button's own text. */
+.view-toggle{display:flex; background:var(--brand-tint); border-radius:999px; padding:3px; gap:2px;}
+.view-toggle-btn{display:inline-flex; align-items:center; gap:6px; border:none; background:none; cursor:pointer;
+  font:inherit; font-weight:600; font-size:.82rem; color:var(--brand-dark); padding:7px 14px; border-radius:999px;
+  transition:background .12s,color .12s;}
+.view-toggle-btn.active{background:var(--brand); color:#fff;}
 .fav{width:20px; height:20px; border-radius:5px; vertical-align:-4px; margin-right:7px; background:var(--bg);}
 /* a same-size bordered badge, matching .card-logo's footprint exactly, so the two sit as
    obviously matching siblings in the row instead of two differently-sized icons pixel-nudged
@@ -11338,7 +11350,7 @@ function renderTrip(t){
     <div class="crumb">
       <div class="crumb-titlerow">
         <span class="crumb-here"><button class="crumb-backbtn" onclick="App.tab('home')" aria-label="Back to overview">${ICONS.back}</button>${esc((TABS.find(x=>x[0]===CUR_TAB)||[])[1]||'')}</span>
-        <span class="crumb-action">${ro?'':crumbAction(t)}</span>
+        <span class="crumb-action">${ro && CUR_TAB!=='plan' ? '' : crumbAction(t)}</span>
       </div>
     </div>`}
     <div id="tab-body"></div>
@@ -11614,8 +11626,12 @@ function crumbAction(t){
     // Itinerary's add actions live in the sticky bar at the bottom of the screen instead
     // (see .add-bar in renderTrip and App.addMenu) - three buttons crammed into this row
     // wrapped awkwardly on a phone, and the sticky bar is reachable without scrolling back
-    // to the top of what can be a long page.
-    case 'plan':   return '';
+    // to the top of what can be a long page. This slot instead carries the List/Map toggle,
+    // only worth showing once there's actually a map to switch to (see tabPlan's own hasNumbered).
+    case 'plan':   return mapRouteStops(t).length ? `<div class="view-toggle">
+      <button type="button" class="view-toggle-btn${PLAN_VIEW==='list'?' active':''}" onclick="App.setPlanView('list')" aria-label="List view">${fa('list')} List</button>
+      <button type="button" class="view-toggle-btn${PLAN_VIEW==='map'?' active':''}" onclick="App.setPlanView('map')" aria-label="Map view">${fa('map')} Map</button>
+    </div>` : '';
     case 'mood':   return `<button class="btn sm primary" onclick="App.moodForm()">${ICONS.add}New Idea</button>`;
     case 'contacts': return `<button class="btn sm primary" onclick="App.contactForm()">+ Add</button>`;
     case 'notes':  return `<button class="btn sm primary" onclick="App.noteForm(-1)">+ Add Note</button>`;
@@ -13763,6 +13779,15 @@ App.routeToggle = key => {
   initRouteMap(t);
   refreshOpenAllBtn(t);
 };
+App.setPlanView = v => {
+  if(PLAN_VIEW === v) return;
+  PLAN_VIEW = v;
+  const t = getTrip(CUR_TRIP_ID); if(!t) return;
+  // the toggle itself lives in the crumb row, outside #tab-body, so a plain renderTab(t) (like
+  // routeToggle's own) wouldn't repaint it - renderTrip redraws the whole page and calls
+  // renderTab(t) at the end anyway, same as switching tabs via App.tab does
+  renderTrip(t);
+};
 /* the route map - free, keyless Leaflet + CartoDB Voyager tiles (a cleaner, more modern-looking
    basemap than plain OpenStreetMap's own default style, still free and keyless - just a
    different, more polished set of tile images built from the same open map data), with place
@@ -13774,6 +13799,10 @@ App.routeToggle = key => {
    The whole tab body is replaced on every render (a toggle included), which throws away the
    map's DOM node each time, so this just makes a fresh Leaflet map every time it's called
    rather than trying to update one in place. */
+// which of the two mutually-exclusive Itinerary views is showing - see the crumb-action toggle
+// in crumbAction and its use in tabPlan below. Module-level like CUR_TAB, not per-trip, so
+// switching trips keeps whichever view you'd last picked rather than always resetting to List.
+let PLAN_VIEW = 'list';
 let ROUTE_MAP = null;
 let ROUTE_MAP_TRIP_ID = null;   // which trip ROUTE_MAP is currently showing - see initRouteMap
 let ROUTE_MAP_PTS = [];   // the current map's own numbered-stop coordinates, for the reset-view control
@@ -13899,14 +13928,16 @@ function tuneCartoLabels(glMap){
   /* Voyager's "background" layer is the map canvas's own opaque base fill - a flat rectangle
      under every polygon, land and sea alike, so it's the actual land colour on this basemap
      rather than a separate tint (see CARTO_WATER_LAYERS' own comment on why that also rules out
-     a transparent sea). A realistic soft green instead of Voyager's own dusty cream. */
+     a transparent sea). A soft cream, close to Voyager's own default dusty tone but a touch more
+     defined against the route line and pins - tried a green here instead at one point, reverted
+     after the fact, cream is the one that was actually wanted. */
   if(glMap.getLayer('background')){
     try{ glMap.setPaintProperty('background', 'background-opacity', 1); }catch(e){}
-    try{ glMap.setPaintProperty('background', 'background-color', '#BFDDA4'); }catch(e){}
+    try{ glMap.setPaintProperty('background', 'background-color', '#e4ddd0'); }catch(e){}
   }
   CARTO_LAND_LAYERS.forEach(id => {
     if(!glMap.getLayer(id)) return;
-    try{ glMap.setPaintProperty(id, 'fill-color', '#BFDDA4'); }catch(e){}
+    try{ glMap.setPaintProperty(id, 'fill-color', '#e4ddd0'); }catch(e){}
     try{ glMap.setPaintProperty(id, 'fill-opacity', 0.65); }catch(e){}
   });
 }
@@ -14303,9 +14334,14 @@ function tabPlan(t, ro){
   // stops come straight from Locations (see mapRouteStops) rather than needing a booked
   // accommodation first, which used to leave a trip with Locations set up but nothing booked
   // yet showing no map at all
+  // List and Map are mutually exclusive now (see the crumb-action toggle in crumbAction) - the
+  // map only ever wins the slot when there's actually something on it to show, so a trip with no
+  // numbered stops yet always falls back to the list regardless of whatever PLAN_VIEW says.
   const hasNumbered = mapRouteStops(t).length > 0;
-  const mapHTML = hasNumbered ? `<div class="route-map-wrap"><div id="route-map" class="route-map"></div></div>` : '';
-  return `${mapHTML}${locationsSummaryHTML(t, ro)}<div class="route-list">${keys.map(dayRow).join('')}</div>`;
+  const showMap = hasNumbered && PLAN_VIEW === 'map';
+  const mapHTML = showMap ? `<div class="route-map-wrap"><div id="route-map" class="route-map"></div></div>` : '';
+  const listHTML = showMap ? '' : `<div class="route-list">${keys.map(dayRow).join('')}</div>`;
+  return `${mapHTML}${locationsSummaryHTML(t, ro)}${listHTML}`;
 }
 /* the trip's own manually-defined Locations (App.locationForm) - a date range with a name and,
    optionally, a country for the flag, so a stretch with nothing else booked yet still names

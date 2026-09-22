@@ -239,6 +239,10 @@ a{color:var(--brand-dark);}
   border-radius:var(--radius); overflow:hidden; border:1px solid var(--line);}
 .trip-card-map-wrap .dash-trip-map{width:100%; height:100%;}
 .trip-card h3{font-size:1.2rem; margin-bottom:2px;}
+/* Edit/Share/Delete Trip - three across instead of stacked full-width, since none of the three
+   labels need the extra room; .btn's own text wraps if a translation ever runs long. */
+.trip-actions-row{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:40px;}
+.trip-actions-row .btn{width:100%;}
 /* The front door: four cards, two by two, under the title, hugging their content rather than
    stretching to fill the screen. Grid rows already equalize the height of cards that sit
    side by side, and since every card holds the same shape (emoji, number, label) both rows
@@ -11218,7 +11222,9 @@ const ICONS = {
   taxi: fa('taxi'),
   tasks: fa('thumbtack'),
   add: fa('plus'),
-  remove: fa('minus')
+  remove: fa('minus'),
+  allergy: fa('wheat-awn'),
+  phrases: fa('comment')
 };
 /* Emoji rather than icon-font glyphs for the big dashboard tiles: they bring their own
    colour, which lifts the grid and sits naturally beside the country flags in the header.
@@ -11335,11 +11341,13 @@ function renderTrip(t){
     </div>`}
     <div id="tab-body"></div>
     ${CUR_TAB==='home' && !ro ? `
-    <button class="btn" style="width:100%;margin-top:40px" onclick="App.tripForm()">${ICONS.edit} Edit Trip</button>`:''}
-    ${CUR_TAB==='home' ? `
-    <button class="btn" style="width:100%;margin-top:10px" onclick="App.share('${t.id}')">${ICONS.share} Share Trip</button>`:''}
-    ${CUR_TAB==='home' && !ro ? `
-    <button class="btn danger" style="width:100%;margin-top:10px" onclick="App.deleteTrip('${t.id}')">Delete Trip</button>`:''}
+    <div class="trip-actions-row">
+      <button class="btn" onclick="App.tripForm()">${ICONS.edit} Edit Trip</button>
+      <button class="btn" onclick="App.share('${t.id}')">${ICONS.share} Share Trip</button>
+      <button class="btn danger" onclick="App.deleteTrip('${t.id}')">Delete Trip</button>
+    </div>`:''}
+    ${CUR_TAB==='home' && ro ? `
+    <button class="btn" style="width:100%;margin-top:40px" onclick="App.share('${t.id}')">${ICONS.share} Share Trip</button>`:''}
     ${CUR_TAB==='home' ? tabLog(t) : ''}
     ${CUR_TAB==='plan' && !ro ? `
     <div class="add-bar"><div class="add-bar-row">

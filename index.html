@@ -1043,18 +1043,13 @@ a{color:var(--brand-dark);}
 /* ---------- breadcrumb back to overview ---------- */
 .crumb{display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin:var(--page-top) 0 18px;}
 .crumb-here{display:inline-flex; align-items:center; gap:6px; font-family:var(--font-head); font-weight:800; font-size:1.5rem; letter-spacing:-.02em; color:var(--ink); min-width:0;}
-/* a fixed equal width/height, not padding around the chevron's own (narrower-than-tall) glyph
-   box, so border-radius:50% actually renders a circle instead of an ellipse. A real background
-   circle at rest now too (same paper+shadow chip look .dash-watchnext-fav's own circle already
-   uses elsewhere), not just on :hover - mobile Safari can leave a tapped element's :hover state
-   looking "stuck" after navigating, which made the circle seem to show up inconsistently from
-   page to page when it was hover-only; showing it all the time removes that inconsistency
-   outright instead of chasing the stuck-hover quirk itself. */
+/* a fixed equal width/height tap target around the chevron, no circle behind it - just the plain
+   brand-coloured glyph, darkening slightly on hover/press rather than gaining a filled background. */
 .crumb-backbtn{display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px;
-  background:var(--paper); box-shadow:var(--shadow); border:none; cursor:pointer; margin-left:-4px;
-  border-radius:50%; color:var(--brand); flex-shrink:0;}
+  background:none; box-shadow:none; border:none; cursor:pointer; margin-left:-4px;
+  color:var(--brand); flex-shrink:0;}
 .crumb-backbtn .icon{font-size:1.05rem;}
-.crumb-backbtn:hover{background:var(--brand-ghost);}
+.crumb-backbtn:hover{color:var(--brand-dark);}
 .crumb-here .icon{font-size:1.5rem; color:var(--brand); flex-shrink:0;}
 /* the Home page's own wordmark (see WORDMARK_PNG) - swaps the plain "Home" text for the app's
    actual logo asset, sized to sit at roughly the same cap-height as every other page's heading. */
@@ -1140,7 +1135,7 @@ input[list]::-webkit-calendar-picker-indicator, input[list]::-webkit-list-button
    button, instead of the small pin-emoji phrase it used to share with the countdown */
 .trip-title-row{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;}
 .trip-title-row .status-pill{flex-shrink:0; margin-top:4px;}
-/* the back-to-all-trips button sits left of the trip name, same round icon button as every
+/* the back-to-all-trips button sits left of the trip name, same plain icon button as every
    other back arrow in the app (see .crumb-backbtn), just placed inline with a serif <h1> here
    instead of a breadcrumb bar */
 .trip-title-main{display:flex; align-items:center; gap:6px;}
@@ -13649,6 +13644,14 @@ function tuneCartoLabels(glMap){
     const type = glMap.getLayer(id).type;   // "fill" (water/water_shadow) or "line" (waterway)
     try{ glMap.setPaintProperty(id, type+'-color', bg); }catch(e){}
   });
+  /* Voyager's "background" layer is the map canvas's own opaque base fill - a flat, near-white
+     cream (#fbf8f3) that every land polygon (landuse, parks...) sits on, so it's the actual land
+     colour on this basemap rather than a separate tint. Darkened a shade so land reads with a
+     bit more definition against the route line and pins instead of nearly blending into the
+     page's own light background. */
+  if(glMap.getLayer('background')){
+    try{ glMap.setPaintProperty('background', 'background-color', '#e4ddd0'); }catch(e){}
+  }
 }
 /* the actual base layer every route map adds - MapLibre GL's vector rendering (via the
    maplibre-gl-leaflet bridge, so the rest of this file keeps using plain Leaflet markers/lines/

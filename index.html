@@ -426,6 +426,10 @@ a{color:var(--brand-dark);}
    same click-to-filter destination either way. */
 .stat-overview-row{display:flex; gap:10px; margin-bottom:20px;}
 .stat-overview-row .dash-widget{flex:1;}
+/* twice the plain dash-stat-num size/weight used elsewhere (the compact dashboard tiles, Money's
+   own earnings card) - these three headline numbers are the whole point of this page, not one
+   more figure in a dense grid, so scoped to just this row rather than the shared base class */
+.stat-overview-row .dash-stat-num{font-size:1.6rem; font-weight:700;}
 .stats-chart{display:flex; flex-direction:column; gap:7px; margin-bottom:22px;}
 .stats-bar{display:flex; align-items:center; gap:8px; width:100%;
   font:inherit; color:inherit; background:none; border:none; padding:0; cursor:pointer;}
@@ -433,6 +437,13 @@ a{color:var(--brand-dark);}
 .stats-bar-track{flex:1; height:16px; border-radius:4px; background:var(--bg); overflow:hidden;}
 .stats-bar-fill{display:block; height:100%; background:var(--brand); border-radius:4px; transition:background .12s;}
 .stats-bar:hover .stats-bar-fill,.stats-bar:focus-visible .stats-bar-fill{background:var(--brand-dark);}
+/* By Year's own red/amber/green band (see ragClass) - after the plain hover rule above so a
+   meaningfully-coloured bar doesn't flash back to plain blue on hover/focus. By Rating's own
+   continuous scale (ratingGradientColor) sets its colour inline instead, since it's a unique
+   shade per value rather than one of three bands. */
+.stats-bar-fill.rag-red{background:var(--rag-red);}
+.stats-bar-fill.rag-yellow{background:var(--rag-yellow);}
+.stats-bar-fill.rag-green{background:var(--rag-green);}
 .stats-bar-count{font-size:.72rem; font-weight:700; color:var(--ink); width:30px; flex-shrink:0; white-space:nowrap;}
 
 /* ---------- home dashboard (masonry widgets) ---------- */
@@ -8330,17 +8341,37 @@ function filmsStatsByRating(){
    scrolling sideways once a diary spanned enough years, with narrower and narrower bars each
    still needing their label/count crammed underneath. A row can just keep adding rows instead.
    Width is a percentage of .stats-bar-track's own flexed width, the whole row is the click target
-   (same filtered poster grid every row-style stat already drilled into). */
-function statsBarChartHTML(entries, onclickFn){
+   (same filtered poster grid every row-style stat already drilled into).
+   fillStyleFn(entry, max), when given, returns {cls} (a rag-red/yellow/green band, see ragClass -
+   By Year's own "how full is this year" reading) or {color} (a specific CSS colour, By Rating's
+   own continuous red-to-green scale, see ratingGradientColor) to colour that one bar differently
+   from the plain brand-blue default. */
+function statsBarChartHTML(entries, onclickFn, fillStyleFn){
   const max = Math.max(1, ...entries.map(e=>e.count));
   return `<div class="stats-chart">
-    ${entries.map(e => `
+    ${entries.map(e => {
+      const fill = fillStyleFn ? fillStyleFn(e, max) : null;
+      const width = Math.round(Math.max(4, (e.count/max)*100));
+      const style = `width:${width}%${fill&&fill.color?`;background:${fill.color}`:''}`;
+      return `
       <button type="button" class="stats-bar" onclick="${onclickFn(e.key)}" aria-label="${esc(String(e.label))}: ${e.count} film${e.count===1?'':'s'}">
         <span class="stats-bar-label">${esc(String(e.label))}</span>
-        <span class="stats-bar-track"><span class="stats-bar-fill" style="width:${Math.round(Math.max(4, (e.count/max)*100))}%"></span></span>
+        <span class="stats-bar-track"><span class="stats-bar-fill${fill&&fill.cls?' '+fill.cls:''}" style="${style}"></span></span>
         <span class="stats-bar-count">${e.count}</span>
-      </button>`).join('')}
+      </button>`;
+    }).join('')}
   </div>`;
+}
+/* a continuous red-to-green scale (not the discrete rag-red/yellow/green bands ragClass uses
+   elsewhere) - a 0.5-10 rating is one continuous line, not three meaningful bands, so each value
+   gets its own shade between the app's own --rag-red and --rag-green tones rather than snapping
+   into one of three buckets. min/max default to the film score range (FILM_SCORE_VALUES). */
+function ratingGradientColor(value, min, max){
+  min = min==null ? 0.5 : min; max = max==null ? 10 : max;
+  const f = max>min ? Math.max(0, Math.min(1, (value-min)/(max-min))) : 1;
+  const red = [255,59,48], green = [52,199,89];   // --rag-red, --rag-green
+  const mix = red.map((c,i) => Math.round(c + (green[i]-c)*f));
+  return `rgb(${mix.join(',')})`;
 }
 function renderFilmsStats(){
   const body = $('#films-body'); if(!body) return;
@@ -8669,9 +8700,9 @@ function renderFilmSortRound(){
 function renderFilmsStatsCharts(){
   const films = DB.films||[];
   const byYear = filmsStatsByYear();
-  // ascending, oldest first - a chart reads left to right as a timeline, unlike the old list
-  // (newest first, easier to scan as a plain list) it replaces
-  const years = [...byYear.keys()].filter(k=>k!=='nodate').sort((a,b)=>a.localeCompare(b));
+  // newest first - the most recent year (the one you're most likely checking in on) reads
+  // first without scrolling past every earlier one to reach it
+  const years = [...byYear.keys()].filter(k=>k!=='nodate').sort((a,b)=>b.localeCompare(a));
   const noDateCount = byYear.get('nodate')||0;
   const yearEntries = years.map(y=>({key:y, label:y, count:byYear.get(y)}));
   if(noDateCount) yearEntries.push({key:'nodate', label:'No Date', count:noDateCount});
@@ -8694,9 +8725,9 @@ function renderFilmsStatsCharts(){
     ${films.length ? `
     ${filmsStatOverviewHTML(films)}
     <h3 style="margin:20px 0 10px">By Year</h3>
-    ${statsBarChartHTML(yearEntries, key => `App.filmsStatsYear('${key}')`)}
+    ${statsBarChartHTML(yearEntries, key => `App.filmsStatsYear('${key}')`, (e,max) => ({cls: ragClass((e.count/max)*100)}))}
     <h3 style="margin:20px 0 10px">By Rating</h3>
-    ${statsBarChartHTML(ratingEntries, key => `App.filmsStatsRating('${key}')`)}`
+    ${statsBarChartHTML(ratingEntries, key => `App.filmsStatsRating('${key}')`, e => typeof e.key==='number' ? {color: ratingGradientColor(e.key)} : null)}`
     : `<div class="empty">Log some films to see stats here.</div>`}`;
 }
 function renderFilmsStatsFiltered(type, valueStr){

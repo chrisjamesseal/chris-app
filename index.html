@@ -11705,15 +11705,19 @@ App.addMenu = (key, rough) => {
     <div class="add-choice-list">
       <button type="button" class="add-choice" onclick="${hasDay?`closeModal();App.ideasForDay('${esc(key)}',${!!rough})`:`closeModal();App.tab('mood')`}">
         <span class="add-choice-emoji" aria-hidden="true">💡</span>
-        <span class="add-choice-body"><strong>Browse Ideas</strong><span class="muted small">Pin somewhere, then turn it into a stop when you're ready</span></span>
+        <span class="add-choice-body"><strong>Browse Ideas</strong></span>
       </button>
       <button type="button" class="add-choice" onclick="${hasDay?`App.travelLegForm(-1, planWhenFor('${esc(key)}',${!!rough}))`:'App.travelLegForm(-1)'}">
         <span class="add-choice-emoji" aria-hidden="true">🚌</span>
-        <span class="add-choice-body"><strong>Add Travel</strong><span class="muted small">A flight, ferry, drive or other leg between places</span></span>
+        <span class="add-choice-body"><strong>Add Travel</strong></span>
+      </button>
+      <button type="button" class="add-choice" onclick="${hasDay && !rough?`App.accomForm(-1, {checkin:'${esc(key)}'})`:'App.accomForm(-1)'}">
+        <span class="add-choice-emoji" aria-hidden="true">🛏️</span>
+        <span class="add-choice-body"><strong>Add Accommodation</strong></span>
       </button>
       <button type="button" class="add-choice" onclick="${hasDay?`App.planGapForm('${esc(key)}',${!!rough})`:'App.planForm(-1)'}">
         <span class="add-choice-emoji" aria-hidden="true">📍</span>
-        <span class="add-choice-body"><strong>Add Stop</strong><span class="muted small">Something to do on a specific day</span></span>
+        <span class="add-choice-body"><strong>Add Stop</strong></span>
       </button>
     </div>`, {autofocus:false});
 };

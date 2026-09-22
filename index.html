@@ -11206,9 +11206,9 @@ function renderTrip(t){
     </div>`}
     <div id="tab-body"></div>
     ${CUR_TAB==='home' && !ro ? `
-    <button class="btn" style="width:100%;margin-top:40px" onclick="App.tripForm()">${secEmoji('✏️')} Edit Trip</button>`:''}
+    <button class="btn" style="width:100%;margin-top:40px" onclick="App.tripForm()">${ICONS.edit} Edit Trip</button>`:''}
     ${CUR_TAB==='home' ? `
-    <button class="btn" style="width:100%;margin-top:10px" onclick="App.share('${t.id}')">${secEmoji('🔗')} Share Trip</button>`:''}
+    <button class="btn" style="width:100%;margin-top:10px" onclick="App.share('${t.id}')">${ICONS.share} Share Trip</button>`:''}
     ${CUR_TAB==='home' && !ro ? `
     <button class="btn danger" style="width:100%;margin-top:10px" onclick="App.deleteTrip('${t.id}')">Delete Trip</button>`:''}
     ${CUR_TAB==='home' ? tabLog(t) : ''}

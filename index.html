@@ -9098,7 +9098,8 @@ function theatreFormImpl(i, prefill){
     <div class="field"><label class="label" for="theatre-time">Time <span class="muted">(optional)</span></label><input id="theatre-time" type="time" value="${esc(t.time||'')}"></div>
     ${theatreRatingFieldHTML(t.rating!=null?t.rating:null)}
     <div class="field"><label class="label" for="theatre-notes">Notes</label><textarea id="theatre-notes" rows="3">${esc(t.notes||'')}</textarea></div>
-    <button class="btn primary" style="width:100%" onclick="App.saveTheatre(${i>=0?i:-1})">${i>=0?'Save':'Log Show'}</button>`);
+    <button class="btn primary" style="width:100%" onclick="App.saveTheatre(${i>=0?i:-1})">${i>=0?'Save':'Log Show'}</button>
+    ${i>=0?`<button class="btn danger" style="width:100%;margin-top:10px" onclick="App.delTheatre(${i})">Delete Show</button>`:''}`);
 }
 function saveTheatreImpl(i){
   const title = ($('#theatre-title').value||'').trim();

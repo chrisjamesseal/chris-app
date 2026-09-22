@@ -205,6 +205,7 @@ a{color:var(--brand-dark);}
 /* ---------- trip list ---------- */
 .trip-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin-top:10px;}
 .trip-card{
+  display:flex; align-items:flex-start; gap:14px;
   border:1px solid var(--line); border-radius:var(--radius); background:var(--paper);
   box-shadow:var(--shadow); padding:16px; cursor:pointer; position:relative;
   backdrop-filter:blur(var(--glass-blur)) saturate(160%); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);
@@ -212,6 +213,14 @@ a{color:var(--brand-dark);}
 }
 .trip-card:hover{transform:translateY(-2px); box-shadow:var(--shadow-lift); border-color:var(--brand);}
 .trip-card.archived{opacity:.55; filter:grayscale(1);}
+.trip-card-body{flex:1; min-width:0;}
+/* the square map preview beside a trip card's own text - fixed size regardless of how tall the
+   text column ends up (a big group's names can run to two lines), same boxed border/radius
+   treatment as the wide Next Trip dashboard preview (.dash-trip-map-wrap), just square instead
+   of wide and sat beside the text rather than above it. */
+.trip-card-map-wrap{flex-shrink:0; align-self:center; width:84px; height:84px;
+  border-radius:var(--radius); overflow:hidden; border:1px solid var(--line);}
+.trip-card-map-wrap .dash-trip-map{width:84px; height:84px;}
 .trip-card h3{font-size:1.2rem; margin-bottom:2px;}
 /* The front door: four cards, two by two, under the title, hugging their content rather than
    stretching to fill the screen. Grid rows already equalize the height of cards that sit
@@ -5572,6 +5581,7 @@ function renderPlacesHub(){
         <button class="version-tag" onclick="App.toggleChangelog()">v${esc(APP_VERSION)} &middot; What's new</button>
       </div>
     </div>`;
+  initDashTripMaps();
   /* repaint the counts, not the page: re-running this whole function from its own callback
      would subscribe again and again */
   loadPlacesCloud(cloud => {
@@ -5582,6 +5592,7 @@ function renderPlacesHub(){
   if(cloudEnabled()){
     fetchAllTrips(all => {
       const el = $('#home-grid'); if(el) el.innerHTML = homeGridHTML(all);
+      initDashTripMaps();
     });
   }
 }
@@ -10737,16 +10748,25 @@ function peopleSummary(t, empty, limit){
 }
 function tripCardHTML(t){
   const people = peopleSummary(t, '', 8);
+  // same small route-map preview the Home dashboard's own Next Trip tile uses (initDashTripMaps
+  // picks up any .dash-trip-map[data-trip-id] on the page, this card's included, no extra JS
+  // needed here) - just square instead of wide, sat beside the card's own text rather than
+  // above it, since a whole row of cards already has more width to spare than height.
+  const mapHTML = mapRouteStops(t).length
+    ? `<div class="trip-card-map-wrap"><div class="dash-trip-map" data-trip-id="${esc(t.id)}"></div></div>` : '';
   return `
     <div class="trip-card ${isArchived(t)?'archived':''}" role="button" tabindex="0"
          onclick="location.hash='#/trip/${t.id}'"
          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();location.hash='#/trip/${t.id}'}">
-      ${tripFlags(t)?`<div class="trip-flags">${tripFlags(t)}</div>`:''}
-      <h3>${esc(t.name)}</h3>
-      ${t.destination?`<div class="muted">${esc(t.destination)}</div>`:''}
-      <div class="small" style="margin-top:8px">${esc(tripWhenLine(t))}</div>
-      ${people?`<div class="small muted trip-people"><span class="trip-people-names">${esc(people)}</span></div>`:''}
-      <div style="margin-top:12px">${statusPill(t)}</div>
+      <div class="trip-card-body">
+        ${tripFlags(t)?`<div class="trip-flags">${tripFlags(t)}</div>`:''}
+        <h3>${esc(t.name)}</h3>
+        ${t.destination?`<div class="muted">${esc(t.destination)}</div>`:''}
+        <div class="small" style="margin-top:8px">${esc(tripWhenLine(t))}</div>
+        ${people?`<div class="small muted trip-people"><span class="trip-people-names">${esc(people)}</span></div>`:''}
+        <div style="margin-top:12px">${statusPill(t)}</div>
+      </div>
+      ${mapHTML}
     </div>`;
 }
 function homeGridHTML(trips, loading){

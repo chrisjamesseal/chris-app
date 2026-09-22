@@ -244,7 +244,10 @@ a{color:var(--brand-dark);}
    the Edit Trip form itself (see App.tripForm), the same "Delete X" pattern every other edit
    form already uses (Delete Gig, Delete Show...) - so it no longer needs a third column here. */
 .trip-actions-row{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:40px;}
-.trip-actions-row .btn{width:100%;}
+/* solid neutral fill instead of the default pale tint - Edit/Share are equal-weight page
+   actions, so give them the same darker treatment as .btn.grey without picking one as primary */
+.trip-actions-row .btn{width:100%; background:#E5E5EA; border-color:#E5E5EA; color:var(--ink);}
+.trip-actions-row .btn:hover{background:#D8D8DE; border-color:#D8D8DE; color:var(--ink);}
 /* The front door: four cards, two by two, under the title, hugging their content rather than
    stretching to fill the screen. Grid rows already equalize the height of cards that sit
    side by side, and since every card holds the same shape (emoji, number, label) both rows

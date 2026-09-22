@@ -384,8 +384,8 @@ a{color:var(--brand-dark);}
    titles sits shorter than its neighbours and the posters below it in the next row creep up to
    meet them, breaking the strict poster-grid look one flexible-height title would give it */
 .film-title{margin-top:6px; font-family:var(--font-head); font-weight:700; font-size:.78rem; color:var(--ink);
-  line-height:1.25; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical;
-  -webkit-line-clamp:2; overflow:hidden; height:2.5em;}
+  line-height:1.1; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical;
+  -webkit-line-clamp:2; overflow:hidden; height:2.2em;}
 .film-rewatch-badge{color:var(--muted); font-weight:400;}
 .film-meta{margin-top:2px; font-size:.68rem; color:var(--muted);}
 /* UK streaming logos - see fetchFilmProviders/filmProvidersHTML. A plain wrapping row under
@@ -527,11 +527,11 @@ a{color:var(--brand-dark);}
    next to two lines of text */
 .dash-item-img-lg{display:block; width:64px; height:64px; object-fit:cover; border-radius:var(--radius-sm); margin-bottom:10px;}
 .dash-item-img-lg.round{border-radius:50%;}
-/* Theatre's own Next Show/Watch Next tiles: no .round (a show's own art isn't a face, same
-   reasoning as .theatre-cover) and object-fit:contain instead of the default cover - see
-   .theatre-cover's own comment on why a fixed crop doesn't suit Ticketmaster's inconsistent
-   aspect ratios here. */
-.theatre-dash-img{object-fit:contain;}
+/* Theatre's own Next Show/Watch Next tiles: full tile width in the same 2:3 poster shape as
+   Films' Watch Next (.dash-watchnext-poster) instead of a small fixed square - the square left a
+   lot of empty letterboxing above/below a tall poster image, so this fills the space instead of
+   containing within it. */
+.theatre-dash-img{width:100%; height:auto; aspect-ratio:2/3; object-fit:cover;}
 /* Watch Next's provider logos sit below the title/sub, with a bit more breathing room above
    them than the tight 4px gap Watchlist's own cards use below their poster, see .film-providers-badge */
 .dash-watchnext-providers{margin-top:10px;}
@@ -597,7 +597,7 @@ a{color:var(--brand-dark);}
    visits shouldn't need a tap into the detail page at all - a narrow grid column had no room for
    any of that. */
 .plants-list{display:flex; flex-direction:column; gap:4px;}
-.plant-card-wide{cursor:pointer; padding:14px 18px;}
+.plant-card-wide{cursor:pointer; padding:14px 18px; background:#fff;}
 /* a vegetable still on "Not Planted" isn't actually being grown yet - fading the whole card
    makes that read at a glance down the list, without needing to open it to check */
 .plant-card-wide.plant-unplanted{opacity:.55;}
@@ -897,7 +897,16 @@ a{color:var(--brand-dark);}
    real booking's card carries, so the two still read as different weights of information. */
 .plan-connector.plan-connector-leg{justify-content:flex-start; background:var(--paper);
   border-radius:var(--radius); padding:11px 14px;}
-.plan-arrive-pill{background:#fff; border-radius:var(--radius); padding:11px 12px; margin:0 0 20px;
+/* the leg's own time prefix ("12:00 -") reused the app-wide .small class, which set a smaller
+   font-size than the rest of the row - shrinking it out of step with .plan-arrive-time on the
+   pill right above/below it even though both mark the same kind of moment */
+.plan-connector-leg .small{font-size:inherit;}
+/* the leg's own link (travelLinkHTML) sits at the far right of the row rather than inline after
+   the text, and shows just the linked site's favicon - no "Link" label - so it reads as an
+   attachment icon rather than competing with the leg's own description text */
+.plan-connector-leg .travel-link-fav{margin-left:auto; flex-shrink:0;}
+.plan-connector-leg .travel-link-fav .fav{margin-right:0;}
+.plan-arrive-pill{background:#fff; border-radius:var(--radius); padding:11px 14px; margin:0 0 20px;
   font-weight:700; font-size:.9rem; color:var(--ink);}
 .plan-arrive-time{font-weight:400;}
 /* the route map (initRouteMap) - a Leaflet/OSM view sat above the stop list, its pins the only
@@ -1811,12 +1820,12 @@ body.kb-open .tabbar.on{display:none;}
 /* a light tint rather than the solid brand blue - reads as a bubble shape without the heavy
    block-of-colour look, so text goes back to the app's normal ink/brand-dark tones instead of
    white now that it's no longer sitting on a dark fill */
-.phrase-bubble{position:relative; width:100%; background:var(--brand-tint); color:var(--ink);
+.phrase-bubble{position:relative; width:100%; background:#D3E7FB; color:var(--ink);
   border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 44px 14px 16px;}
 /* the tail, pointing down from the bubble's lower-left - a plain CSS triangle rather than an
    image, so it always matches the bubble's own background colour exactly */
-.phrase-bubble::after{content:""; position:absolute; left:22px; bottom:-9px; width:0; height:0;
-  border-left:9px solid transparent; border-right:9px solid transparent; border-top:9px solid var(--brand-tint);}
+.phrase-bubble::after{content:""; position:absolute; left:11px; bottom:-9px; width:0; height:0;
+  border-left:9px solid transparent; border-right:9px solid transparent; border-top:9px solid #D3E7FB;}
 .phrase-native{font-family:var(--font-head); font-weight:700; font-size:1.4rem; line-height:1.25; color:var(--ink); display:block;}
 .phrase-pron{color:var(--brand-dark); font-size:.92rem; font-style:italic; display:block; margin-top:4px;}
 /* brand-dark now that the bubble's light rather than a solid fill - still sat in its bottom-right
@@ -3691,11 +3700,11 @@ function ordinalSuffix(n){
   if(n%100>=11 && n%100<=13) return 'th';
   switch(n%10){ case 1: return 'st'; case 2: return 'nd'; case 3: return 'rd'; default: return 'th'; }
 }
-function fmtDateOrdinal(d){
+function fmtDateOrdinal(d, noYear){
   if(!d) return '';
   const dt = new Date(d + 'T00:00:00');
   const day = dt.getDate();
-  return `${day}${ordinalSuffix(day)} ${dt.toLocaleDateString(undefined, {month:'long'})} ${dt.getFullYear()}`;
+  return `${day}${ordinalSuffix(day)} ${dt.toLocaleDateString(undefined, {month:'long'})}${noYear?'':' '+dt.getFullYear()}`;
 }
 /* an ordinal date range for a stretch of days on the Tasks page (a run of nights with nowhere
    booked) - same "year said once, at the end" idea as rangeParts, but written out day by day
@@ -3758,12 +3767,29 @@ function statusPhrase(t){
   if(s) return 'happening now';
   return '';
 }
-/* the trip's start date, but only when it's genuinely still ahead of us, used to decide
-   whether the header shows the live countdown card instead of the "N to go" phrase */
+/* the earliest dated item actually on the itinerary - a booked flight/ferry/car pickup or an
+   accommodation check-in - rather than the trip's own startDate field, which is often just a
+   placeholder guess set before anything was booked and can drift out of sync with what the
+   day-by-day plan actually starts with. Falls back to startDate once nothing's booked yet. */
+function tripFirstMoment(t){
+  const candidates = [];
+  (t.flights||[]).forEach(f=>{ if(f.date) candidates.push({date:f.date, time:f.depTime||''}); });
+  (t.ferries||[]).forEach(f=>{ if(f.date) candidates.push({date:f.date, time:f.depTime||''}); });
+  (t.carHire||[]).forEach(c=>{ if(c.pickupDate) candidates.push({date:c.pickupDate, time:c.pickupTime||''}); });
+  (t.accommodations||[]).forEach(a=>{ if(a.checkin) candidates.push({date:a.checkin, time:a.checkinTime||''}); });
+  if(!candidates.length) return t.startDate ? {date:t.startDate, time:''} : null;
+  candidates.sort((a,b)=>(a.date+' '+(a.time||'00:00')).localeCompare(b.date+' '+(b.time||'00:00')));
+  return candidates[0];
+}
+/* the trip's first itinerary moment (see tripFirstMoment), but only when it's genuinely still
+   ahead of us, used to decide whether the header shows the live countdown card instead of the
+   "N to go" phrase */
 function upcomingStartDate(t){
-  if(isArchived(t) || !t.startDate) return null;
+  if(isArchived(t)) return null;
+  const first = tripFirstMoment(t);
+  if(!first || !first.date) return null;
   const today = new Date(); today.setHours(0,0,0,0);
-  return today < new Date(t.startDate+'T00:00:00') ? t.startDate : null;
+  return today < new Date(first.date+'T00:00:00') ? first.date : null;
 }
 /* the trip to jump straight into from the bottom bar's Travel button, when one's close enough
    that "which trip" isn't really a question: already happening (including one running with no
@@ -4043,7 +4069,8 @@ function tripStatus(t){
      instead of pretending to know a date */
   if(hasRoughWhen(t)) return {label:'Being Planned', cls:'soon'};
   const day = 86400000, today = new Date(); today.setHours(0,0,0,0);
-  const s = t.startDate ? new Date(t.startDate+'T00:00:00') : null;
+  const first = tripFirstMoment(t);
+  const s = first && first.date ? new Date(first.date+'T00:00:00') : null;
   const e = t.endDate ? new Date(t.endDate+'T00:00:00') : null;
   if(s && today < s){
     const n = Math.round((s-today)/day);
@@ -4937,7 +4964,7 @@ function placesHubCardsHTML(){
    trips (shuffled) rather than just the next one, mainly to give the masonry more to work with. */
 function dashUpcomingTrips(){
   const withDates = DB.trips.filter(t=>upcomingStartDate(t));
-  withDates.sort((a,b)=>a.startDate.localeCompare(b.startDate));
+  withDates.sort((a,b)=>(tripFirstMoment(a).date).localeCompare(tripFirstMoment(b).date));
   return withDates;
 }
 /* each flag gets its own equal-width cell (rather than one run of text at a fixed size) so
@@ -4950,6 +4977,7 @@ function flagCellsHTML(arr){
 }
 function dashTripItemHTML(t){
   const flags = tripFlagsArr(t);
+  const first = tripFirstMoment(t);
   return `
     <div class="dash-widget dash-widget-item" role="button" tabindex="0" onclick="location.hash='#/trip/${esc(t.id)}'"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();location.hash='#/trip/${esc(t.id)}'}">
@@ -4957,7 +4985,7 @@ function dashTripItemHTML(t){
       <div class="dash-item-flags dash-item-flags-boxed" aria-hidden="true">${flagCellsHTML(flags.length?flags:['✈️'])}</div>
       <div class="dash-item-title">${esc(t.name)}</div>
       <div class="dash-item-sub">Next Trip</div>
-      ${miniCountdownHTML(t.startDate)}
+      ${first ? miniCountdownHTML(first.date, first.time) : ''}
     </div>`;
 }
 function dashTripWidgetsHTML(){
@@ -8998,6 +9026,15 @@ function drawTheatreList(){
     ? `<div class="theatre-poster-grid">${ordered.map(o=>theatreCardHTML(o.t,o.i)).join('')}</div>`
     : `<div class="empty">No shows logged yet.<br>Tap + Log Show to log the first one.</div>`;
 }
+/* Ticketmaster's venue string is "Venue Name, City" - useful while picking a result apart from
+   others of the same name in the search dropdown, but redundant clutter once it's saved to a
+   list you're only ever looking at one trip/city's worth of shows in, so the list views below
+   drop everything from the last comma on. */
+function venueNoCity(venue){
+  if(!venue) return venue;
+  const i = venue.lastIndexOf(',');
+  return i===-1 ? venue : venue.slice(0, i).trim();
+}
 function theatreCardHTML(t, i){
   // venue and date/time are two different kinds of fact (where vs when) - forced onto their own
   // lines rather than one joined string, which used to wrap wherever the text happened to run
@@ -9009,7 +9046,7 @@ function theatreCardHTML(t, i){
       ${t.image ? `<img class="theatre-poster" src="${esc(t.image)}" alt="" loading="lazy">`
                  : `<span class="theatre-poster theatre-poster-fallback" aria-hidden="true">🎭</span>`}
       <div class="theatre-poster-title">${esc(t.title||'Untitled')}</div>
-      ${t.venue?`<div class="theatre-poster-venue muted small">${esc(t.venue)}</div>`:''}
+      ${t.venue?`<div class="theatre-poster-venue muted small">${esc(venueNoCity(t.venue))}</div>`:''}
       ${when?`<div class="theatre-poster-venue muted small">${esc(when)}</div>`:''}
       ${theatreStarsHTML(t.rating)}
       ${t.notes?`<div class="small muted" style="margin-top:8px">${esc(t.notes)}</div>`:''}
@@ -9178,7 +9215,7 @@ function theatreWatchlistCardHTML(t){
       ${t.image ? `<img class="theatre-poster" src="${esc(t.image)}" alt="" loading="lazy">`
                  : `<span class="theatre-poster theatre-poster-fallback" aria-hidden="true">🎭</span>`}
       <div class="theatre-poster-title">${esc(t.title||'Untitled')}</div>
-      ${t.venue?`<div class="theatre-poster-venue muted small">${esc(t.venue)}</div>`:''}
+      ${t.venue?`<div class="theatre-poster-venue muted small">${esc(venueNoCity(t.venue))}</div>`:''}
       ${t.notes?`<div class="small muted" style="margin-top:6px">${esc(t.notes)}</div>`:''}
     </div>`;
 }
@@ -13187,8 +13224,8 @@ function planDaysHTML(t, ro, filterKeys){
       </div>
       ${ac.address && ac.address!==cityName?`<div class="itin-route-name">${esc(ac.address)}</div>`:''}
       ${ac.checkin?`<div class="itin-stay-dates" style="margin-bottom:${hasBelow?'12px':'0'}${BOOKING_SERVICE_COLORS[detectBookingService(ac.bookingUrl)]?`;--stay-icon-color:${BOOKING_SERVICE_COLORS[detectBookingService(ac.bookingUrl)]}`:''}">
-        <span>${ICONS.calendar}${esc(fmtDateOrdinal(ac.checkin))}${ac.checkinTime?` ${fa('clock')}Check In: ${esc(ac.checkinTime)}`:''}</span>
-        ${ac.checkout?`<span class="itin-date-to">to ${ICONS.calendar}${esc(fmtDateOrdinal(ac.checkout))}${ac.checkoutTime?` ${fa('clock')}Check Out: ${esc(ac.checkoutTime)}`:''}</span>`:''}
+        <span>${ICONS.calendar}${esc(fmtDateOrdinal(ac.checkin, true))}${ac.checkinTime?` ${fa('clock')}Check In: ${esc(ac.checkinTime)}`:''}</span>
+        ${ac.checkout?`<span class="itin-date-to">to ${ICONS.calendar}${esc(fmtDateOrdinal(ac.checkout, true))}${ac.checkoutTime?` ${fa('clock')}Check Out: ${esc(ac.checkoutTime)}`:''}</span>`:''}
       </div>`:''}
       ${ac.ref?`<div class="itin-ref">Booking Reference: <strong>${esc(ac.ref)}</strong></div>`:''}
       ${mapsUrl||ac.bookingUrl?`<div class="itin-actions">
@@ -14963,7 +15000,7 @@ function googleMapsUrl(q){ return 'https://www.google.com/maps/search/?api=1&que
    typed without a scheme ("aircanada.com/booking") still needs to actually work as an href */
 function normalizeUrl(url){ return url && !/^https?:\/\//i.test(url) ? 'https://'+url : url; }
 function travelLinkHTML(url){
-  return url ? `<a class="doc-attach" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${fa('link')}Link</a>` : '';
+  return url ? `<a class="doc-attach travel-link-fav" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${faviconFor(url) || fa('link')}</a>` : '';
 }
 /* a Google Maps link gets Google's own icon, the same way a booking link gets the site's;
    anything else (a maps.apple.com or what3words link somebody pasted) keeps the emoji.

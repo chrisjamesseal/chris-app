@@ -124,6 +124,10 @@ h1{font-family:var(--font-head); font-size:1.9rem; font-weight:800; letter-spaci
 h2{font-family:var(--font-head); font-size:1.08rem; font-weight:800; letter-spacing:-.01em; margin-bottom:12px; color:var(--ink);}
 h3{font-family:var(--font-head); font-size:1rem; font-weight:700; color:var(--ink);}
 .label{font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); display:block; margin-bottom:5px;}
+/* a field hint like "(optional)" sits inside the label as a plain .muted span - .muted's own
+   font-size (.85rem) is bigger than the label's own .7rem, so the hint read larger than the
+   label itself instead of a quiet aside. Inherit instead, so it always matches. */
+.label .muted{font-size:inherit;}
 .muted{color:var(--muted); font-size:.85rem;}
 .small{font-size:.85rem;}
 /* visible to screen readers only - for a label an icon/badge already carries visually */
@@ -7003,7 +7007,8 @@ function gigFormImpl(i, prefillArtist){
       </div>
       <div class="chips" id="gig-people-pills" style="margin-top:10px"></div>
     </div>
-    <button class="btn primary" style="width:100%" onclick="App.saveGig(${i>=0?i:-1})">${i>=0?'Save':'Add Gig'}</button>`);
+    <button class="btn primary" style="width:100%" onclick="App.saveGig(${i>=0?i:-1})">${i>=0?'Save':'Add Gig'}</button>
+    ${i>=0?`<button class="btn danger" style="width:100%;margin-top:10px" onclick="App.deleteGigFromForm(${i})">Delete Gig</button>`:''}`);
   const picked = $('#gig-picked'); if(picked) picked.innerHTML = gigPickedHTML();
   drawGigPeoplePills();
 }
@@ -10467,6 +10472,13 @@ App.gigArtistInput = gigArtistInputImpl;
 App.gigArtistPick = gigArtistPickImpl;
 App.saveGig = saveGigImpl;
 App.delGig = delGigImpl;
+/* Edit Gig's own Delete button - App.delGig itself (the list's small trash icon) deletes
+   outright with no confirmation; a full-width Delete button inside the form is a much easier
+   target to hit by mistake mid-scroll, so this one guards it with the same confirm dialog
+   delTheatreImpl already uses for the equivalent Theatre button. */
+App.deleteGigFromForm = i => {
+  confirmModal('Remove This Gig?', "This removes it from your log. This can't be undone.", 'Remove', () => App.delGig(i));
+};
 /* People names get their first letter capitalised as they're added, so "cal" reads the same
    as "Cal". Only the first letter of each word is touched (words split on spaces and hyphens),
    leaving the rest of each word as typed so intentional casing like "McCartney" survives. */

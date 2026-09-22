@@ -10958,10 +10958,12 @@ function renderHome(){
         <button class="version-tag" onclick="App.toggleChangelog()">v${esc(APP_VERSION)} · What's new</button>
       </div>
     </div>`;
+  initDashTripMaps();
   if(cloudEnabled()){
     fetchAllTrips(all => {
       if(CUR_TRIP_ID) return; // navigated into a trip while this was loading
       const el = $('#home-grid'); if(el) el.innerHTML = homeGridHTML(all);
+      initDashTripMaps();
     });
   }
 }

@@ -3804,20 +3804,21 @@ function fmtRange(a,b){
    reads exactly like every other range */
 const fmtRangeLong = fmtRange;
 /* "Wed 23 Sep 2026" - a Location's own date range on the Itinerary page (see weekdayRangeLabel)
-   wants the day of week on both ends and a short month, unlike fmtRange's long-form single-year
-   style, so this doesn't try to share fmtDate/rangeParts's "year said once" compression - each
-   end is short enough to just say in full. */
-function fmtDateWeekday(d){
+   wants the day of week on both ends and a short month, unlike fmtRange's long-form style. Same
+   "year said once, at the end" compression as rangeParts though - "Wed 23 Sep - Sun 27 Sep 2026"
+   rather than saying 2026 twice when both ends share it. */
+function fmtDateWeekday(d, noYear){
   if(!d) return '';
   const dt = new Date(d+'T00:00:00');
   return dt.toLocaleDateString(undefined, {weekday:'short'})+' '+dt.getDate()+' '
-    +dt.toLocaleDateString(undefined, {month:'short'})+' '+dt.getFullYear();
+    +dt.toLocaleDateString(undefined, {month:'short'})+(noYear?'':' '+dt.getFullYear());
 }
 function fmtRangeWeekday(a,b){
   if(!a && !b) return 'Dates TBC';
   if(!a || !b) return a ? 'From '+fmtDateWeekday(a) : 'Until '+fmtDateWeekday(b);
   if(a===b) return fmtDateWeekday(a);
-  return fmtDateWeekday(a)+' - '+fmtDateWeekday(b);
+  const sameYear = new Date(a+'T00:00:00').getFullYear() === new Date(b+'T00:00:00').getFullYear();
+  return fmtDateWeekday(a, sameYear)+' - '+fmtDateWeekday(b);
 }
 /* months/weeks/days breakdown for the "to go" countdown, e.g. "1 month 2 weeks to go" */
 function daysToGoPhrase(n){

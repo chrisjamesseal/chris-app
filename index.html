@@ -938,10 +938,17 @@ a{color:var(--brand-dark);}
    attachment icon rather than competing with the leg's own description text */
 .plan-connector-leg .travel-link-fav{margin-left:auto; flex-shrink:0;}
 .plan-connector-leg .travel-link-fav .fav{margin-right:0;}
+/* flex-wrap so the weather chip (wxArriveHTML) drops to its own line below the place name once
+   both can't fit on one row, rather than either squeezing the weather chip against a wrapped
+   second line of the name (see .plan-arrive-label's own nowrap) or the two overlapping */
 .plan-arrive-pill{background:#fff; border-radius:var(--radius); padding:11px 14px; margin:0 0 20px;
-  font-weight:700; font-size:.9rem; color:var(--ink); display:flex; align-items:center;
-  justify-content:space-between; gap:10px;}
+  font-weight:700; font-size:.9rem; color:var(--ink); display:flex; flex-wrap:wrap; align-items:center;
+  justify-content:space-between; gap:4px 10px;}
 .plan-arrive-time{font-weight:400;}
+/* never wraps onto a second line itself - a long destination name pushes the weather chip below
+   instead (see .plan-arrive-pill's own flex-wrap), rather than the name and the weather chip
+   both trying to share one narrower line */
+.plan-arrive-label{white-space:nowrap;}
 /* the destination's own weather, right-aligned on its "Arrive in X" pill (wxArriveHTML) - plain
    weight so it doesn't compete with the pill's own bold place name */
 .wx-arrive-inline{font-weight:400; color:var(--muted); flex-shrink:0;}
@@ -1254,11 +1261,12 @@ input[list]::-webkit-calendar-picker-indicator, input[list]::-webkit-list-button
 /* the back-to-all-trips button sits left of the trip name, same plain icon button as every
    other back arrow in the app (see .crumb-backbtn), just placed inline with a serif <h1> here
    instead of a breadcrumb bar */
-/* top-aligned rather than centred - a short trip name looked the same either way, but a longer
-   one that wraps onto two or three lines was centring the back arrow against the whole wrapped
-   block, floating it well below where the Itinerary crumb's own back arrow sits (that title's
-   never more than one short word, so it never had this problem to begin with) */
-.trip-title-main{display:flex; align-items:flex-start; gap:6px;}
+.trip-title-main{display:flex; align-items:center; gap:6px;}
+/* .crumb-backbtn's own icon defaults to a smaller 1.05rem (right for the plain single-line
+   headings it sits next to everywhere else) - this is the one spot it sits beside a much bigger
+   trip-name heading, so it needs the same bump .crumb-here already gives it to actually match
+   the Itinerary page's own back arrow instead of reading noticeably smaller next to it. */
+.trip-title-main .icon{font-size:1.5rem; color:var(--brand); flex-shrink:0;}
 .trip-meta{margin-top:4px; display:flex; align-items:center; gap:6px 18px; flex-wrap:wrap;}
 .trip-meta > span{display:inline-flex; align-items:center; gap:7px;}
 .meta-emoji{font-size:.8rem; line-height:1;
@@ -12405,7 +12413,7 @@ function tabAllergy(t){
       <div class="allergy-card-lang">${esc(tr.title)}</div>
       <div class="allergy-section severe">
         <div class="allergy-section-head">
-          <span class="allergy-section-emoji" aria-hidden="true">🌾🚫</span>
+          <span class="allergy-section-emoji" aria-hidden="true">🌾</span>
           <span class="allergy-section-title">${esc(tr.coeliacTitle)}</span>
         </div>
         ${bullets(tr.coeliacBullets)}
@@ -13387,7 +13395,7 @@ function planDaysHTML(t, ro, filterKeys){
     </div>
     ${planConnectorHTML(dur, ICONS.flight)}
     ${s.f.to?`<div class="plan-arrive-pill${!ro?' plan-click':''}" ${clickAttrs(`App.flightForm(${s.fi})`)}>
-      <span>${s.f.arrTime?`<span class="plan-arrive-time">${esc(s.f.arrTime)} -</span> `:''}${arriveFlag?arriveFlag+' ':''}Arrive in ${esc(toName)}</span>
+      <span class="plan-arrive-label">${s.f.arrTime?`<span class="plan-arrive-time">${esc(s.f.arrTime)} -</span> `:''}${arriveFlag?arriveFlag+' ':''}Arrive in ${esc(toName)}</span>
       <span class="wx-slot" data-arr-date="${esc(s.f.date||'')}" data-arr-cands="${esc(wxAirportPlaces(s.f.to).join('|'))}"></span>
     </div>`:''}`;
   };
@@ -13473,7 +13481,9 @@ function planDaysHTML(t, ro, filterKeys){
     const service = detectBookingService(s.ac.bookingUrl);
     const specificName = accomCityName(s.ac, t).split(',')[0].trim();
     return `
-    <div class="plan-arrive-pill${!ro?' plan-click':''}" ${clickAttrs(`App.accomForm(${s.aci})`)}>${s.time?`<span class="plan-arrive-time">${esc(s.time)} -</span> `:''}${secEmoji('🚪')} Check Out of ${esc(specificName)} ${esc(service || 'Accommodation')}</div>`;
+    <div class="plan-arrive-pill${!ro?' plan-click':''}" ${clickAttrs(`App.accomForm(${s.aci})`)}>
+      <span>${s.time?`<span class="plan-arrive-time">${esc(s.time)} -</span> `:''}${secEmoji('🚪')} Check Out of ${esc(specificName)} ${esc(service || 'Accommodation')}</span>
+    </div>`;
   };
   /* A flight is a booked thing with a time you have to make, so it earns a card. Everything
      else - a ferry, a train, a bus, a taxi, driving yourself - is not that: you turn up and go,

@@ -1268,7 +1268,7 @@ input[list]::-webkit-calendar-picker-indicator, input[list]::-webkit-list-button
    the Itinerary page's own back arrow instead of reading noticeably smaller next to it. */
 .trip-title-main .icon{font-size:1.5rem; color:var(--brand); flex-shrink:0;}
 .trip-meta{margin-top:4px; display:flex; align-items:center; gap:6px 18px; flex-wrap:wrap;}
-.trip-meta > span{display:inline-flex; align-items:center; gap:7px;}
+.trip-meta > span{display:inline-flex; align-items:center; gap:3.5px;}
 .meta-emoji{font-size:.8rem; line-height:1;
   font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;}
 /* centring the boxes isn't the same as centring what you see: a line of text carries its
@@ -3858,7 +3858,7 @@ function statusPhrase(t){
   const e = t.endDate ? new Date(t.endDate+'T00:00:00') : null;
   if(s && today < s){ const n = Math.round((s-today)/day); return daysToGoPhrase(n); }
   if(e && today > e){ const n = Math.round((today-e)/day); return n===1?'ended yesterday':'ended '+n+' days ago'; }
-  if(s && e){ const d = Math.round((today-s)/day)+1, tot = Math.round((e-s)/day)+1; return 'day '+d+' of '+tot; }
+  if(s && e){ const d = Math.round((today-s)/day)+1, tot = Math.round((e-s)/day)+1; return 'Day '+d+'/'+tot; }
   if(s) return 'happening now';
   return '';
 }

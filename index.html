@@ -938,10 +938,17 @@ a{color:var(--brand-dark);}
    attachment icon rather than competing with the leg's own description text */
 .plan-connector-leg .travel-link-fav{margin-left:auto; flex-shrink:0;}
 .plan-connector-leg .travel-link-fav .fav{margin-right:0;}
+/* flex-wrap so the weather chip (wxArriveHTML) drops to its own line below the place name once
+   both can't fit on one row, rather than either squeezing the weather chip against a wrapped
+   second line of the name (see .plan-arrive-label's own nowrap) or the two overlapping */
 .plan-arrive-pill{background:#fff; border-radius:var(--radius); padding:11px 14px; margin:0 0 20px;
-  font-weight:700; font-size:.9rem; color:var(--ink); display:flex; align-items:center;
-  justify-content:space-between; gap:10px;}
+  font-weight:700; font-size:.9rem; color:var(--ink); display:flex; flex-wrap:wrap; align-items:center;
+  justify-content:space-between; gap:4px 10px;}
 .plan-arrive-time{font-weight:400;}
+/* never wraps onto a second line itself - a long destination name pushes the weather chip below
+   instead (see .plan-arrive-pill's own flex-wrap), rather than the name and the weather chip
+   both trying to share one narrower line */
+.plan-arrive-label{white-space:nowrap;}
 /* the destination's own weather, right-aligned on its "Arrive in X" pill (wxArriveHTML) - plain
    weight so it doesn't compete with the pill's own bold place name */
 .wx-arrive-inline{font-weight:400; color:var(--muted); flex-shrink:0;}
@@ -13388,7 +13395,7 @@ function planDaysHTML(t, ro, filterKeys){
     </div>
     ${planConnectorHTML(dur, ICONS.flight)}
     ${s.f.to?`<div class="plan-arrive-pill${!ro?' plan-click':''}" ${clickAttrs(`App.flightForm(${s.fi})`)}>
-      <span>${s.f.arrTime?`<span class="plan-arrive-time">${esc(s.f.arrTime)} -</span> `:''}${arriveFlag?arriveFlag+' ':''}Arrive in ${esc(toName)}</span>
+      <span class="plan-arrive-label">${s.f.arrTime?`<span class="plan-arrive-time">${esc(s.f.arrTime)} -</span> `:''}${arriveFlag?arriveFlag+' ':''}Arrive in ${esc(toName)}</span>
       <span class="wx-slot" data-arr-date="${esc(s.f.date||'')}" data-arr-cands="${esc(wxAirportPlaces(s.f.to).join('|'))}"></span>
     </div>`:''}`;
   };
@@ -13474,7 +13481,9 @@ function planDaysHTML(t, ro, filterKeys){
     const service = detectBookingService(s.ac.bookingUrl);
     const specificName = accomCityName(s.ac, t).split(',')[0].trim();
     return `
-    <div class="plan-arrive-pill${!ro?' plan-click':''}" ${clickAttrs(`App.accomForm(${s.aci})`)}>${s.time?`<span class="plan-arrive-time">${esc(s.time)} -</span> `:''}${secEmoji('🚪')} Check Out of ${esc(specificName)} ${esc(service || 'Accommodation')}</div>`;
+    <div class="plan-arrive-pill${!ro?' plan-click':''}" ${clickAttrs(`App.accomForm(${s.aci})`)}>
+      <span>${s.time?`<span class="plan-arrive-time">${esc(s.time)} -</span> `:''}${secEmoji('🚪')} Check Out of ${esc(specificName)} ${esc(service || 'Accommodation')}</span>
+    </div>`;
   };
   /* A flight is a booked thing with a time you have to make, so it earns a card. Everything
      else - a ferry, a train, a bus, a taxi, driving yourself - is not that: you turn up and go,

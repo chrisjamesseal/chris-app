@@ -1630,13 +1630,16 @@ details .d-body{padding:14px 16px;}
 
 /* ---------- today card (only while the trip is actually under way) ---------- */
 .today-card{margin-bottom:16px;}
-.today-head{display:flex; align-items:center; flex-wrap:wrap; gap:4px; font-family:var(--font-head);
-  font-weight:700; font-size:1.05rem; color:var(--ink); margin-bottom:10px;}
-.today-row{display:flex; align-items:center; gap:8px; padding:7px 0; cursor:pointer;}
+.today-head{display:flex; align-items:center; flex-wrap:nowrap; gap:6px; font-family:var(--font-head);
+  font-weight:700; font-size:.92rem; color:var(--ink); padding-bottom:10px;
+  margin-bottom:2px; border-bottom:1px solid var(--line);}
+.today-head > span:first-child{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.today-row{display:flex; align-items:center; gap:8px; padding:9px 0; cursor:pointer;}
 .today-row + .today-row{border-top:1px solid var(--line);}
-.today-time{color:var(--muted); font-size:.82rem; flex-shrink:0; min-width:2.6em;}
+.today-time, .today-title{font-family:var(--font-head); font-weight:400; font-size:.9rem;}
+.today-time{color:var(--muted); flex-shrink:0; min-width:2.6em;}
 .today-emoji{flex-shrink:0;}
-.today-title{color:var(--ink); font-size:.9rem;}
+.today-title{color:var(--ink);}
 .today-empty{color:var(--muted); font-size:.9rem; padding:4px 0;}
 .today-tomorrow-head{font-weight:700; font-size:.82rem; color:var(--muted); text-transform:uppercase;
   letter-spacing:.02em; margin-top:14px; padding-top:10px; border-top:1px solid var(--line);}

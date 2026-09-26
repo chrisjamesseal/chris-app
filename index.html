@@ -1615,12 +1615,16 @@ details .d-body{padding:14px 16px;}
 .split-sum .left{font-weight:700; color:var(--ink);}
 .split-sum .left.clear{color:var(--brand-dark); font-weight:700;}
 
-/* ---------- trip local info (language/time zone/emergency number, per country) ---------- */
-.trip-localinfo{margin:8px 0 16px;}
-.trip-localinfo-flags{display:flex; gap:6px; margin-bottom:6px;}
-.trip-localinfo-flag{border:1px solid var(--line); background:var(--paper); border-radius:999px;
-  padding:2px 10px; font-size:1rem; line-height:1.6; cursor:pointer; opacity:.5;}
-.trip-localinfo-flag.on{opacity:1; border-color:var(--brand);}
+/* ---------- country info card (language/time/emergency/currency/etc, one per country) ---------- */
+.country-info-card{margin-bottom:14px;}
+.country-info-head{display:flex; align-items:center; gap:8px; font-family:var(--font-head);
+  font-weight:700; font-size:1.05rem; color:var(--ink); margin-bottom:8px;}
+.country-info-row{display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--ink);
+  padding:6px 0;}
+.country-info-row + .country-info-row{border-top:1px solid var(--line);}
+.country-info-emoji{flex-shrink:0; width:1.3em; text-align:center;}
+.country-info-label{color:var(--muted);}
+.country-info-val{font-weight:600; margin-left:auto; text-align:right;}
 /* ---------- trip dashboard ---------- */
 .dash-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:6px;}
 .dash-tile{
@@ -4619,6 +4623,118 @@ const COUNTRY_EMERGENCY = {
   AU:'000', NZ:'111', FJ:'911',
   EG:'122', ZA:'112 (mobile) / 10111 (police)', KE:'999', TZ:'112', UG:'112',
   MA:'19 (police) / 15 (ambulance & fire)', TN:'197', NG:'112', MU:'999'
+};
+/* [currency, international dial code, which side of the road, plug type(s) & voltage] for the
+   Country Info card - the same broad, realistic-destinations set as COUNTRY_TZ above (currency,
+   dial code and driving side are stable, well-documented facts across virtually every country;
+   plug type names the single most common type(s) in everyday use, not every standard that's ever
+   been seen there, same "good enough, not a reference" spirit as everywhere else in this file). */
+const COUNTRY_TRAVEL = {
+  AD:['Euro (€)','+376','right','Type C/F · 230V'], AL:['Lek (L)','+355','right','Type C/F · 230V'],
+  AT:['Euro (€)','+43','right','Type C/F · 230V'], BA:['Convertible Mark (KM)','+387','right','Type C/F · 230V'],
+  BE:['Euro (€)','+32','right','Type C/E · 230V'], BG:['Lev (лв)','+359','right','Type C/F · 230V'],
+  BY:['Belarusian Ruble (Br)','+375','right','Type C/F · 230V'], CH:['Swiss Franc (CHF)','+41','right','Type J · 230V'],
+  CY:['Euro (€)','+357','left','Type G · 230V'], CZ:['Czech Koruna (Kč)','+420','right','Type C/E · 230V'],
+  DE:['Euro (€)','+49','right','Type C/F · 230V'], DK:['Danish Krone (kr)','+45','right','Type C/E/K · 230V'],
+  EE:['Euro (€)','+372','right','Type C/F · 230V'], ES:['Euro (€)','+34','right','Type C/F · 230V'],
+  FI:['Euro (€)','+358','right','Type C/F · 230V'], FO:['Danish Krone (kr)','+298','right','Type C/E/K · 230V'],
+  FR:['Euro (€)','+33','right','Type C/E · 230V'], GG:['Pound Sterling (£)','+44','left','Type G · 230V'],
+  GI:['Gibraltar Pound (£)','+350','right','Type G · 230V'], GL:['Danish Krone (kr)','+299','right','Type C/E/K · 230V'],
+  GR:['Euro (€)','+30','right','Type C/F · 230V'], HR:['Euro (€)','+385','right','Type C/F · 230V'],
+  HU:['Hungarian Forint (Ft)','+36','right','Type C/F · 230V'], IE:['Euro (€)','+353','left','Type G · 230V'],
+  IM:['Pound Sterling (£)','+44','left','Type G · 230V'], IS:['Icelandic Króna (kr)','+354','right','Type C/F · 230V'],
+  IT:['Euro (€)','+39','right','Type C/F/L · 230V'], JE:['Pound Sterling (£)','+44','left','Type G · 230V'],
+  LI:['Swiss Franc (CHF)','+423','right','Type J · 230V'], LT:['Euro (€)','+370','right','Type C/F · 230V'],
+  LU:['Euro (€)','+352','right','Type C/F · 230V'], LV:['Euro (€)','+371','right','Type C/F · 230V'],
+  MC:['Euro (€)','+377','right','Type C/E · 230V'], MD:['Moldovan Leu (L)','+373','right','Type C/F · 230V'],
+  ME:['Euro (€)','+382','right','Type C/F · 230V'], MK:['Denar (ден)','+389','right','Type C/F · 230V'],
+  MT:['Euro (€)','+356','left','Type G · 230V'], NL:['Euro (€)','+31','right','Type C/F · 230V'],
+  NO:['Norwegian Krone (kr)','+47','right','Type C/F · 230V'], PL:['Polish Złoty (zł)','+48','right','Type C/E · 230V'],
+  PT:['Euro (€)','+351','right','Type C/F · 230V'], RO:['Romanian Leu (lei)','+40','right','Type C/F · 230V'],
+  RS:['Serbian Dinar (дин)','+381','right','Type C/F · 230V'], RU:['Russian Ruble (₽)','+7','right','Type C/F · 220V'],
+  SE:['Swedish Krona (kr)','+46','right','Type C/F · 230V'], SI:['Euro (€)','+386','right','Type C/F · 230V'],
+  SK:['Euro (€)','+421','right','Type C/E · 230V'], SM:['Euro (€)','+378','right','Type C/F/L · 230V'],
+  TR:['Turkish Lira (₺)','+90','right','Type C/F · 230V'], UA:['Ukrainian Hryvnia (₴)','+380','right','Type C/F · 230V'],
+  VA:['Euro (€)','+39','right','Type C/F/L · 230V'],
+  XE:['Pound Sterling (£)','+44','left','Type G · 230V'], XS:['Pound Sterling (£)','+44','left','Type G · 230V'],
+  XW:['Pound Sterling (£)','+44','left','Type G · 230V'], XI:['Pound Sterling (£)','+44','left','Type G · 230V'],
+  US:['US Dollar ($)','+1','right','Type A/B · 120V'], CA:['Canadian Dollar ($)','+1','right','Type A/B · 120V'],
+  MX:['Mexican Peso ($)','+52','right','Type A/B · 127V'], BM:['Bermudian Dollar ($)','+1','left','Type A/B · 120V'],
+  BZ:['Belize Dollar ($)','+501','right','Type A/B/G · 110V'], CR:['Costa Rican Colón (₡)','+506','right','Type A/B · 120V'],
+  SV:['US Dollar ($)','+503','right','Type A/B · 115V'], GT:['Quetzal (Q)','+502','right','Type A/B · 120V'],
+  HN:['Lempira (L)','+504','right','Type A/B · 110V'], NI:['Córdoba (C$)','+505','right','Type A/B · 120V'],
+  PA:['Balboa/US Dollar (B/.)','+507','right','Type A/B · 120V'], CU:['Cuban Peso ($)','+53','right','Type A/B/C · 110V'],
+  DO:['Dominican Peso (RD$)','+1','right','Type A/B · 120V'], JM:['Jamaican Dollar ($)','+1','left','Type A/B · 110V'],
+  PR:['US Dollar ($)','+1','right','Type A/B · 120V'], BB:['Barbadian Dollar ($)','+1','left','Type A/B · 115V'],
+  BS:['Bahamian Dollar ($)','+1','right','Type A/B · 120V'], TT:['TT Dollar ($)','+1','left','Type A/B · 115V'],
+  HT:['Gourde (G)','+509','right','Type A/B · 110V'], AW:['Aruban Florin (ƒ)','+297','right','Type A/B/F · 127V'],
+  CW:['Neth. Antillean Guilder (ƒ)','+599','right','Type A/B/F · 127V'],
+  AR:['Argentine Peso ($)','+54','right','Type C/I · 220V'], BO:['Boliviano (Bs.)','+591','right','Type A/C · 230V'],
+  BR:['Brazilian Real (R$)','+55','right','Type C/N · 127V/220V'], CL:['Chilean Peso ($)','+56','right','Type C/L · 220V'],
+  CO:['Colombian Peso ($)','+57','right','Type A/B · 110V'], EC:['US Dollar ($)','+593','right','Type A/B · 120V'],
+  GY:['Guyanese Dollar ($)','+592','left','Type A/B/G · 240V'], PY:['Guaraní (₲)','+595','right','Type C · 220V'],
+  PE:['Peruvian Sol (S/)','+51','right','Type A/C · 220V'], SR:['Surinamese Dollar ($)','+597','right','Type C/F · 127V'],
+  UY:['Uruguayan Peso ($)','+598','right','Type C/F/I · 230V'], VE:['Venezuelan Bolívar (Bs.)','+58','right','Type A/B · 120V'],
+  AE:['UAE Dirham (AED)','+971','right','Type C/G · 230V'], BH:['Bahraini Dinar (BD)','+973','right','Type G · 230V'],
+  IL:['Israeli Shekel (₪)','+972','right','Type C/H · 230V'], IQ:['Iraqi Dinar (ID)','+964','right','Type C/D/G · 230V'],
+  IR:['Iranian Rial (﷼)','+98','right','Type C/F · 230V'], JO:['Jordanian Dinar (JD)','+962','right','Type C/G · 230V'],
+  KW:['Kuwaiti Dinar (KD)','+965','right','Type C/G · 230V'], LB:['Lebanese Pound (LL)','+961','right','Type C/D · 220V'],
+  OM:['Omani Rial (OMR)','+968','right','Type C/G · 240V'], QA:['Qatari Riyal (QR)','+974','right','Type D/G · 240V'],
+  SA:['Saudi Riyal (SR)','+966','right','Type G · 230V'], SY:['Syrian Pound (SP)','+963','right','Type C/E/L · 220V'],
+  YE:['Yemeni Rial (YR)','+967','right','Type A/D · 230V'],
+  AF:['Afghani (؋)','+93','right','Type C/F · 220V'], AM:['Armenian Dram (֏)','+374','right','Type C/F · 230V'],
+  AZ:['Azerbaijani Manat (₼)','+994','right','Type C/F · 220V'], BD:['Bangladeshi Taka (৳)','+880','left','Type C/D/G · 220V'],
+  BN:['Brunei Dollar ($)','+673','left','Type G · 240V'], BT:['Ngultrum (Nu.)','+975','left','Type D/G · 230V'],
+  CN:['Chinese Yuan (¥)','+86','right','Type A/C/I · 220V'], GE:['Georgian Lari (₾)','+995','right','Type C/F · 220V'],
+  HK:['Hong Kong Dollar (HK$)','+852','left','Type G · 220V'], ID:['Indonesian Rupiah (Rp)','+62','left','Type C/F · 230V'],
+  IN:['Indian Rupee (₹)','+91','left','Type C/D/M · 230V'], JP:['Japanese Yen (¥)','+81','left','Type A/B · 100V'],
+  KG:['Kyrgyzstani Som (с)','+996','right','Type C/F · 220V'], KH:['Cambodian Riel (៛)','+855','right','Type A/C · 230V'],
+  KP:['North Korean Won (₩)','+850','right','Type A/C · 220V'], KR:['South Korean Won (₩)','+82','right','Type C/F · 220V'],
+  KZ:['Kazakhstani Tenge (₸)','+7','right','Type C/F · 220V'], LA:['Lao Kip (₭)','+856','right','Type A/C · 230V'],
+  LK:['Sri Lankan Rupee (Rs)','+94','left','Type D/G · 230V'], MM:['Myanmar Kyat (K)','+95','right','Type C/D/G · 230V'],
+  MN:['Mongolian Tögrög (₮)','+976','right','Type C/E · 220V'], MO:['Macanese Pataca (MOP$)','+853','left','Type G · 220V'],
+  MV:['Maldivian Rufiyaa (Rf)','+960','left','Type D/G · 230V'], MY:['Malaysian Ringgit (RM)','+60','left','Type G · 240V'],
+  NP:['Nepalese Rupee (Rs)','+977','left','Type C/D/M · 230V'], PH:['Philippine Peso (₱)','+63','right','Type A/B/C · 220V'],
+  PK:['Pakistani Rupee (Rs)','+92','left','Type C/D · 230V'], SG:['Singapore Dollar ($)','+65','left','Type G · 230V'],
+  TH:['Thai Baht (฿)','+66','right','Type A/C · 220V'], TJ:['Tajikistani Somoni (ЅМ)','+992','right','Type C/F · 220V'],
+  TL:['US Dollar ($)','+670','left','Type C/I · 220V'], TM:['Turkmenistan Manat (m)','+993','right','Type C/F · 220V'],
+  TW:['New Taiwan Dollar (NT$)','+886','right','Type A/B · 110V'], UZ:['Uzbekistani Som (сўм)','+998','right','Type C/F/I · 220V'],
+  VN:['Vietnamese Dong (₫)','+84','right','Type A/C · 220V'],
+  DZ:['Algerian Dinar (DA)','+213','right','Type C/F · 230V'], AO:['Angolan Kwanza (Kz)','+244','right','Type C · 220V'],
+  BF:['West African CFA Franc (CFA)','+226','right','Type C/E · 220V'], BI:['Burundian Franc (FBu)','+257','right','Type C/E · 220V'],
+  BJ:['West African CFA Franc (CFA)','+229','right','Type C/E · 220V'], BW:['Botswana Pula (P)','+267','left','Type G · 230V'],
+  CD:['Congolese Franc (FC)','+243','right','Type C · 220V'], CF:['Central African CFA Franc (FCFA)','+236','right','Type C/E · 220V'],
+  CG:['Central African CFA Franc (FCFA)','+242','right','Type C/E · 230V'], CI:['West African CFA Franc (CFA)','+225','right','Type C/E · 220V'],
+  CM:['Central African CFA Franc (FCFA)','+237','right','Type C/E · 220V'], CV:['Cape Verdean Escudo ($)','+238','right','Type C/F · 220V'],
+  DJ:['Djiboutian Franc (Fdj)','+253','right','Type C/E · 220V'], EG:['Egyptian Pound (E£)','+20','right','Type C/F · 220V'],
+  ER:['Nakfa (Nfk)','+291','right','Type C/L · 230V'], ET:['Ethiopian Birr (Br)','+251','right','Type C/F/L · 220V'],
+  GA:['Central African CFA Franc (FCFA)','+241','right','Type C · 220V'], GH:['Ghanaian Cedi (GH₵)','+233','right','Type D/G · 230V'],
+  GM:['Dalasi (D)','+220','right','Type G · 230V'], GN:['Guinean Franc (FG)','+224','right','Type C/F/K · 220V'],
+  GQ:['Central African CFA Franc (FCFA)','+240','right','Type C/E · 220V'], GW:['West African CFA Franc (CFA)','+245','right','Type C · 220V'],
+  KE:['Kenyan Shilling (KSh)','+254','left','Type G · 240V'], KM:['Comorian Franc (KMF)','+269','right','Type C/E · 220V'],
+  LR:['Liberian Dollar ($)','+231','right','Type A/B/C · 120V'], LS:['Lesotho Loti (L)','+266','left','Type M · 230V'],
+  LY:['Libyan Dinar (LD)','+218','right','Type C/L · 230V'], MA:['Moroccan Dirham (DH)','+212','right','Type C/E · 220V'],
+  MG:['Malagasy Ariary (Ar)','+261','right','Type C/E · 220V'], ML:['West African CFA Franc (CFA)','+223','right','Type C/E · 220V'],
+  MR:['Mauritanian Ouguiya (UM)','+222','right','Type C · 220V'], MU:['Mauritian Rupee (Rs)','+230','left','Type C/G · 230V'],
+  MW:['Malawian Kwacha (MK)','+265','left','Type G · 230V'], MZ:['Mozambican Metical (MT)','+258','left','Type C/F · 220V'],
+  NA:['Namibian Dollar ($)','+264','left','Type D/M · 230V'], NE:['West African CFA Franc (CFA)','+227','right','Type C/D/E · 220V'],
+  NG:['Nigerian Naira (₦)','+234','right','Type D/G · 230V'], RW:['Rwandan Franc (RF)','+250','right','Type C/J · 230V'],
+  SC:['Seychellois Rupee (SR)','+248','left','Type G · 240V'], SD:['Sudanese Pound (SDG)','+249','right','Type C/D · 230V'],
+  SL:['Sierra Leonean Leone (Le)','+232','right','Type D/G · 230V'], SN:['West African CFA Franc (CFA)','+221','right','Type C/E/K · 230V'],
+  SO:['Somali Shilling (Sh)','+252','right','Type C · 220V'], SS:['South Sudanese Pound (SSP)','+211','right','Type C/D · 230V'],
+  ST:['Dobra (Db)','+239','right','Type C/F · 230V'], SZ:['Swazi Lilangeni (E)','+268','left','Type M · 230V'],
+  TD:['Central African CFA Franc (FCFA)','+235','right','Type C/D · 220V'], TG:['West African CFA Franc (CFA)','+228','right','Type C · 220V'],
+  TN:['Tunisian Dinar (DT)','+216','right','Type C/E · 230V'], TZ:['Tanzanian Shilling (TSh)','+255','left','Type D/G · 230V'],
+  UG:['Ugandan Shilling (USh)','+256','left','Type G · 240V'], ZA:['South African Rand (R)','+27','left','Type C/M/N · 230V'],
+  ZM:['Zambian Kwacha (ZK)','+260','right','Type C/D · 230V'], ZW:['Zimbabwean Dollar/US$','+263','left','Type D/G · 240V'],
+  AU:['Australian Dollar ($)','+61','left','Type I · 230V'], FJ:['Fijian Dollar ($)','+679','left','Type I · 240V'],
+  FM:['US Dollar ($)','+691','right','Type A/B · 120V'], KI:['Australian Dollar ($)','+686','left','Type I · 240V'],
+  MH:['US Dollar ($)','+692','right','Type A/B · 120V'], NC:['CFP Franc (₣)','+687','right','Type C/E/F · 220V'],
+  NR:['Australian Dollar ($)','+674','left','Type I · 240V'], NZ:['New Zealand Dollar ($)','+64','left','Type I · 230V'],
+  PF:['CFP Franc (₣)','+689','right','Type C/E · 220V'], PG:['Papua New Guinean Kina (K)','+675','left','Type I · 240V'],
+  PW:['US Dollar ($)','+680','right','Type A/B · 120V'], SB:['Solomon Islands Dollar ($)','+677','left','Type G · 220V'],
+  TO:['Tongan Paʻanga (T$)','+676','left','Type I · 240V'], TV:['Australian Dollar ($)','+688','left','Type I · 240V'],
+  VU:['Vanuatu Vatu (VT)','+678','right','Type G · 220V'], WS:['Samoan Tālā (T)','+685','left','Type I · 230V']
 };
 function loadPlacesCloud(cb){
   if(!fbRoot){ cb(DB.places||{}); return; }
@@ -7671,16 +7787,13 @@ function renderSettings(){
       <h3 style="margin-bottom:10px">Allergy Card</h3>
       <div class="card" style="margin-bottom:20px">
         <p class="small muted" style="margin-bottom:14px">
-          Choose what shows on every trip's Allergy Card - a personal, device-only setting.
-          Coeliac Disease and Dairy Intolerance have their own wording, translated into whichever
-          language the trip needs; anything else you add only ever shows in English, since there's
-          no translation this app can vouch for.
+          Choose which of the 14 major food allergens show on every trip's Allergy Card - a
+          personal, device-only setting. Coeliac Disease and Dairy Intolerance have the widest
+          translation coverage; the other 12 are translated into English plus French, Spanish,
+          Portuguese, German, Italian, Dutch, Greek, Albanian and Turkish, and fall back to
+          English anywhere else, since there's no translation this app can vouch for there.
         </p>
         <div class="chips" id="allergy-settings-chips">${allergySettingsChipsHTML()}</div>
-        <div class="field" style="margin-top:14px">
-          <label class="label">Other allergies or intolerances (English only)</label>
-          <input id="allergy-other" type="text" value="${esc(loadAllergySettings().other)}" placeholder="e.g. Peanut allergy" onchange="App.setAllergyOther(this.value)">
-        </div>
       </div>
     </div>`;
   drawLetterboxdConnect();
@@ -7689,7 +7802,8 @@ function allergySettingsChipsHTML(){
   const s = loadAllergySettings();
   const chip = (key,label,on) => `<span class="chip pick${on?' on':''}" role="button" tabindex="0" onclick="App.toggleAllergySetting('${key}')"
     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.toggleAllergySetting('${key}')}">${esc(label)}</span>`;
-  return chip('coeliac','Coeliac Disease', s.coeliac) + chip('dairy','Dairy Intolerance', s.dairy);
+  return chip('coeliac','Coeliac Disease', s.coeliac) + chip('dairy','Dairy Intolerance', s.dairy) +
+    ALLERGEN_LIST.map(a => chip(a.key, ALLERGEN_TEXT.en.titles[a.key], s[a.key])).join('');
 }
 function streamingServicesChipsHTML(){
   const selected = selectedStreamingServices();
@@ -10766,11 +10880,6 @@ App.toggleAllergySetting = key => {
   saveAllergySettings(s);
   const el = $('#allergy-settings-chips'); if(el) el.innerHTML = allergySettingsChipsHTML();
 };
-App.setAllergyOther = val => {
-  const s = loadAllergySettings();
-  s.other = val.trim();
-  saveAllergySettings(s);
-};
 App.goGigs = () => { location.hash = '#/gigs'; };
 App.goGigsSeen = () => { CUR_GIGS_TAB = 'log'; location.hash = '#/gigs'; };
 App.goSongs = () => { CUR_GIGS_TAB = 'songs'; location.hash = '#/gigs'; };
@@ -11404,7 +11513,7 @@ App.copyText = (enc, btn) => {
   const done = () => {
     if(!btn) return;
     const was = btn.innerHTML;
-    btn.innerHTML = `<span class="sec-emoji" aria-hidden="true">✅</span>`;
+    btn.textContent = 'Copied!';
     setTimeout(()=>{ btn.innerHTML = was; }, 1200);
   };
   const manual = () => {
@@ -11470,7 +11579,8 @@ const ICONS = {
   remove: fa('minus'),
   allergy: fa('wheat-awn'),
   phrases: fa('comment'),
-  copy: fa('copy')
+  copy: fa('copy'),
+  country: fa('earth-europe')
 };
 /* Emoji rather than icon-font glyphs for the big dashboard tiles: they bring their own
    colour, which lifts the grid and sits naturally beside the country flags in the header.
@@ -11479,7 +11589,7 @@ const ICONS = {
    lines up better at small sizes. */
 const TAB_EMOJI = {
   edit:'✏️', plan:'🗺️', travel:'🚌', stay:'🏠', mood:'💡', allergy:'🌾', tasks:'☑',
-  phrases:'💬', money:'💰', photos:'📸', contacts:'📞', docs:'📎', notes:'📝'
+  phrases:'💬', money:'💰', photos:'📸', contacts:'📞', docs:'📎', notes:'📝', country:'🌍'
 };
 function tileIcon(k){
   return TAB_EMOJI[k] ? `<span class="dash-emoji" aria-hidden="true">${TAB_EMOJI[k]}</span>` : (ICONS[k]||'');
@@ -11538,6 +11648,7 @@ const TABS = [
   ['mood','Ideas'],
   ['allergy','Allergy Card'],
   ['phrases','Phrases'],
+  ['country','Country Info'],
   ['money','Money'],
   ['photos','Photos'],
   ['docs','Docs & Links'],
@@ -11864,6 +11975,7 @@ function renderTab(t){
   if(CUR_TAB==='notes')    el.innerHTML = tabNotes(t,ro);
   if(CUR_TAB==='allergy')  el.innerHTML = tabAllergy(t);
   if(CUR_TAB==='phrases')  el.innerHTML = tabPhrases(t);
+  if(CUR_TAB==='country')  el.innerHTML = tabCountryInfo(t);
   if(CUR_TAB==='tasks')    el.innerHTML = tabTasks(t,ro);
 }
 /* the section's primary action, shown next to the breadcrumb title */
@@ -11932,46 +12044,46 @@ function tzNow(tz){
   try{ return new Intl.DateTimeFormat('en-GB',{timeZone:tz, hour:'2-digit', minute:'2-digit', hour12:false}).format(new Date()); }
   catch(e){ return ''; }
 }
-/* Language / local time / emergency number for the trip's own countries, in that order - reads
-   as one more line under the trip's own date/day-count meta line rather than a section of its
-   own, since it's the kind of thing worth seeing the moment you open the trip rather than a
-   whole card to scroll past. A multi-country trip gets a small flag toggle above it instead of
-   stacking every country's own line - CUR_LOCAL_INFO_CODE (reset whenever it points at a country
-   that isn't on the trip any more) remembers which one's showing. Skipped entirely for a
-   home-nation "trip" (a staycation in Scotland, say) - same language, same clock, same 999 you
-   already know. */
+/* a home-nation "trip" (a staycation in Scotland, say) has nothing worth a Country Info card -
+   same language, same clock, same 999 you already know */
 const HOME_NATION_CODES = ['XE','XS','XW','XI'];
-let CUR_LOCAL_INFO_CODE = null;
-function tripLocalInfoHTML(t){
-  const codes = (t.countries||[]).filter(c => !HOME_NATION_CODES.includes(c) && countryByCode(c));
-  if(!codes.length) return '';
-  if(!CUR_LOCAL_INFO_CODE || !codes.includes(CUR_LOCAL_INFO_CODE)) CUR_LOCAL_INFO_CODE = codes[0];
-  const code = CUR_LOCAL_INFO_CODE;
-  const co = countryByCode(code);
-  const info = COUNTRY_INFO[code];
-  const tz = COUNTRY_TZ[code];
-  const emergency = COUNTRY_EMERGENCY[code];
-  const flags = codes.length>1 ? `
-    <div class="trip-localinfo-flags">${codes.map(c=>{
-      const cco = countryByCode(c);
-      return `<button class="trip-localinfo-flag${c===code?' on':''}" aria-label="${esc(cco.name)}" onclick="App.setLocalInfoCountry('${c}')">${cco.flag}</button>`;
-    }).join('')}</div>` : '';
-  const item = (emoji, val) => val ? `<span><span class="meta-emoji" aria-hidden="true">${emoji}</span><span class="meta-text">${esc(val)}</span></span>` : '';
-  return `
-  <div class="trip-localinfo" id="trip-localinfo">
-    ${flags}
-    <p class="muted trip-meta">
-      ${item('💬', info && info[1])}
-      ${item('🕐', tz && tzNow(tz))}
-      ${item('🚨', emergency)}
-    </p>
-  </div>`;
+function countryInfoCodes(t){
+  return (t.countries||[]).filter(c => !HOME_NATION_CODES.includes(c) && countryByCode(c));
 }
-App.setLocalInfoCountry = code => {
-  CUR_LOCAL_INFO_CODE = code;
-  const t = getTrip(CUR_TRIP_ID); if(!t) return;
-  const el = $('#trip-localinfo'); if(el) el.outerHTML = tripLocalInfoHTML(t);
-};
+function countryInfoSummaryLine(t){
+  if(!(t.countries||[]).length) return 'Add Countries First';
+  const n = countryInfoCodes(t).length;
+  return n ? n+(n===1?' Country':' Countries') : 'Home Country';
+}
+/* one card per country - capital, language, local time, emergency number, currency, dial code,
+   driving side and plug/voltage. A country left out of COUNTRY_TRAVEL/COUNTRY_TZ/
+   COUNTRY_EMERGENCY just drops that one row rather than showing a wrong value. */
+function tabCountryInfo(t){
+  if(!(t.countries||[]).length) return tripLangEmptyHTML('country info appears');
+  const codes = countryInfoCodes(t);
+  if(!codes.length) return `<div class="empty">Nothing to show for a home-nation trip - you already know the language, the clock and the emergency number.</div>`;
+  const row = (emoji, label, val) => val ? `
+      <div class="country-info-row"><span class="country-info-emoji" aria-hidden="true">${emoji}</span><span class="country-info-label">${label}</span><span class="country-info-val">${esc(val)}</span></div>` : '';
+  return codes.map(code => {
+    const co = countryByCode(code);
+    const info = COUNTRY_INFO[code];
+    const tz = COUNTRY_TZ[code];
+    const emergency = COUNTRY_EMERGENCY[code];
+    const travel = COUNTRY_TRAVEL[code];
+    return `
+    <div class="card country-info-card">
+      <div class="country-info-head"><span aria-hidden="true">${co.flag}</span>${esc(co.name)}</div>
+      ${row('🏛️','Capital', info && info[0])}
+      ${row('💬','Language', info && info[1])}
+      ${row('🕐','Local Time', tz && tzNow(tz))}
+      ${row('🚨','Emergency', emergency)}
+      ${row('💷','Currency', travel && travel[0])}
+      ${row('☎️','Dial Code', travel && travel[1])}
+      ${row('🚗','Driving Side', travel && (travel[2]==='left'?'Left':'Right'))}
+      ${row('🔌','Plug & Voltage', travel && travel[3])}
+    </div>`;
+  }).join('');
+}
 function tabHome(t, ro){
   const n = t.notes||{contacts:[],general:''};
   const nTravel = (t.flights||[]).length + (t.ferries||[]).length + (t.carHire||[]).length;
@@ -12029,6 +12141,7 @@ function tabHome(t, ro){
     ['travel','Travel', travParts.join(', ') || 'Nothing Booked Yet', !travParts.length],
     ['phrases','Phrases', phrasesSummaryLine(t), !(t.countries||[]).length],
     ['allergy','Allergy Card', allergySummaryLine(t), !(t.countries||[]).length],
+    ['country','Country Info', countryInfoSummaryLine(t), !(t.countries||[]).length],
     ['stay','Accommodation', staySum, !accoms.length],
     ['money','Money', moneySum, !nRec],
     ['photos','Photos', album ? album+' Linked' : 'No Shared Album Yet', !album],
@@ -12043,7 +12156,7 @@ function tabHome(t, ro){
       <span class="dash-icon">${tileIcon(k)}</span>
       <span class="dash-text"><span class="dash-label">${esc(label)}</span><span class="dash-sum${empty?' unfilled':''}">${esc(sum)}</span></span>
     </div>`;
-  return `${tripLocalInfoHTML(t)}<div class="dash-grid">${tiles.map(tile).join('')}</div>`;
+  return `<div class="dash-grid">${tiles.map(tile).join('')}</div>`;
 }
 /* ================= TAB: log (what changed) ================= */
 /* which tab a log entry's section belongs to, so each row can jump straight there,
@@ -12621,27 +12734,82 @@ function tripLangEmptyHTML(hint){
   return `<div class="empty">Add this trip's countries and ${hint} in the right language.<br><br>
     <button class="btn primary" onclick="App.tripForm()">Add Countries</button></div>`;
 }
+/* the other 12 of the UK/EU's legally-defined 14 major food allergens (Coeliac Disease and
+   Dairy Intolerance above already cover the other 2 - gluten-containing cereals and milk - with
+   their own bespoke wording and near-complete language coverage). All 12 use the same strict
+   "no cross-contamination" framing as Coeliac rather than guessing which ones are mild enough
+   for "a trace is fine" - the safer assumption on a card a kitchen actually acts on. Translated
+   into English plus the handful of languages this app can genuinely vouch for a good translation
+   in (the trip's own language everywhere else falls back to English for just these sections -
+   the rest of the card, and Coeliac/Dairy, still render in whatever language is picked) rather
+   than risk a wrong translation of a technical word like "lupin" or "sulphites" in a language
+   this app has no real confidence in. */
+const ALLERGEN_LIST = [
+  {key:'celery', emoji:'🥬'}, {key:'crustaceans', emoji:'🦐'}, {key:'eggs', emoji:'🥚'},
+  {key:'fish', emoji:'🐟'}, {key:'lupin', emoji:'🌸'}, {key:'molluscs', emoji:'🐚'},
+  {key:'mustard', emoji:'🌼'}, {key:'treenuts', emoji:'🌰'}, {key:'peanuts', emoji:'🥜'},
+  {key:'sesame', emoji:'🔸'}, {key:'soybeans', emoji:'🫘'}, {key:'sulphites', emoji:'🧪'}
+];
+const ALLERGEN_TEXT = {
+  en: { warning:'Cross contamination can make me seriously ill. Please check all ingredients and cooking surfaces.',
+    titles:{celery:'Celery Allergy', crustaceans:'Crustacean Allergy', eggs:'Egg Allergy', fish:'Fish Allergy', lupin:'Lupin Allergy', molluscs:'Mollusc Allergy', mustard:'Mustard Allergy', treenuts:'Tree Nut Allergy', peanuts:'Peanut Allergy', sesame:'Sesame Allergy', soybeans:'Soy Allergy', sulphites:'Sulphite Sensitivity'},
+    bullets:{celery:'No celery, celeriac or celery salt - often hidden in stock cubes and sauces.', crustaceans:'No crab, lobster, prawns, shrimp or crayfish, including in stocks or sauces.', eggs:'No eggs in any form, including in sauces, batter, mayonnaise or baked goods.', fish:'No fish or fish-derived ingredients, including fish sauce, stock or Worcestershire sauce.', lupin:'No lupin flour or seeds, sometimes used in bread, pastries and pasta.', molluscs:'No mussels, oysters, squid, octopus or snails, including in stocks or sauces.', mustard:'No mustard seeds, powder or prepared mustard, including in dressings and sauces.', treenuts:'No almonds, hazelnuts, walnuts, cashews, pecans, brazil nuts, pistachios or macadamia, including oils or pastes.', peanuts:'No peanuts or peanut oil, including in sauces, desserts or as a garnish.', sesame:'No sesame seeds, oil or tahini, including on bread and in dressings.', soybeans:'No soybeans, soy sauce, tofu or edamame, including as a sauce ingredient.', sulphites:'Please avoid dishes with added sulphur dioxide, common in wine, dried fruit and some sauces.'}},
+  fr: { warning:'Une contamination croisée peut me rendre gravement malade. Merci de vérifier tous les ingrédients et les surfaces de cuisson.',
+    titles:{celery:'Allergie au céleri', crustaceans:'Allergie aux crustacés', eggs:'Allergie aux œufs', fish:'Allergie au poisson', lupin:'Allergie au lupin', molluscs:'Allergie aux mollusques', mustard:'Allergie à la moutarde', treenuts:'Allergie aux fruits à coque', peanuts:'Allergie aux arachides', sesame:'Allergie au sésame', soybeans:'Allergie au soja', sulphites:'Sensibilité aux sulfites'},
+    bullets:{celery:'Pas de céleri, céleri-rave ni sel de céleri - souvent présent dans les bouillons et sauces.', crustaceans:'Pas de crabe, homard, crevette ou écrevisse, y compris dans les bouillons ou sauces.', eggs:"Pas d'œufs sous aucune forme, y compris dans les sauces, la pâte à frire, la mayonnaise ou les pâtisseries.", fish:'Pas de poisson ni d\'ingrédients dérivés du poisson, y compris la sauce de poisson, le bouillon ou la sauce Worcestershire.', lupin:'Pas de farine ou de graines de lupin, parfois utilisées dans le pain, les pâtisseries et les pâtes.', molluscs:'Pas de moules, huîtres, calamars, poulpe ou escargots, y compris dans les bouillons ou sauces.', mustard:'Pas de graines, poudre ou moutarde préparée, y compris dans les vinaigrettes et sauces.', treenuts:"Pas d'amandes, noisettes, noix, noix de cajou, pécans, noix du Brésil, pistaches ou noix de macadamia, y compris sous forme d'huile ou de pâte.", peanuts:"Pas d'arachides ni d'huile d'arachide, y compris dans les sauces, desserts ou en garniture.", sesame:"Pas de graines de sésame, d'huile ou de tahini, y compris sur le pain et dans les vinaigrettes.", soybeans:'Pas de soja, sauce soja, tofu ou edamame, y compris comme ingrédient dans une sauce.', sulphites:"Merci d'éviter les plats contenant du dioxyde de soufre ajouté, présent dans le vin, les fruits secs et certaines sauces."}},
+  es: { warning:'Una contaminación cruzada puede enfermarme gravemente. Por favor, revise todos los ingredientes y las superficies de cocina.',
+    titles:{celery:'Alergia al apio', crustaceans:'Alergia a los crustáceos', eggs:'Alergia al huevo', fish:'Alergia al pescado', lupin:'Alergia al altramuz', molluscs:'Alergia a los moluscos', mustard:'Alergia a la mostaza', treenuts:'Alergia a los frutos secos', peanuts:'Alergia al cacahuete', sesame:'Alergia al sésamo', soybeans:'Alergia a la soja', sulphites:'Sensibilidad a los sulfitos'},
+    bullets:{celery:'Nada de apio, apionabo ni sal de apio - a menudo presente en caldos y salsas.', crustaceans:'Nada de cangrejo, langosta, gambas o cigalas, incluso en caldos o salsas.', eggs:'Nada de huevo en ninguna forma, incluso en salsas, rebozados, mayonesa o repostería.', fish:'Nada de pescado ni ingredientes derivados del pescado, incluida la salsa de pescado, el caldo o la salsa Worcestershire.', lupin:'Nada de harina o semillas de altramuz, usadas a veces en pan, bollería y pasta.', molluscs:'Nada de mejillones, ostras, calamar, pulpo o caracoles, incluso en caldos o salsas.', mustard:'Nada de semillas, polvo o mostaza preparada, incluso en aliños y salsas.', treenuts:'Nada de almendras, avellanas, nueces, anacardos, pacanas, nueces de Brasil, pistachos o macadamia, incluso en aceite o pasta.', peanuts:'Nada de cacahuete ni aceite de cacahuete, incluso en salsas, postres o como guarnición.', sesame:'Nada de semillas de sésamo, aceite o tahini, incluso en pan y aliños.', soybeans:'Nada de soja, salsa de soja, tofu o edamame, incluso como ingrediente en una salsa.', sulphites:'Por favor, evite platos con dióxido de azufre añadido, presente en el vino, la fruta seca y algunas salsas.'}},
+  pt: { warning:'A contaminação cruzada pode me deixar gravemente doente. Por favor, verifique todos os ingredientes e as superfícies de cozinha.',
+    titles:{celery:'Alergia a aipo', crustaceans:'Alergia a crustáceos', eggs:'Alergia a ovo', fish:'Alergia a peixe', lupin:'Alergia a tremoço', molluscs:'Alergia a moluscos', mustard:'Alergia a mostarda', treenuts:'Alergia a frutos de casca rija', peanuts:'Alergia a amendoim', sesame:'Alergia a sésamo', soybeans:'Alergia a soja', sulphites:'Sensibilidade a sulfitos'},
+    bullets:{celery:'Nada de aipo, aipo-rábano ou sal de aipo - frequentemente presente em caldos e molhos.', crustaceans:'Nada de caranguejo, lagosta, camarão ou lagostim, incluindo em caldos ou molhos.', eggs:'Nada de ovo em qualquer forma, incluindo em molhos, massa de fritura, maionese ou produtos de pastelaria.', fish:'Nada de peixe ou ingredientes derivados de peixe, incluindo molho de peixe, caldo ou molho inglês.', lupin:'Nada de farinha ou sementes de tremoço, por vezes usadas em pão, pastelaria e massa.', molluscs:'Nada de mexilhões, ostras, lulas, polvo ou caracóis, incluindo em caldos ou molhos.', mustard:'Nada de sementes, pó ou mostarda preparada, incluindo em molhos e temperos.', treenuts:'Nada de amêndoas, avelãs, nozes, castanha de caju, noz-pecã, castanha-do-pará, pistácio ou macadâmia, incluindo em óleo ou pasta.', peanuts:'Nada de amendoim ou óleo de amendoim, incluindo em molhos, sobremesas ou como guarnição.', sesame:'Nada de sementes de sésamo, óleo ou tahini, incluindo em pão e temperos.', soybeans:'Nada de soja, molho de soja, tofu ou edamame, incluindo como ingrediente num molho.', sulphites:'Por favor, evite pratos com dióxido de enxofre adicionado, presente no vinho, frutas secas e alguns molhos.'}},
+  de: { warning:'Kreuzkontamination kann mich ernsthaft krank machen. Bitte prüfen Sie alle Zutaten und Arbeitsflächen.',
+    titles:{celery:'Sellerieallergie', crustaceans:'Krebstierallergie', eggs:'Eiallergie', fish:'Fischallergie', lupin:'Lupinenallergie', molluscs:'Weichtierallergie', mustard:'Senfallergie', treenuts:'Schalenfruchtallergie', peanuts:'Erdnussallergie', sesame:'Sesamallergie', soybeans:'Sojaallergie', sulphites:'Sulfitempfindlichkeit'},
+    bullets:{celery:'Kein Sellerie, keine Selleriewurzel oder Selleriesalz - oft in Brühen und Saucen enthalten.', crustaceans:'Keine Krabben, Hummer, Garnelen oder Flusskrebse, auch nicht in Brühen oder Saucen.', eggs:'Keine Eier in jeglicher Form, auch nicht in Saucen, Teig, Mayonnaise oder Gebäck.', fish:'Kein Fisch oder Fischprodukte, auch keine Fischsauce, Brühe oder Worcestersauce.', lupin:'Kein Lupinenmehl oder Lupinensamen, manchmal in Brot, Gebäck und Nudeln enthalten.', molluscs:'Keine Muscheln, Austern, Tintenfisch, Oktopus oder Schnecken, auch nicht in Brühen oder Saucen.', mustard:'Keine Senfkörner, kein Senfpulver oder fertiger Senf, auch nicht in Dressings und Saucen.', treenuts:'Keine Mandeln, Haselnüsse, Walnüsse, Cashewkerne, Pekannüsse, Paranüsse, Pistazien oder Macadamianüsse, auch nicht als Öl oder Paste.', peanuts:'Keine Erdnüsse oder Erdnussöl, auch nicht in Saucen, Desserts oder als Garnitur.', sesame:'Kein Sesam, Sesamöl oder Tahini, auch nicht auf Brot oder in Dressings.', soybeans:'Keine Sojabohnen, Sojasauce, Tofu oder Edamame, auch nicht als Zutat in einer Sauce.', sulphites:'Bitte vermeiden Sie Gerichte mit zugesetztem Schwefeldioxid, häufig in Wein, Trockenfrüchten und manchen Saucen enthalten.'}},
+  it: { warning:'Una contaminazione incrociata può farmi stare molto male. Per favore controlli tutti gli ingredienti e le superfici di cottura.',
+    titles:{celery:'Allergia al sedano', crustaceans:'Allergia ai crostacei', eggs:'Allergia alle uova', fish:'Allergia al pesce', lupin:'Allergia al lupino', molluscs:'Allergia ai molluschi', mustard:'Allergia alla senape', treenuts:'Allergia alla frutta a guscio', peanuts:'Allergia alle arachidi', sesame:'Allergia al sesamo', soybeans:'Allergia alla soia', sulphites:'Sensibilità ai solfiti'},
+    bullets:{celery:'Niente sedano, sedano rapa o sale di sedano - spesso presente in brodi e salse.', crustaceans:'Niente granchio, aragosta, gamberi o gamberetti, anche in brodi o salse.', eggs:'Niente uova in nessuna forma, anche in salse, pastelle, maionese o dolci.', fish:'Niente pesce o ingredienti derivati dal pesce, inclusa salsa di pesce, brodo o salsa Worcestershire.', lupin:'Niente farina o semi di lupino, a volte usati in pane, pasticceria e pasta.', molluscs:'Niente cozze, ostriche, calamari, polpo o lumache, anche in brodi o salse.', mustard:'Niente semi, polvere o senape pronta, anche in condimenti e salse.', treenuts:'Niente mandorle, nocciole, noci, anacardi, noci pecan, noci del Brasile, pistacchi o macadamia, anche come olio o pasta.', peanuts:'Niente arachidi o olio di arachidi, anche in salse, dolci o come guarnizione.', sesame:'Niente semi di sesamo, olio o tahini, anche su pane e condimenti.', soybeans:'Niente soia, salsa di soia, tofu o edamame, anche come ingrediente in una salsa.', sulphites:'Per favore, eviti piatti con anidride solforosa aggiunta, presente in vino, frutta secca e alcune salse.'}},
+  nl: { warning:'Kruisbesmetting kan mij ernstig ziek maken. Controleer alstublieft alle ingrediënten en kookoppervlakken.',
+    titles:{celery:'Selderij-allergie', crustaceans:'Schaaldierenallergie', eggs:'Eiallergie', fish:'Visallergie', lupin:'Lupine-allergie', molluscs:'Weekdierenallergie', mustard:'Mosterdallergie', treenuts:'Notenallergie', peanuts:'Pindaallergie', sesame:'Sesamallergie', soybeans:'Soja-allergie', sulphites:'Sulfietgevoeligheid'},
+    bullets:{celery:'Geen selderij, knolselderij of selderijzout - vaak verwerkt in bouillon en sauzen.', crustaceans:'Geen krab, kreeft, garnalen of rivierkreeft, ook niet in bouillon of sauzen.', eggs:'Geen ei in welke vorm dan ook, ook niet in sauzen, beslag, mayonaise of gebak.', fish:'Geen vis of visproducten, ook geen vissaus, bouillon of Worcestersaus.', lupin:'Geen lupinemeel of -zaden, soms verwerkt in brood, gebak en pasta.', molluscs:'Geen mosselen, oesters, inktvis, octopus of slakken, ook niet in bouillon of sauzen.', mustard:'Geen mosterdzaad, -poeder of kant-en-klare mosterd, ook niet in dressings en sauzen.', treenuts:'Geen amandelen, hazelnoten, walnoten, cashewnoten, pecannoten, paranoten, pistachenoten of macadamianoten, ook niet als olie of pasta.', peanuts:"Geen pinda's of pindaolie, ook niet in sauzen, desserts of als garnering.", sesame:'Geen sesamzaad, -olie of tahini, ook niet op brood en in dressings.', soybeans:'Geen sojabonen, sojasaus, tofu of edamame, ook niet als ingrediënt in een saus.', sulphites:'Vermijd alstublieft gerechten met toegevoegd zwaveldioxide, vaak aanwezig in wijn, gedroogd fruit en sommige sauzen.'}},
+  el: { warning:'Η διασταυρούμενη επιμόλυνση μπορεί να με κάνει σοβαρά άρρωστο/η. Παρακαλώ ελέγξτε όλα τα υλικά και τις επιφάνειες μαγειρέματος.',
+    titles:{celery:'Αλλεργία στο σέλινο', crustaceans:'Αλλεργία στα καρκινοειδή', eggs:'Αλλεργία στο αυγό', fish:'Αλλεργία στο ψάρι', lupin:'Αλλεργία στο λούπινο', molluscs:'Αλλεργία στα μαλάκια', mustard:'Αλλεργία στη μουστάρδα', treenuts:'Αλλεργία στους ξηρούς καρπούς', peanuts:'Αλλεργία στο φιστίκι', sesame:'Αλλεργία στο σουσάμι', soybeans:'Αλλεργία στη σόγια', sulphites:'Ευαισθησία στα θειώδη'},
+    bullets:{celery:'Όχι σέλινο, σελινόριζα ή αλάτι σελίνου - συχνά κρύβεται σε ζωμούς και σάλτσες.', crustaceans:'Όχι καβούρι, αστακό, γαρίδες ή καραβίδα, ούτε σε ζωμούς ή σάλτσες.', eggs:'Όχι αυγό σε καμία μορφή, ούτε σε σάλτσες, κουρκούτι, μαγιονέζα ή γλυκά.', fish:'Όχι ψάρι ή προϊόντα ψαριού, ούτε σάλτσα ψαριού, ζωμό ή σάλτσα Worcestershire.', lupin:'Όχι αλεύρι ή σπόροι λούπινου, που χρησιμοποιούνται μερικές φορές σε ψωμί, ζαχαροπλαστική και ζυμαρικά.', molluscs:'Όχι μύδια, στρείδια, καλαμάρι, χταπόδι ή σαλιγκάρια, ούτε σε ζωμούς ή σάλτσες.', mustard:'Όχι σπόροι, σκόνη ή έτοιμη μουστάρδα, ούτε σε ντρέσινγκ και σάλτσες.', treenuts:'Όχι αμύγδαλα, φουντούκια, καρύδια, κάσιους, πεκάν, καρύδια Βραζιλίας, φιστίκια Αιγίνης ή μακαντάμια, ούτε ως λάδι ή πάστα.', peanuts:'Όχι φιστίκια ή λάδι φιστικιού, ούτε σε σάλτσες, επιδόρπια ή ως γαρνιτούρα.', sesame:'Όχι σουσάμι, λάδι σουσαμιού ή ταχίνι, ούτε σε ψωμί και ντρέσινγκ.', soybeans:'Όχι σόγια, σάλτσα σόγιας, τόφου ή έδαμαμε, ούτε ως συστατικό σε σάλτσα.', sulphites:'Παρακαλώ αποφύγετε πιάτα με προσθήκη διοξειδίου του θείου, που υπάρχει συχνά σε κρασί, αποξηραμένα φρούτα και ορισμένες σάλτσες.'}},
+  sq: { warning:'Ndotja e kryqëzuar mund të më sëmurë rëndë. Ju lutem kontrolloni të gjitha përbërësit dhe sipërfaqet e gatimit.',
+    titles:{celery:'Alergji ndaj selinos', crustaceans:'Alergji ndaj krustaceve', eggs:'Alergji ndaj vezëve', fish:'Alergji ndaj peshkut', lupin:'Alergji ndaj lupinit', molluscs:'Alergji ndaj molusqeve', mustard:'Alergji ndaj mustardës', treenuts:'Alergji ndaj arrave', peanuts:'Alergji ndaj kikirikëve', sesame:'Alergji ndaj susamit', soybeans:'Alergji ndaj sojës', sulphites:'Ndjeshmëri ndaj sulfiteve'},
+    bullets:{celery:'Pa selino, rrënjë selinoje ose kripë selinoje - shpesh e fshehur në lëngje mishi dhe salca.', crustaceans:'Pa gaforre, karavidhe, karkaleca deti ose gaforre lumi, as në lëngje mishi apo salca.', eggs:'Pa vezë në asnjë formë, as në salca, brumë, majonezë apo ëmbëlsira.', fish:'Pa peshk ose përbërës nga peshku, as salcë peshku, lëng mishi apo salcë Worcestershire.', lupin:'Pa miell ose fara lupini, ndonjëherë të përdorura në bukë, ëmbëlsira dhe makarona.', molluscs:'Pa midhje, guaska, kallamar, oktapod apo kërmij, as në lëngje mishi apo salca.', mustard:'Pa fara, pluhur apo mustardë të gatshme, as në salca dresingu.', treenuts:'Pa bajame, lajthi, arra, kaju, pekan, arra brazili, fistikë apo makadamia, as si vaj apo pastë.', peanuts:'Pa kikirikë ose vaj kikiriku, as në salca, ëmbëlsira apo si garnitura.', sesame:'Pa fara susami, vaj susami apo tahini, as në bukë dhe salca dresingu.', soybeans:'Pa soje, salcë soje, tofu apo edamame, as si përbërës në ndonjë salcë.', sulphites:'Ju lutem shmangni pjatat me dioksid squfuri të shtuar, i pranishëm shpesh në verë, fruta të thata dhe disa salca.'}},
+  tr: { warning:'Çapraz bulaşma beni ciddi şekilde hasta edebilir. Lütfen tüm malzemeleri ve pişirme yüzeylerini kontrol edin.',
+    titles:{celery:'Kereviz Alerjisi', crustaceans:'Kabuklu Deniz Ürünleri Alerjisi', eggs:'Yumurta Alerjisi', fish:'Balık Alerjisi', lupin:'Acı Bakla (Lupin) Alerjisi', molluscs:'Yumuşakça Alerjisi', mustard:'Hardal Alerjisi', treenuts:'Sert Kabuklu Yemiş Alerjisi', peanuts:'Yer Fıstığı Alerjisi', sesame:'Susam Alerjisi', soybeans:'Soya Alerjisi', sulphites:'Sülfit Hassasiyeti'},
+    bullets:{celery:'Kereviz, kereviz kökü veya kereviz tuzu yok - genellikle et suyu ve soslarda gizlidir.', crustaceans:'Yengeç, ıstakoz, karides veya kerevit yok, et suyu veya soslarda dahi.', eggs:'Hiçbir şekilde yumurta yok, soslarda, hamurda, mayonezde veya pastalarda dahi.', fish:'Balık veya balık türevi malzeme yok, balık sosu, et suyu veya Worcestershire sosu dahil.', lupin:'Acı bakla unu veya tohumu yok, bazen ekmek, hamur işi ve makarnada kullanılır.', molluscs:'Midye, istiridye, kalamar, ahtapot veya salyangoz yok, et suyu veya soslarda dahi.', mustard:'Hardal tohumu, tozu veya hazır hardal yok, soslarda ve sos harçlarında dahi.', treenuts:'Badem, fındık, ceviz, kaju, pekan cevizi, brezilya cevizi, antep fıstığı veya makadamya yok, yağ veya ezme olarak dahi.', peanuts:'Yer fıstığı veya yer fıstığı yağı yok, soslarda, tatlılarda veya garnitür olarak dahi.', sesame:'Susam, susam yağı veya tahin yok, ekmek üzerinde ve soslarda dahi.', soybeans:'Soya fasulyesi, soya sosu, tofu veya edamame yok, bir sosun içinde malzeme olarak dahi.', sulphites:'Lütfen şaraplarda, kuru meyvelerde ve bazı soslarda yaygın olarak bulunan eklenmiş kükürt dioksit içeren yemeklerden kaçının.'}}
+};
 /* which conditions actually go on the Allergy Card - a personal, device-only setting (Settings
-   > Allergy Card), same storage shape as the Streaming Services picker above. Coeliac and Dairy
-   default ON so an existing card keeps showing exactly what it always has; "other" is free text
-   since there's no translated bullet list to build for an arbitrary condition, so it only ever
-   shows in English on the card itself, clearly marked as such. */
+   > Allergy Card). Coeliac and Dairy default ON so an existing card keeps showing exactly what
+   it always has; the other 12 default OFF since they weren't part of the card before - tick
+   whichever actually apply. */
 const ALLERGY_SETTINGS_KEY = 'calstrippin_allergy_v1';
 function loadAllergySettings(){
   try{
-    const v = JSON.parse(localStorage.getItem(ALLERGY_SETTINGS_KEY));
-    return { coeliac: !v || v.coeliac!==false, dairy: !v || v.dairy!==false, other: (v && v.other) || '' };
-  }catch(e){ return { coeliac:true, dairy:true, other:'' }; }
+    const v = JSON.parse(localStorage.getItem(ALLERGY_SETTINGS_KEY)) || {};
+    const s = { coeliac: v.coeliac!==false, dairy: v.dairy!==false };
+    ALLERGEN_LIST.forEach(a => { s[a.key] = !!v[a.key]; });
+    return s;
+  }catch(e){
+    const s = { coeliac:true, dairy:true };
+    ALLERGEN_LIST.forEach(a => { s[a.key] = false; });
+    return s;
+  }
 }
 function saveAllergySettings(s){ try{ localStorage.setItem(ALLERGY_SETTINGS_KEY, JSON.stringify(s)); }catch(e){} }
 function allergySummaryLine(t){
   if(!(t.countries||[]).length) return 'Add Countries First';
   const s = loadAllergySettings();
-  const parts = [];
-  if(s.coeliac) parts.push('Coeliac Disease');
-  if(s.dairy) parts.push('Dairy Intolerance');
-  if(s.other) parts.push(s.other);
-  return parts.length ? parts.join(', ') : 'Nothing Set Up';
+  const labels = [];
+  if(s.coeliac) labels.push('Coeliac Disease');
+  if(s.dairy) labels.push('Dairy Intolerance');
+  ALLERGEN_LIST.forEach(a => { if(s[a.key]) labels.push(ALLERGEN_TEXT.en.titles[a.key]); });
+  if(!labels.length) return 'Nothing Set Up';
+  const joined = labels.join(', ');
+  return joined.length <= 28 ? joined : `${labels.length} Conditions`;
 }
 /* names the actual languages on offer ("German, Greek") rather than just "Phrases Ready", same
    idea as the Travel tile's own comma-joined summary - falls back to a plain count once the list
@@ -12655,14 +12823,26 @@ function phrasesSummaryLine(t){
 function tabAllergy(t){
   if(!(t.countries||[]).length) return tripLangEmptyHTML('your allergy card writes itself');
   const s = loadAllergySettings();
-  if(!s.coeliac && !s.dairy && !s.other){
+  const anyAllergen = ALLERGEN_LIST.some(a => s[a.key]);
+  if(!s.coeliac && !s.dairy && !anyAllergen){
     return `<div class="empty">Nothing set up yet.<br><br>
       <button class="btn primary" onclick="App.goSettings()">Choose What's On Your Card</button></div>`;
   }
   const langs = tripLangsFor(t);
   if(!langs.includes(CUR_TRIP_LANG)) CUR_TRIP_LANG = langs[0];
   const tr = ALLERGY_TEXT[CUR_TRIP_LANG];
+  // the 12 extra allergens have narrower language coverage than Coeliac/Dairy - a language this
+  // app can't vouch for a translation in falls back to English for just these sections
+  const atr = ALLERGEN_TEXT[CUR_TRIP_LANG] || ALLERGEN_TEXT.en;
   const bullets = arr => `<ul class="allergy-bullets">${arr.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`;
+  const allergenSectionHTML = a => `
+      <div class="allergy-section severe">
+        <div class="allergy-section-head">
+          <span class="allergy-section-emoji" aria-hidden="true">${a.emoji}</span>
+          <span class="allergy-section-title">${esc(atr.titles[a.key])}</span>
+        </div>
+        ${bullets([atr.bullets[a.key], atr.warning])}
+      </div>`;
   return `
     ${langPickerHTML(t, langs)}
     <div class="card allergy-card">
@@ -12681,13 +12861,7 @@ function tabAllergy(t){
         </div>
         ${bullets(tr.dairyBullets)}
       </div>`:''}
-      ${s.other?`<div class="allergy-section note">
-        <div class="allergy-section-head">
-          <span class="allergy-section-emoji" aria-hidden="true">⚠️</span>
-          <span class="allergy-section-title">Other (English only)</span>
-        </div>
-        <p style="margin:0">${esc(s.other)}</p>
-      </div>`:''}
+      ${ALLERGEN_LIST.filter(a=>s[a.key]).map(allergenSectionHTML).join('')}
       <div class="allergy-thanks">${esc(tr.thanks)}</div>
     </div>`;
 }

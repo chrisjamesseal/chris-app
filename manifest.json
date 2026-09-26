@@ -1,0 +1,13 @@
+{
+  "name": "Hobi",
+  "short_name": "Hobi",
+  "description": "One place for your films, games, gigs, theatre, plants and trips.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0060DF",
+  "theme_color": "#0060DF",
+  "icons": [
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

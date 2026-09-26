@@ -1625,6 +1625,19 @@ details .d-body{padding:14px 16px;}
 .country-info-emoji{flex-shrink:0; width:1.3em; text-align:center;}
 .country-info-label{color:var(--muted);}
 .country-info-val{font-weight:600; margin-left:auto; text-align:right;}
+
+/* ---------- today card (only while the trip is actually under way) ---------- */
+.today-card{margin-bottom:16px;}
+.today-head{display:flex; align-items:center; flex-wrap:wrap; gap:4px; font-family:var(--font-head);
+  font-weight:700; font-size:1.05rem; color:var(--ink); margin-bottom:10px;}
+.today-row{display:flex; align-items:center; gap:8px; padding:7px 0; cursor:pointer;}
+.today-row + .today-row{border-top:1px solid var(--line);}
+.today-time{color:var(--muted); font-size:.82rem; flex-shrink:0; min-width:2.6em;}
+.today-emoji{flex-shrink:0;}
+.today-title{color:var(--ink); font-size:.9rem;}
+.today-empty{color:var(--muted); font-size:.9rem; padding:4px 0;}
+.today-tomorrow-head{font-weight:700; font-size:.82rem; color:var(--muted); text-transform:uppercase;
+  letter-spacing:.02em; margin-top:14px; padding-top:10px; border-top:1px solid var(--line);}
 /* ---------- trip dashboard ---------- */
 .dash-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:6px;}
 .dash-tile{
@@ -11963,7 +11976,7 @@ function renderTab(t){
   // lets the desktop/tablet sidebar layout give Itinerary its own narrower width - see the
   // .wrap[data-tab="plan"] rule
   const appEl = $('#app'); if(appEl) appEl.dataset.tab = CUR_TAB;
-  if(CUR_TAB==='home')     el.innerHTML = tabHome(t,ro);
+  if(CUR_TAB==='home')   { el.innerHTML = tabHome(t,ro); initWeather(t); }
   if(CUR_TAB==='travel')   el.innerHTML = tabTravel(t,ro);
   if(CUR_TAB==='stay')     el.innerHTML = tabStay(t,ro);
   if(CUR_TAB==='plan')   { el.innerHTML = tabPlan(t,ro); initWeather(t); initRouteMap(t); initAiSummaries(t); }
@@ -12084,6 +12097,46 @@ function tabCountryInfo(t){
     </div>`;
   }).join('');
 }
+/* a compact, tap-through summary of one itinerary entry (any of planDayGroups' many shapes -
+   a plain stop, a manual or auto-suggested travel leg, a flight/ferry/car/stay/gig, or a task)
+   for the Today card below - full detail is one tap away on the Itinerary tab itself, so this
+   only needs enough to recognise what's coming up, not the rich card each of those gets there. */
+function todayEntryHTML(item){
+  const time = item.time || (item.period && PLAN_PERIODS[item.period] && PLAN_PERIODS[item.period][0]) || '';
+  const row = (emoji, title) => `
+      <div class="today-row" role="button" tabindex="0" onclick="App.tab('plan')" onkeydown="if(event.key==='Enter'||event.key===' '){App.tab('plan')}">
+        ${time?`<span class="today-time">${esc(time)}</span>`:''}
+        <span class="today-emoji" aria-hidden="true">${emoji}</span>
+        <span class="today-title">${esc(title)}</span>
+      </div>`;
+  if(item._autoFlight){ const f=item.f; return row('✈️', (f.from?f.from+' → ':'')+(f.to||'Flight')); }
+  if(item._autoFerry){ const f=item.f; return row('⛴️', (f.from?f.from+' → ':'')+(f.to||'Ferry')); }
+  if(item._autoCar){ const c=item.c; return row('🚗', item._autoCar==='pickup' ? 'Pick Up: '+(c.pickupLoc||'Car Hire') : 'Drop Off: '+(c.dropoffLoc||c.pickupLoc||'Car Hire')); }
+  if(item._autoStay){ const ac=item.ac; return row('🛏️', (item._autoStay==='checkin'?'Check In: ':'Check Out: ')+(ac.name||'Accommodation')); }
+  if(item._autoGig){ const g=item.g; return row('🎤', g.artist || g.title || 'Gig'); }
+  if(item.kind==='travel'){ const mode=TRAVEL_MODES[item.mode]||TRAVEL_MODES.undecided; return row(mode.emoji, item.to ? 'To '+item.to : mode.label); }
+  if(item.kind==='task') return row('☑', item.title);
+  return row(item.emoji || ideaEmojiFor(item.name) || '📍', item.name || 'Stop');
+}
+/* today's own plan, today's weather, and anything not yet booked/done that's linked to
+   tomorrow - shown once, above the dashboard tiles, only while the trip is actually under way
+   (tripStatus's 'now'), since it's the one moment a trip's Overview page is worth opening
+   several times a day for. A rough "next summer" trip has no calendar to know "today" against,
+   so it never qualifies regardless of tripStatus. */
+function todayCardHTML(t){
+  if(tripStatus(t).cls!=='now' || hasRoughWhen(t)) return '';
+  const todayKey = todayStr(), tomorrowKey = isoAddDays(todayKey, 1);
+  const {groups} = planDayGroups(t);
+  const items = (groups[todayKey]||[]).slice().sort((a,b)=>itineraryTimeKey(a).localeCompare(itineraryTimeKey(b)));
+  const tomorrowTasks = (groups[tomorrowKey]||[]).filter(x=>x.kind==='task')
+    .sort((a,b)=>itineraryTimeKey(a).localeCompare(itineraryTimeKey(b)));
+  return `
+    <div class="card today-card">
+      <div class="today-head"><span>Today · ${esc(fmtDateOrdinal(todayKey, true))}</span><span class="wx-slot" data-wx-date="${esc(todayKey)}"></span></div>
+      ${items.length ? items.map(todayEntryHTML).join('') : '<div class="today-empty">Nothing planned today.</div>'}
+      ${tomorrowTasks.length ? `<div class="today-tomorrow-head">Still to sort for tomorrow</div>${tomorrowTasks.map(todayEntryHTML).join('')}` : ''}
+    </div>`;
+}
 function tabHome(t, ro){
   const n = t.notes||{contacts:[],general:''};
   const nTravel = (t.flights||[]).length + (t.ferries||[]).length + (t.carHire||[]).length;
@@ -12156,7 +12209,7 @@ function tabHome(t, ro){
       <span class="dash-icon">${tileIcon(k)}</span>
       <span class="dash-text"><span class="dash-label">${esc(label)}</span><span class="dash-sum${empty?' unfilled':''}">${esc(sum)}</span></span>
     </div>`;
-  return `<div class="dash-grid">${tiles.map(tile).join('')}</div>`;
+  return `${todayCardHTML(t)}<div class="dash-grid">${tiles.map(tile).join('')}</div>`;
 }
 /* ================= TAB: log (what changed) ================= */
 /* which tab a log entry's section belongs to, so each row can jump straight there,
@@ -13462,7 +13515,7 @@ function paintWeather(){
 function initWeather(t){
   const keys = [...document.querySelectorAll('#tab-body [data-wx-date]')].map(el=>el.dataset.wxDate);
   WX_DAY_PLACES = wxDayPlaces(t, keys);
-  const repaint = () => { if(CUR_TAB==='plan' && CUR_TRIP_ID===t.id) paintWeather(); };
+  const repaint = () => { if((CUR_TAB==='plan'||CUR_TAB==='home') && CUR_TRIP_ID===t.id) paintWeather(); };
   const listKeys = new Set(Object.values(WX_DAY_PLACES).map(c=>c.join('|')));
   document.querySelectorAll('#tab-body [data-arr-cands]').forEach(el=>{
     if(el.dataset.arrCands) listKeys.add(el.dataset.arrCands);

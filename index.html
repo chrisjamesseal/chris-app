@@ -12202,7 +12202,14 @@ function tabHome(t, ro){
   if(nDocs) docParts.push(nDocs+(nDocs===1?' File':' Files'));
   const travParts = [];
   if((t.flights||[]).length) travParts.push((t.flights.length)+(t.flights.length===1?' Flight':' Flights'));
-  if((t.ferries||[]).length) travParts.push((t.ferries.length)+(t.ferries.length===1?' Ferry':' Ferries'));
+  // a ferry can be booked two ways - the dedicated Ferries feature (t.ferries, its own full
+  // card with times/booking ref) or a plain itinerary travel leg with mode 'ferry' (just a
+  // connector line - see tabPlan's own travelCard). Both are genuinely "a ferry" from where
+  // this tile's counting, so both count towards it; an itinerary leg flagged "Add as Task" isn't
+  // booked yet, so it's excluded the same way nLegs above excludes it.
+  const nItinFerries = (t.itinerary||[]).filter(s=>s.kind==='travel' && s.mode==='ferry' && !s.asTask).length;
+  const nFerries = (t.ferries||[]).length + nItinFerries;
+  if(nFerries) travParts.push(nFerries+(nFerries===1?' Ferry':' Ferries'));
   if((t.carHire||[]).length) travParts.push('Car Hire');
   // each row doubles as a counter: what's booked, added, pinned and owed
   const totalSpent = (t.receipts||[]).reduce((s,r)=>s+receiptTotal(r),0);

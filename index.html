@@ -1625,7 +1625,7 @@ details .d-body{padding:14px 16px;}
   letter-spacing:.04em; color:var(--muted); margin-bottom:4px;}
 .country-info-tile-val{font-weight:700; color:var(--ink); font-size:.95rem;}
 .plug-val{display:flex; flex-direction:column; align-items:center; gap:5px;}
-.plug-icons{display:inline-flex; gap:3px; justify-content:center;}
+.plug-icons{display:inline-flex; gap:6px; justify-content:center;}
 .plug-icon{color:var(--ink); flex-shrink:0;}
 
 /* ---------- today card (only while the trip is actually under way) ---------- */
@@ -12135,7 +12135,7 @@ const PLUG_PINS = {
 };
 function plugIconSVG(letter){
   const fam = PLUG_ICON_FAMILY[letter] || 'round2';
-  return `<svg class="plug-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">${PLUG_FACE}${PLUG_PINS[fam]}</svg>`;
+  return `<svg class="plug-icon" viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">${PLUG_FACE}${PLUG_PINS[fam]}</svg>`;
 }
 /* travel[3] looks like "Type C/F · 230V" - split into the letters (one icon each) and the
    voltage, which stays as plain text */

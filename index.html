@@ -11326,8 +11326,13 @@ function renderHome(){
   renderSidebar(null);
   $('#app').innerHTML = `
     <div class="page-head">
-      <div class="home-title"><h1>Your Trips</h1>
-        <button class="btn sm primary" onclick="App.newTrip()">+ New Trip</button></div>
+      <div class="home-title">
+        <div class="trip-title-main">
+          <button class="crumb-backbtn" onclick="App.goDashboard()" aria-label="Back to Home">${ICONS.back}</button>
+          <h1>Your Trips</h1>
+        </div>
+        <button class="btn sm primary" onclick="App.newTrip()">+ New Trip</button>
+      </div>
       <div id="home-grid">${homeGridHTML(DB.trips, cloudEnabled())}</div>
       <div class="home-foot">
         <button class="version-tag" onclick="App.toggleChangelog()">v${esc(APP_VERSION)} · What's new</button>

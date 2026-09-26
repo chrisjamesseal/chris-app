@@ -868,9 +868,6 @@ a{color:var(--brand-dark);}
 .itin-seats{color:var(--ink); font-size:.85rem; margin-left:auto;}
 .itin-seats .icon{margin-right:5px;}
 .itin-route-name{font-weight:700; color:var(--ink); font-size:.9rem; margin-bottom:12px;}
-.itin-route-name-copy{display:flex; align-items:center; justify-content:space-between; gap:8px;}
-.itin-route-name-copy .iconbtn{padding:2px 6px; flex-shrink:0;}
-.itin-route-name-copy .iconbtn .icon{font-size:.9rem;}
 .itin-amenities{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:12px;}
 .itin-amenity{display:flex; align-items:center; gap:6px; font-size:.9rem; color:var(--ink);}
 /* both states share the brand orange rather than a green/grey semantic pairing, matching the
@@ -1619,20 +1616,11 @@ details .d-body{padding:14px 16px;}
 .split-sum .left.clear{color:var(--brand-dark); font-weight:700;}
 
 /* ---------- trip local info (language/time zone/emergency number, per country) ---------- */
-.local-info-grid{display:flex; flex-direction:column; gap:10px; margin-bottom:16px;}
-.local-info-card{border:1px solid var(--line); border-radius:var(--radius); background:var(--paper);
-  box-shadow:var(--shadow); padding:14px 16px;}
-.local-info-head{display:flex; align-items:center; gap:8px; font-family:var(--font-head);
-  font-weight:700; font-size:.95rem; color:var(--ink); margin-bottom:6px;}
-.local-info-row{display:flex; align-items:center; gap:8px; font-size:.85rem; color:var(--ink);
-  padding:5px 0;}
-.local-info-row + .local-info-row{border-top:1px solid var(--line);}
-.local-info-emoji{flex-shrink:0; width:1.2em; text-align:center;}
-.local-info-label{color:var(--muted);}
-.local-info-val{font-weight:600; margin-left:auto; text-align:right;}
-.local-info-note{color:var(--muted); font-size:.78rem; margin-top:8px; padding-top:8px;
-  border-top:1px solid var(--line);}
-.local-info-note a{color:var(--brand); font-weight:600;}
+.trip-localinfo{margin:8px 0 16px;}
+.trip-localinfo-flags{display:flex; gap:6px; margin-bottom:6px;}
+.trip-localinfo-flag{border:1px solid var(--line); background:var(--paper); border-radius:999px;
+  padding:2px 10px; font-size:1rem; line-height:1.6; cursor:pointer; opacity:.5;}
+.trip-localinfo-flag.on{opacity:1; border-color:var(--brand);}
 /* ---------- trip dashboard ---------- */
 .dash-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:6px;}
 .dash-tile{
@@ -1899,6 +1887,7 @@ body.kb-open .tabbar.on{display:none;}
 .allergy-section.severe .allergy-section-title{color:var(--rag-red);}
 .allergy-section.caution{background:#FFF3E0; border:1px solid rgba(255,159,10,.28);}
 .allergy-section.caution .allergy-section-title{color:var(--rag-yellow);}
+.allergy-section.note{background:var(--bg); border:1px solid var(--line);}
 .allergy-thanks{margin-top:6px; color:var(--muted); font-style:italic; font-size:.9rem;}
 /* Phrases' own single-column card list - the local-language word/phrase and its pronunciation
    live together inside a speech-bubble shape (since both are "how do I actually say this" and
@@ -7679,8 +7668,28 @@ function renderSettings(){
         <div class="chips" id="streaming-services-chips">${streamingServicesChipsHTML()}</div>
         <button class="btn sm ghost" style="margin-top:14px" onclick="App.streamingServicesSelectAll()">Select All</button>
       </div>
+      <h3 style="margin-bottom:10px">Allergy Card</h3>
+      <div class="card" style="margin-bottom:20px">
+        <p class="small muted" style="margin-bottom:14px">
+          Choose what shows on every trip's Allergy Card - a personal, device-only setting.
+          Coeliac Disease and Dairy Intolerance have their own wording, translated into whichever
+          language the trip needs; anything else you add only ever shows in English, since there's
+          no translation this app can vouch for.
+        </p>
+        <div class="chips" id="allergy-settings-chips">${allergySettingsChipsHTML()}</div>
+        <div class="field" style="margin-top:14px">
+          <label class="label">Other allergies or intolerances (English only)</label>
+          <input id="allergy-other" type="text" value="${esc(loadAllergySettings().other)}" placeholder="e.g. Peanut allergy" onchange="App.setAllergyOther(this.value)">
+        </div>
+      </div>
     </div>`;
   drawLetterboxdConnect();
+}
+function allergySettingsChipsHTML(){
+  const s = loadAllergySettings();
+  const chip = (key,label,on) => `<span class="chip pick${on?' on':''}" role="button" tabindex="0" onclick="App.toggleAllergySetting('${key}')"
+    onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.toggleAllergySetting('${key}')}">${esc(label)}</span>`;
+  return chip('coeliac','Coeliac Disease', s.coeliac) + chip('dairy','Dairy Intolerance', s.dairy);
 }
 function streamingServicesChipsHTML(){
   const selected = selectedStreamingServices();
@@ -10751,6 +10760,17 @@ App.streamingServicesSelectAll = () => {
   saveStreamingServices(new Set(STREAMING_SERVICES.map(s=>s.key)));
   const el = $('#streaming-services-chips'); if(el) el.innerHTML = streamingServicesChipsHTML();
 };
+App.toggleAllergySetting = key => {
+  const s = loadAllergySettings();
+  s[key] = !s[key];
+  saveAllergySettings(s);
+  const el = $('#allergy-settings-chips'); if(el) el.innerHTML = allergySettingsChipsHTML();
+};
+App.setAllergyOther = val => {
+  const s = loadAllergySettings();
+  s.other = val.trim();
+  saveAllergySettings(s);
+};
 App.goGigs = () => { location.hash = '#/gigs'; };
 App.goGigsSeen = () => { CUR_GIGS_TAB = 'log'; location.hash = '#/gigs'; };
 App.goSongs = () => { CUR_GIGS_TAB = 'songs'; location.hash = '#/gigs'; };
@@ -11372,15 +11392,13 @@ App.comboPick = (id, encValue) => {
 App.cardLogoCheck = img => {
   if(img.naturalWidth <= 16 && img.naturalHeight <= 16) cardLogoRestore(img);
 };
-/* an address line with its own small copy button - shared by the Itinerary's and
-   Accommodation's rich stay cards (itinAccomCardHTML/accomCardHTML), the two places a full
-   postal address is actually printed on screen rather than just a place name, so it's worth
-   pasting into a taxi app or Maps directly instead of retyping it */
-const addressLineHTML = address => address ? `
-      <div class="itin-route-name itin-route-name-copy">
-        <span>${esc(address)}</span>
-        <button class="iconbtn" aria-label="Copy address" title="Copy address" onclick="event.stopPropagation();App.copyText('${encodeURIComponent(address)}', this)">${ICONS.copy}</button>
-      </div>` : '';
+/* a full-width "Copy Address" button, matching the Google Maps/View Details buttons it sits
+   below - shared by the Itinerary's and Accommodation's rich stay cards
+   (itinAccomCardHTML/accomCardHTML), the two places a full postal address is actually printed
+   on screen rather than just a place name, so it's worth pasting into a taxi app or Maps
+   directly instead of retyping it */
+const copyAddressBtnHTML = address => address ? `
+        <button class="btn itin-action-btn" onclick="event.stopPropagation();App.copyText('${encodeURIComponent(address)}', this)">${ICONS.copy} Copy Address</button>` : '';
 App.copyText = (enc, btn) => {
   const text = decodeURIComponent(enc);
   const done = () => {
@@ -11914,54 +11932,46 @@ function tzNow(tz){
   try{ return new Intl.DateTimeFormat('en-GB',{timeZone:tz, hour:'2-digit', minute:'2-digit', hour12:false}).format(new Date()); }
   catch(e){ return ''; }
 }
-/* how far ahead/behind a destination's zone is right now versus this device's own, worked out
-   from the actual current UTC offset on each side rather than a fixed difference, so it stays
-   right across a DST change on either end */
-function tzDiffLabel(tz){
-  try{
-    const now = new Date(), home = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const here = new Date(now.toLocaleString('en-US',{timeZone:home}));
-    const there = new Date(now.toLocaleString('en-US',{timeZone:tz}));
-    const diffMin = Math.round((there-here)/60000);
-    if(Math.abs(diffMin) < 15) return 'same time as you';
-    const h = Math.abs(diffMin)/60;
-    const hLabel = (Number.isInteger(h)?h:h.toFixed(1))+'h';
-    return diffMin>0 ? hLabel+' ahead of you' : hLabel+' behind you';
-  }catch(e){ return ''; }
-}
-/* Language / local time / emergency number for each of the trip's own countries, in that order
-   - shown once above the dashboard tiles rather than on a tab of its own, since it's the kind of
-   thing worth seeing the moment you open the trip rather than going to look for. Skipped
-   entirely for a home-nation "trip" (a staycation in Scotland, say) - same language, same clock,
-   same 999 you already know, and "check your roaming" would be actively wrong advice for
-   somewhere that was never going to roam. The data/eSIM line is the same general nudge for every
-   country rather than a claim about any specific network's own roaming deal - those vary by
-   provider and change too often to state as fact here. */
+/* Language / local time / emergency number for the trip's own countries, in that order - reads
+   as one more line under the trip's own date/day-count meta line rather than a section of its
+   own, since it's the kind of thing worth seeing the moment you open the trip rather than a
+   whole card to scroll past. A multi-country trip gets a small flag toggle above it instead of
+   stacking every country's own line - CUR_LOCAL_INFO_CODE (reset whenever it points at a country
+   that isn't on the trip any more) remembers which one's showing. Skipped entirely for a
+   home-nation "trip" (a staycation in Scotland, say) - same language, same clock, same 999 you
+   already know. */
 const HOME_NATION_CODES = ['XE','XS','XW','XI'];
+let CUR_LOCAL_INFO_CODE = null;
 function tripLocalInfoHTML(t){
-  const codes = (t.countries||[]).filter(c => !HOME_NATION_CODES.includes(c));
-  const cards = codes.map(code=>{
-    const co = countryByCode(code); if(!co) return '';
-    const info = COUNTRY_INFO[code];
-    const tz = COUNTRY_TZ[code];
-    const emergency = COUNTRY_EMERGENCY[code];
-    const row = (emoji, label, val) => `
-      <div class="local-info-row"><span class="local-info-emoji" aria-hidden="true">${emoji}</span><span class="local-info-label">${label}</span><span class="local-info-val">${esc(val)}</span></div>`;
-    const rows = [
-      info ? row('💬','Language', info[1]) : '',
-      tz ? row('🕐','Local Time', [tzNow(tz), tzDiffLabel(tz)].filter(Boolean).join(' · ')) : '',
-      emergency ? row('🚨','Emergency', emergency) : ''
-    ].join('');
-    const esimUrl = 'https://www.google.com/search?q='+encodeURIComponent('esim for '+co.name);
-    return `
-    <div class="local-info-card">
-      <div class="local-info-head"><span aria-hidden="true">${co.flag}</span>${esc(co.name)}</div>
-      ${rows}
-      <div class="local-info-note"><span aria-hidden="true">📶</span> Check your provider's roaming rates before you go - an <a href="${esimUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">eSIM for ${esc(co.name)}</a> is often cheaper for data.</div>
-    </div>`;
-  }).filter(Boolean).join('');
-  return cards ? `<div class="local-info-grid">${cards}</div>` : '';
+  const codes = (t.countries||[]).filter(c => !HOME_NATION_CODES.includes(c) && countryByCode(c));
+  if(!codes.length) return '';
+  if(!CUR_LOCAL_INFO_CODE || !codes.includes(CUR_LOCAL_INFO_CODE)) CUR_LOCAL_INFO_CODE = codes[0];
+  const code = CUR_LOCAL_INFO_CODE;
+  const co = countryByCode(code);
+  const info = COUNTRY_INFO[code];
+  const tz = COUNTRY_TZ[code];
+  const emergency = COUNTRY_EMERGENCY[code];
+  const flags = codes.length>1 ? `
+    <div class="trip-localinfo-flags">${codes.map(c=>{
+      const cco = countryByCode(c);
+      return `<button class="trip-localinfo-flag${c===code?' on':''}" aria-label="${esc(cco.name)}" onclick="App.setLocalInfoCountry('${c}')">${cco.flag}</button>`;
+    }).join('')}</div>` : '';
+  const item = (emoji, val) => val ? `<span><span class="meta-emoji" aria-hidden="true">${emoji}</span><span class="meta-text">${esc(val)}</span></span>` : '';
+  return `
+  <div class="trip-localinfo" id="trip-localinfo">
+    ${flags}
+    <p class="muted trip-meta">
+      ${item('💬', info && info[1])}
+      ${item('🕐', tz && tzNow(tz))}
+      ${item('🚨', emergency)}
+    </p>
+  </div>`;
 }
+App.setLocalInfoCountry = code => {
+  CUR_LOCAL_INFO_CODE = code;
+  const t = getTrip(CUR_TRIP_ID); if(!t) return;
+  const el = $('#trip-localinfo'); if(el) el.outerHTML = tripLocalInfoHTML(t);
+};
 function tabHome(t, ro){
   const n = t.notes||{contacts:[],general:''};
   const nTravel = (t.flights||[]).length + (t.ferries||[]).length + (t.carHire||[]).length;
@@ -12611,8 +12621,27 @@ function tripLangEmptyHTML(hint){
   return `<div class="empty">Add this trip's countries and ${hint} in the right language.<br><br>
     <button class="btn primary" onclick="App.tripForm()">Add Countries</button></div>`;
 }
+/* which conditions actually go on the Allergy Card - a personal, device-only setting (Settings
+   > Allergy Card), same storage shape as the Streaming Services picker above. Coeliac and Dairy
+   default ON so an existing card keeps showing exactly what it always has; "other" is free text
+   since there's no translated bullet list to build for an arbitrary condition, so it only ever
+   shows in English on the card itself, clearly marked as such. */
+const ALLERGY_SETTINGS_KEY = 'calstrippin_allergy_v1';
+function loadAllergySettings(){
+  try{
+    const v = JSON.parse(localStorage.getItem(ALLERGY_SETTINGS_KEY));
+    return { coeliac: !v || v.coeliac!==false, dairy: !v || v.dairy!==false, other: (v && v.other) || '' };
+  }catch(e){ return { coeliac:true, dairy:true, other:'' }; }
+}
+function saveAllergySettings(s){ try{ localStorage.setItem(ALLERGY_SETTINGS_KEY, JSON.stringify(s)); }catch(e){} }
 function allergySummaryLine(t){
-  return (t.countries||[]).length ? 'Coeliac Disease, Dairy Intolerance' : 'Add Countries First';
+  if(!(t.countries||[]).length) return 'Add Countries First';
+  const s = loadAllergySettings();
+  const parts = [];
+  if(s.coeliac) parts.push('Coeliac Disease');
+  if(s.dairy) parts.push('Dairy Intolerance');
+  if(s.other) parts.push(s.other);
+  return parts.length ? parts.join(', ') : 'Nothing Set Up';
 }
 /* names the actual languages on offer ("German, Greek") rather than just "Phrases Ready", same
    idea as the Travel tile's own comma-joined summary - falls back to a plain count once the list
@@ -12625,6 +12654,11 @@ function phrasesSummaryLine(t){
 }
 function tabAllergy(t){
   if(!(t.countries||[]).length) return tripLangEmptyHTML('your allergy card writes itself');
+  const s = loadAllergySettings();
+  if(!s.coeliac && !s.dairy && !s.other){
+    return `<div class="empty">Nothing set up yet.<br><br>
+      <button class="btn primary" onclick="App.goSettings()">Choose What's On Your Card</button></div>`;
+  }
   const langs = tripLangsFor(t);
   if(!langs.includes(CUR_TRIP_LANG)) CUR_TRIP_LANG = langs[0];
   const tr = ALLERGY_TEXT[CUR_TRIP_LANG];
@@ -12633,20 +12667,27 @@ function tabAllergy(t){
     ${langPickerHTML(t, langs)}
     <div class="card allergy-card">
       <div class="allergy-card-lang">${esc(tr.title)}</div>
-      <div class="allergy-section severe">
+      ${s.coeliac?`<div class="allergy-section severe">
         <div class="allergy-section-head">
           <span class="allergy-section-emoji" aria-hidden="true">🌾</span>
           <span class="allergy-section-title">${esc(tr.coeliacTitle)}</span>
         </div>
         ${bullets(tr.coeliacBullets)}
-      </div>
-      <div class="allergy-section caution">
+      </div>`:''}
+      ${s.dairy?`<div class="allergy-section caution">
         <div class="allergy-section-head">
           <span class="allergy-section-emoji" aria-hidden="true">🥛</span>
           <span class="allergy-section-title">${esc(tr.dairyTitle)}</span>
         </div>
         ${bullets(tr.dairyBullets)}
-      </div>
+      </div>`:''}
+      ${s.other?`<div class="allergy-section note">
+        <div class="allergy-section-head">
+          <span class="allergy-section-emoji" aria-hidden="true">⚠️</span>
+          <span class="allergy-section-title">Other (English only)</span>
+        </div>
+        <p style="margin:0">${esc(s.other)}</p>
+      </div>`:''}
       <div class="allergy-thanks">${esc(tr.thanks)}</div>
     </div>`;
 }
@@ -13675,7 +13716,7 @@ function planDaysHTML(t, ro, filterKeys){
         <strong class="head-with-logo">${primaryTime?'- ':''}${logo}<span${ac.asTask?' class="text-undecided"':''}>${esc(titleText)}</span></strong>
         ${nights?`<span class="itin-seats">${nights} Night${nights===1?'':'s'}</span>`:''}
       </div>
-      ${ac.address && ac.address!==cityName?addressLineHTML(ac.address):''}
+      ${ac.address && ac.address!==cityName?`<div class="itin-route-name">${esc(ac.address)}</div>`:''}
       ${ac.checkin?`<div class="itin-stay-dates" style="margin-bottom:${hasBelow?'12px':'0'}${BOOKING_SERVICE_COLORS[detectBookingService(ac.bookingUrl)]?`;--stay-icon-color:${BOOKING_SERVICE_COLORS[detectBookingService(ac.bookingUrl)]}`:''}">
         <span>${ICONS.calendar}${esc(fmtDateOrdinal(ac.checkin, true))}${ac.checkinTime?` ${fa('clock')}Check In: ${esc(ac.checkinTime)}`:''}</span>
         ${ac.checkout?`<span class="itin-date-to">to ${ICONS.calendar}${esc(fmtDateOrdinal(ac.checkout, true))}${ac.checkoutTime?` ${fa('clock')}Check Out: ${esc(ac.checkoutTime)}`:''}</span>`:''}
@@ -13684,6 +13725,7 @@ function planDaysHTML(t, ro, filterKeys){
       ${mapsUrl||ac.bookingUrl?`<div class="itin-actions">
         ${mapsUrl?`<a class="btn itin-action-btn" href="${mapsUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${mapIcon(mapsUrl)} Google Maps</a>`:''}
         ${ac.bookingUrl?`<a class="btn itin-action-btn primary" href="${esc(ac.bookingUrl)}" target="_blank" rel="noopener"${bookingButtonStyle(ac.bookingUrl)} onclick="event.stopPropagation()">${bookingIconFor(ac.bookingUrl)} View Details</a>`:''}
+        ${copyAddressBtnHTML(ac.address)}
       </div>`:''}
     </div>`;
   };
@@ -15719,7 +15761,7 @@ function accomCardHTML(a, opts){
   const richLogo = a.bookingUrl ? bookingLogoFor(a.bookingUrl, '', a.name||'Accommodation') : '';
   const primaryTime = a.arrivalTime || a.checkinTime;
   const bodyInner = `
-      ${a.address && a.address!==displayName?addressLineHTML(a.address):''}
+      ${a.address && a.address!==displayName?`<div class="itin-route-name">${esc(a.address)}</div>`:''}
       ${a.checkin?`<div class="itin-stay-dates"${BOOKING_SERVICE_COLORS[service]?` style="--stay-icon-color:${BOOKING_SERVICE_COLORS[service]}"`:''}>
         <span>${ICONS.calendar}${esc(fmtDateOrdinal(a.checkin))}${a.checkinTime?` ${fa('clock')}Check In: ${esc(a.checkinTime)}`:''}</span>
         ${a.checkout?`<span class="itin-date-to">to ${ICONS.calendar}${esc(fmtDateOrdinal(a.checkout))}${a.checkoutTime?` ${fa('clock')}Check Out: ${esc(a.checkoutTime)}`:''}</span>`:''}
@@ -15728,6 +15770,7 @@ function accomCardHTML(a, opts){
       ${mapsUrl||a.bookingUrl?`<div class="itin-actions" onclick="event.stopPropagation()">
         ${mapsUrl?`<a class="btn itin-action-btn" href="${mapsUrl}" target="_blank" rel="noopener">${mapIcon(mapsUrl)} Google Maps</a>`:''}
         ${a.bookingUrl?`<a class="btn itin-action-btn primary" href="${esc(a.bookingUrl)}" target="_blank" rel="noopener"${bookingButtonStyle(a.bookingUrl)}>${bookingIconFor(a.bookingUrl)} View Details</a>`:''}
+        ${copyAddressBtnHTML(a.address)}
       </div>`:''}`;
   return `
     <div class="flight-strip itin-flight${opts.plainHead?' plain-head':''}">

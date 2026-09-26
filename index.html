@@ -864,6 +864,9 @@ a{color:var(--brand-dark);}
 .itin-seats{color:var(--ink); font-size:.85rem; margin-left:auto;}
 .itin-seats .icon{margin-right:5px;}
 .itin-route-name{font-weight:700; color:var(--ink); font-size:.9rem; margin-bottom:12px;}
+.itin-route-name-copy{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.itin-route-name-copy .iconbtn{padding:2px 6px; flex-shrink:0;}
+.itin-route-name-copy .iconbtn .icon{font-size:.9rem;}
 .itin-amenities{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:12px;}
 .itin-amenity{display:flex; align-items:center; gap:6px; font-size:.9rem; color:var(--ink);}
 /* both states share the brand orange rather than a green/grey semantic pairing, matching the
@@ -1611,6 +1614,21 @@ details .d-body{padding:14px 16px;}
 .split-sum .left{font-weight:700; color:var(--ink);}
 .split-sum .left.clear{color:var(--brand-dark); font-weight:700;}
 
+/* ---------- trip local info (language/time zone/emergency number, per country) ---------- */
+.local-info-grid{display:flex; flex-direction:column; gap:10px; margin-bottom:16px;}
+.local-info-card{border:1px solid var(--line); border-radius:var(--radius); background:var(--paper);
+  box-shadow:var(--shadow); padding:14px 16px;}
+.local-info-head{display:flex; align-items:center; gap:8px; font-family:var(--font-head);
+  font-weight:700; font-size:.95rem; color:var(--ink); margin-bottom:6px;}
+.local-info-row{display:flex; align-items:center; gap:8px; font-size:.85rem; color:var(--ink);
+  padding:5px 0;}
+.local-info-row + .local-info-row{border-top:1px solid var(--line);}
+.local-info-emoji{flex-shrink:0; width:1.2em; text-align:center;}
+.local-info-label{color:var(--muted);}
+.local-info-val{font-weight:600; margin-left:auto; text-align:right;}
+.local-info-note{color:var(--muted); font-size:.78rem; margin-top:8px; padding-top:8px;
+  border-top:1px solid var(--line);}
+.local-info-note a{color:var(--brand); font-weight:600;}
 /* ---------- trip dashboard ---------- */
 .dash-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:6px;}
 .dash-tile{
@@ -4514,6 +4532,100 @@ const COUNTRY_INFO = {
   XS:['Edinburgh','English'],
   XW:['Cardiff','English/Welsh'],
   XI:['Belfast','English']
+};
+/* IANA time zone for each country - its capital's own zone stands in for the whole country,
+   same "one representative pick" call COUNTRY_INFO's capital/language already makes for a
+   multi-zone country (US, Russia, Australia...). Used to work out the actual current time and
+   how far ahead/behind it is, not just a label, so it stays right across a DST change on either
+   end. Deliberately not every one of COUNTRY_INFO's 220-odd entries - a country worth adding
+   here is one this app's own trips are actually likely to visit; anything left out just drops
+   its Local Time row on the trip page rather than risk a wrong one. */
+const COUNTRY_TZ = {
+  AD:'Europe/Andorra', AL:'Europe/Tirane', AT:'Europe/Vienna', BA:'Europe/Sarajevo',
+  BE:'Europe/Brussels', BG:'Europe/Sofia', BY:'Europe/Minsk', CH:'Europe/Zurich',
+  CY:'Asia/Nicosia', CZ:'Europe/Prague', DE:'Europe/Berlin', DK:'Europe/Copenhagen',
+  EE:'Europe/Tallinn', ES:'Europe/Madrid', FI:'Europe/Helsinki', FO:'Atlantic/Faroe',
+  FR:'Europe/Paris', GG:'Europe/Guernsey', GI:'Europe/Gibraltar', GL:'America/Nuuk',
+  GR:'Europe/Athens', HR:'Europe/Zagreb', HU:'Europe/Budapest', IE:'Europe/Dublin',
+  IM:'Europe/Isle_of_Man', IS:'Atlantic/Reykjavik', IT:'Europe/Rome', JE:'Europe/Jersey',
+  LI:'Europe/Vaduz', LT:'Europe/Vilnius', LU:'Europe/Luxembourg', LV:'Europe/Riga',
+  MC:'Europe/Monaco', MD:'Europe/Chisinau', ME:'Europe/Podgorica', MK:'Europe/Skopje',
+  MT:'Europe/Malta', NL:'Europe/Amsterdam', NO:'Europe/Oslo', PL:'Europe/Warsaw',
+  PT:'Europe/Lisbon', RO:'Europe/Bucharest', RS:'Europe/Belgrade', RU:'Europe/Moscow',
+  SE:'Europe/Stockholm', SI:'Europe/Ljubljana', SK:'Europe/Bratislava', SM:'Europe/San_Marino',
+  TR:'Europe/Istanbul', UA:'Europe/Kyiv', VA:'Europe/Vatican',
+  XE:'Europe/London', XS:'Europe/London', XW:'Europe/London', XI:'Europe/London',
+  US:'America/New_York', CA:'America/Toronto', MX:'America/Mexico_City', BM:'Atlantic/Bermuda',
+  BZ:'America/Belize', CR:'America/Costa_Rica', SV:'America/El_Salvador', GT:'America/Guatemala',
+  HN:'America/Tegucigalpa', NI:'America/Managua', PA:'America/Panama', CU:'America/Havana',
+  DO:'America/Santo_Domingo', JM:'America/Jamaica', PR:'America/Puerto_Rico',
+  BB:'America/Barbados', BS:'America/Nassau', TT:'America/Port_of_Spain',
+  HT:'America/Port-au-Prince', AW:'America/Aruba', CW:'America/Curacao',
+  AR:'America/Argentina/Buenos_Aires', BO:'America/La_Paz', BR:'America/Sao_Paulo',
+  CL:'America/Santiago', CO:'America/Bogota', EC:'America/Guayaquil', GY:'America/Guyana',
+  PY:'America/Asuncion', PE:'America/Lima', SR:'America/Paramaribo', UY:'America/Montevideo',
+  VE:'America/Caracas',
+  AE:'Asia/Dubai', BH:'Asia/Bahrain', IL:'Asia/Jerusalem', IQ:'Asia/Baghdad', IR:'Asia/Tehran',
+  JO:'Asia/Amman', KW:'Asia/Kuwait', LB:'Asia/Beirut', OM:'Asia/Muscat', QA:'Asia/Qatar',
+  SA:'Asia/Riyadh', SY:'Asia/Damascus', YE:'Asia/Aden',
+  AF:'Asia/Kabul', AM:'Asia/Yerevan', AZ:'Asia/Baku', BD:'Asia/Dhaka', BN:'Asia/Brunei',
+  BT:'Asia/Thimphu', CN:'Asia/Shanghai', GE:'Asia/Tbilisi', HK:'Asia/Hong_Kong',
+  ID:'Asia/Jakarta', IN:'Asia/Kolkata', JP:'Asia/Tokyo', KG:'Asia/Bishkek',
+  KH:'Asia/Phnom_Penh', KP:'Asia/Pyongyang', KR:'Asia/Seoul', KZ:'Asia/Almaty',
+  LA:'Asia/Vientiane', LK:'Asia/Colombo', MM:'Asia/Yangon', MN:'Asia/Ulaanbaatar',
+  MO:'Asia/Macau', MV:'Indian/Maldives', MY:'Asia/Kuala_Lumpur', NP:'Asia/Kathmandu',
+  PH:'Asia/Manila', PK:'Asia/Karachi', SG:'Asia/Singapore', TH:'Asia/Bangkok',
+  TJ:'Asia/Dushanbe', TL:'Asia/Dili', TM:'Asia/Ashgabat', TW:'Asia/Taipei',
+  UZ:'Asia/Tashkent', VN:'Asia/Ho_Chi_Minh',
+  DZ:'Africa/Algiers', AO:'Africa/Luanda', BF:'Africa/Ouagadougou', BI:'Africa/Bujumbura',
+  BJ:'Africa/Porto-Novo', BW:'Africa/Gaborone', CD:'Africa/Kinshasa', CF:'Africa/Bangui',
+  CG:'Africa/Brazzaville', CI:'Africa/Abidjan', CM:'Africa/Douala', CV:'Atlantic/Cape_Verde',
+  DJ:'Africa/Djibouti', EG:'Africa/Cairo', ER:'Africa/Asmara', ET:'Africa/Addis_Ababa',
+  GA:'Africa/Libreville', GH:'Africa/Accra', GM:'Africa/Banjul', GN:'Africa/Conakry',
+  GQ:'Africa/Malabo', GW:'Africa/Bissau', KE:'Africa/Nairobi', KM:'Indian/Comoro',
+  LR:'Africa/Monrovia', LS:'Africa/Maseru', LY:'Africa/Tripoli', MA:'Africa/Casablanca',
+  MG:'Indian/Antananarivo', ML:'Africa/Bamako', MR:'Africa/Nouakchott', MU:'Indian/Mauritius',
+  MW:'Africa/Blantyre', MZ:'Africa/Maputo', NA:'Africa/Windhoek', NE:'Africa/Niamey',
+  NG:'Africa/Lagos', RW:'Africa/Kigali', SC:'Indian/Mahe', SD:'Africa/Khartoum',
+  SL:'Africa/Freetown', SN:'Africa/Dakar', SO:'Africa/Mogadishu', SS:'Africa/Juba',
+  ST:'Africa/Sao_Tome', SZ:'Africa/Mbabane', TD:'Africa/Ndjamena', TG:'Africa/Lome',
+  TN:'Africa/Tunis', TZ:'Africa/Dar_es_Salaam', UG:'Africa/Kampala', ZA:'Africa/Johannesburg',
+  ZM:'Africa/Lusaka', ZW:'Africa/Harare',
+  AU:'Australia/Sydney', FJ:'Pacific/Fiji', FM:'Pacific/Pohnpei', KI:'Pacific/Tarawa',
+  MH:'Pacific/Majuro', NC:'Pacific/Noumea', NR:'Pacific/Nauru', NZ:'Pacific/Auckland',
+  PF:'Pacific/Tahiti', PG:'Pacific/Port_Moresby', PW:'Pacific/Palau', SB:'Pacific/Guadalcanal',
+  TO:'Pacific/Tongatapu', TV:'Pacific/Funafuti', VU:'Pacific/Efate', WS:'Pacific/Apia'
+};
+/* Primary emergency number - sourced from the same kind of published "list of emergency
+   telephone numbers" reference this whole card's own languages/capitals lean on, single number
+   where a country genuinely runs one unified service, slash-joined ones otherwise (police first).
+   Narrower than COUNTRY_TZ above on purpose: getting a time zone wrong is a minor annoyance,
+   getting an emergency number wrong on a card meant to actually be used isn't worth the risk, so
+   a country this app can't vouch for confidently just drops the row instead of guessing. */
+const COUNTRY_EMERGENCY = {
+  AD:'112', AL:'112', AT:'112', BA:'112', BE:'112', BG:'112', BY:'112', CH:'112', CY:'112',
+  CZ:'112', DE:'112', DK:'112', EE:'112', ES:'112', FI:'112', FO:'112', FR:'112', GI:'112',
+  GR:'112', HR:'112', HU:'112', IE:'112', IS:'112', IT:'112', LI:'112', LT:'112', LU:'112',
+  LV:'112', MC:'112', MD:'112', ME:'112', MK:'112', MT:'112', NL:'112', NO:'112', PL:'112',
+  PT:'112', RO:'112', RS:'112', RU:'112', SE:'112', SI:'112', SK:'112', SM:'112', TR:'112',
+  UA:'112', VA:'112',
+  XE:'999', XS:'999', XW:'999', XI:'999', GG:'999', JE:'999', IM:'999',
+  US:'911', CA:'911', MX:'911', BM:'911',
+  CR:'911', PA:'911', SV:'911', HN:'911', NI:'911', GT:'911', DO:'911', PR:'911',
+  JM:'119 (police) / 110 (fire & ambulance)', CU:'106 (police) / 105 (fire) / 104 (ambulance)',
+  AR:'911', BR:'190 (police) / 192 (ambulance) / 193 (fire)',
+  CL:'133 (police) / 131 (ambulance) / 132 (fire)', CO:'123', EC:'911', UY:'911', VE:'911',
+  AE:'999', QA:'999', BH:'999', KW:'112', IL:'100 (police) / 101 (ambulance) / 102 (fire)',
+  JO:'911', OM:'9999',
+  IN:'112', CN:'110 (police) / 120 (ambulance) / 119 (fire)',
+  JP:'110 (police) / 119 (fire & ambulance)', KR:'112 (police) / 119 (fire & ambulance)',
+  TH:'191', VN:'113 (police) / 115 (ambulance) / 114 (fire)', PH:'911', ID:'112', MY:'999',
+  SG:'999 (police) / 995 (ambulance & fire)', HK:'999',
+  TW:'110 (police) / 119 (fire & ambulance)', BD:'999',
+  NP:'100 (police) / 102 (ambulance) / 101 (fire)', KZ:'112', GE:'112', AM:'112', AZ:'112',
+  AU:'000', NZ:'111', FJ:'911',
+  EG:'122', ZA:'112 (mobile) / 10111 (police)', KE:'999', TZ:'112', UG:'112',
+  MA:'19 (police) / 15 (ambulance & fire)', TN:'197', NG:'112', MU:'999'
 };
 function loadPlacesCloud(cb){
   if(!fbRoot){ cb(DB.places||{}); return; }
@@ -11250,6 +11362,15 @@ App.comboPick = (id, encValue) => {
 App.cardLogoCheck = img => {
   if(img.naturalWidth <= 16 && img.naturalHeight <= 16) cardLogoRestore(img);
 };
+/* an address line with its own small copy button - shared by the Itinerary's and
+   Accommodation's rich stay cards (itinAccomCardHTML/accomCardHTML), the two places a full
+   postal address is actually printed on screen rather than just a place name, so it's worth
+   pasting into a taxi app or Maps directly instead of retyping it */
+const addressLineHTML = address => address ? `
+      <div class="itin-route-name itin-route-name-copy">
+        <span>${esc(address)}</span>
+        <button class="iconbtn" aria-label="Copy address" title="Copy address" onclick="event.stopPropagation();App.copyText('${encodeURIComponent(address)}', this)">${ICONS.copy}</button>
+      </div>` : '';
 App.copyText = (enc, btn) => {
   const text = decodeURIComponent(enc);
   const done = () => {
@@ -11320,7 +11441,8 @@ const ICONS = {
   add: fa('plus'),
   remove: fa('minus'),
   allergy: fa('wheat-awn'),
-  phrases: fa('comment')
+  phrases: fa('comment'),
+  copy: fa('copy')
 };
 /* Emoji rather than icon-font glyphs for the big dashboard tiles: they bring their own
    colour, which lifts the grid and sits naturally beside the country flags in the header.
@@ -11776,6 +11898,60 @@ function rerender(){
   renderTabbar();
 }
 /* ================= TAB: home (dashboard) ================= */
+/* the current time in an IANA zone, in the same 24h style the rest of the app already shows
+   times in */
+function tzNow(tz){
+  try{ return new Intl.DateTimeFormat('en-GB',{timeZone:tz, hour:'2-digit', minute:'2-digit', hour12:false}).format(new Date()); }
+  catch(e){ return ''; }
+}
+/* how far ahead/behind a destination's zone is right now versus this device's own, worked out
+   from the actual current UTC offset on each side rather than a fixed difference, so it stays
+   right across a DST change on either end */
+function tzDiffLabel(tz){
+  try{
+    const now = new Date(), home = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const here = new Date(now.toLocaleString('en-US',{timeZone:home}));
+    const there = new Date(now.toLocaleString('en-US',{timeZone:tz}));
+    const diffMin = Math.round((there-here)/60000);
+    if(Math.abs(diffMin) < 15) return 'same time as you';
+    const h = Math.abs(diffMin)/60;
+    const hLabel = (Number.isInteger(h)?h:h.toFixed(1))+'h';
+    return diffMin>0 ? hLabel+' ahead of you' : hLabel+' behind you';
+  }catch(e){ return ''; }
+}
+/* Language / local time / emergency number for each of the trip's own countries, in that order
+   - shown once above the dashboard tiles rather than on a tab of its own, since it's the kind of
+   thing worth seeing the moment you open the trip rather than going to look for. Skipped
+   entirely for a home-nation "trip" (a staycation in Scotland, say) - same language, same clock,
+   same 999 you already know, and "check your roaming" would be actively wrong advice for
+   somewhere that was never going to roam. The data/eSIM line is the same general nudge for every
+   country rather than a claim about any specific network's own roaming deal - those vary by
+   provider and change too often to state as fact here. */
+const HOME_NATION_CODES = ['XE','XS','XW','XI'];
+function tripLocalInfoHTML(t){
+  const codes = (t.countries||[]).filter(c => !HOME_NATION_CODES.includes(c));
+  const cards = codes.map(code=>{
+    const co = countryByCode(code); if(!co) return '';
+    const info = COUNTRY_INFO[code];
+    const tz = COUNTRY_TZ[code];
+    const emergency = COUNTRY_EMERGENCY[code];
+    const row = (emoji, label, val) => `
+      <div class="local-info-row"><span class="local-info-emoji" aria-hidden="true">${emoji}</span><span class="local-info-label">${label}</span><span class="local-info-val">${esc(val)}</span></div>`;
+    const rows = [
+      info ? row('💬','Language', info[1]) : '',
+      tz ? row('🕐','Local Time', [tzNow(tz), tzDiffLabel(tz)].filter(Boolean).join(' · ')) : '',
+      emergency ? row('🚨','Emergency', emergency) : ''
+    ].join('');
+    const esimUrl = 'https://www.google.com/search?q='+encodeURIComponent('esim for '+co.name);
+    return `
+    <div class="local-info-card">
+      <div class="local-info-head"><span aria-hidden="true">${co.flag}</span>${esc(co.name)}</div>
+      ${rows}
+      <div class="local-info-note"><span aria-hidden="true">📶</span> Check your provider's roaming rates before you go - an <a href="${esimUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">eSIM for ${esc(co.name)}</a> is often cheaper for data.</div>
+    </div>`;
+  }).filter(Boolean).join('');
+  return cards ? `<div class="local-info-grid">${cards}</div>` : '';
+}
 function tabHome(t, ro){
   const n = t.notes||{contacts:[],general:''};
   const nTravel = (t.flights||[]).length + (t.ferries||[]).length + (t.carHire||[]).length;
@@ -11793,9 +11969,8 @@ function tabHome(t, ro){
   if((t.ferries||[]).length) travParts.push((t.ferries.length)+(t.ferries.length===1?' Ferry':' Ferries'));
   if((t.carHire||[]).length) travParts.push('Car Hire');
   // each row doubles as a counter: what's booked, added, pinned and owed
-  const net = nRec ? computeBalances(t) : null;
-  const allSettled = net && Object.values(net).every(v=>Math.abs(v)<0.005);
-  const moneySum = !nRec ? 'No receipts yet' : allSettled ? 'All settled' : 'Receipts added';
+  const totalSpent = (t.receipts||[]).reduce((s,r)=>s+receiptTotal(r),0);
+  const moneySum = !nRec ? 'No receipts yet' : money(totalSpent);
   // an accommodation flagged "Add as Task" isn't a real booking - it belongs to the Tasks
   // count below, not here
   const accoms = (t.accommodations||[]).filter(a=>!a.asTask);
@@ -11848,7 +12023,7 @@ function tabHome(t, ro){
       <span class="dash-icon">${tileIcon(k)}</span>
       <span class="dash-text"><span class="dash-label">${esc(label)}</span><span class="dash-sum${empty?' unfilled':''}">${esc(sum)}</span></span>
     </div>`;
-  return `<div class="dash-grid">${tiles.map(tile).join('')}</div>`;
+  return `${tripLocalInfoHTML(t)}<div class="dash-grid">${tiles.map(tile).join('')}</div>`;
 }
 /* ================= TAB: log (what changed) ================= */
 /* which tab a log entry's section belongs to, so each row can jump straight there,
@@ -12427,7 +12602,7 @@ function tripLangEmptyHTML(hint){
     <button class="btn primary" onclick="App.tripForm()">Add Countries</button></div>`;
 }
 function allergySummaryLine(t){
-  return (t.countries||[]).length ? 'Card Ready' : 'Add Countries First';
+  return (t.countries||[]).length ? 'Coeliac Disease, Dairy Intolerance' : 'Add Countries First';
 }
 /* names the actual languages on offer ("German, Greek") rather than just "Phrases Ready", same
    idea as the Travel tile's own comma-joined summary - falls back to a plain count once the list
@@ -13490,7 +13665,7 @@ function planDaysHTML(t, ro, filterKeys){
         <strong class="head-with-logo">${primaryTime?'- ':''}${logo}<span${ac.asTask?' class="text-undecided"':''}>${esc(titleText)}</span></strong>
         ${nights?`<span class="itin-seats">${nights} Night${nights===1?'':'s'}</span>`:''}
       </div>
-      ${ac.address && ac.address!==cityName?`<div class="itin-route-name">${esc(ac.address)}</div>`:''}
+      ${ac.address && ac.address!==cityName?addressLineHTML(ac.address):''}
       ${ac.checkin?`<div class="itin-stay-dates" style="margin-bottom:${hasBelow?'12px':'0'}${BOOKING_SERVICE_COLORS[detectBookingService(ac.bookingUrl)]?`;--stay-icon-color:${BOOKING_SERVICE_COLORS[detectBookingService(ac.bookingUrl)]}`:''}">
         <span>${ICONS.calendar}${esc(fmtDateOrdinal(ac.checkin, true))}${ac.checkinTime?` ${fa('clock')}Check In: ${esc(ac.checkinTime)}`:''}</span>
         ${ac.checkout?`<span class="itin-date-to">to ${ICONS.calendar}${esc(fmtDateOrdinal(ac.checkout, true))}${ac.checkoutTime?` ${fa('clock')}Check Out: ${esc(ac.checkoutTime)}`:''}</span>`:''}
@@ -15534,7 +15709,7 @@ function accomCardHTML(a, opts){
   const richLogo = a.bookingUrl ? bookingLogoFor(a.bookingUrl, '', a.name||'Accommodation') : '';
   const primaryTime = a.arrivalTime || a.checkinTime;
   const bodyInner = `
-      ${a.address && a.address!==displayName?`<div class="itin-route-name">${esc(a.address)}</div>`:''}
+      ${a.address && a.address!==displayName?addressLineHTML(a.address):''}
       ${a.checkin?`<div class="itin-stay-dates"${BOOKING_SERVICE_COLORS[service]?` style="--stay-icon-color:${BOOKING_SERVICE_COLORS[service]}"`:''}>
         <span>${ICONS.calendar}${esc(fmtDateOrdinal(a.checkin))}${a.checkinTime?` ${fa('clock')}Check In: ${esc(a.checkinTime)}`:''}</span>
         ${a.checkout?`<span class="itin-date-to">to ${ICONS.calendar}${esc(fmtDateOrdinal(a.checkout))}${a.checkoutTime?` ${fa('clock')}Check Out: ${esc(a.checkoutTime)}`:''}</span>`:''}

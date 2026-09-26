@@ -128,6 +128,7 @@ h1{font-family:var(--font-head); font-size:1.9rem; font-weight:800; letter-spaci
 h2{font-family:var(--font-head); font-size:1.08rem; font-weight:800; letter-spacing:-.01em; margin-bottom:12px; color:var(--ink);}
 h3{font-family:var(--font-head); font-size:1rem; font-weight:700; color:var(--ink);}
 .label{font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); display:block; margin-bottom:5px;}
+.settings-subhead{margin-top:16px;}
 /* a field hint like "(optional)" sits inside the label as a plain .muted span - .muted's own
    font-size (.85rem) is bigger than the label's own .7rem, so the hint read larger than the
    label itself instead of a quiet aside. Inherit instead, so it always matches. */
@@ -1625,6 +1626,22 @@ details .d-body{padding:14px 16px;}
 .country-info-emoji{flex-shrink:0; width:1.3em; text-align:center;}
 .country-info-label{color:var(--muted);}
 .country-info-val{font-weight:600; margin-left:auto; text-align:right;}
+.plug-val{display:flex; align-items:center; gap:6px;}
+.plug-icons{display:inline-flex; gap:3px;}
+.plug-icon{color:var(--ink); flex-shrink:0;}
+
+/* ---------- today card (only while the trip is actually under way) ---------- */
+.today-card{margin-bottom:16px;}
+.today-head{display:flex; align-items:center; flex-wrap:wrap; gap:4px; font-family:var(--font-head);
+  font-weight:700; font-size:1.05rem; color:var(--ink); margin-bottom:10px;}
+.today-row{display:flex; align-items:center; gap:8px; padding:7px 0; cursor:pointer;}
+.today-row + .today-row{border-top:1px solid var(--line);}
+.today-time{color:var(--muted); font-size:.82rem; flex-shrink:0; min-width:2.6em;}
+.today-emoji{flex-shrink:0;}
+.today-title{color:var(--ink); font-size:.9rem;}
+.today-empty{color:var(--muted); font-size:.9rem; padding:4px 0;}
+.today-tomorrow-head{font-weight:700; font-size:.82rem; color:var(--muted); text-transform:uppercase;
+  letter-spacing:.02em; margin-top:14px; padding-top:10px; border-top:1px solid var(--line);}
 /* ---------- trip dashboard ---------- */
 .dash-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:6px;}
 .dash-tile{
@@ -7787,13 +7804,12 @@ function renderSettings(){
       <h3 style="margin-bottom:10px">Allergy Card</h3>
       <div class="card" style="margin-bottom:20px">
         <p class="small muted" style="margin-bottom:14px">
-          Choose which of the 14 major food allergens show on every trip's Allergy Card - a
-          personal, device-only setting. Coeliac Disease and Dairy Intolerance have the widest
-          translation coverage; the other 12 are translated into English plus French, Spanish,
-          Portuguese, German, Italian, Dutch, Greek, Albanian and Turkish, and fall back to
-          English anywhere else, since there's no translation this app can vouch for there.
+          Choose which of the 14 major food allergens show on every trip's Allergy Card.
         </p>
+        <span class="label">Allergies</span>
         <div class="chips" id="allergy-settings-chips">${allergySettingsChipsHTML()}</div>
+        <span class="label settings-subhead">Intolerances</span>
+        <div class="chips" id="intolerance-settings-chips">${intoleranceSettingsChipsHTML()}</div>
       </div>
     </div>`;
   drawLetterboxdConnect();
@@ -7802,8 +7818,15 @@ function allergySettingsChipsHTML(){
   const s = loadAllergySettings();
   const chip = (key,label,on) => `<span class="chip pick${on?' on':''}" role="button" tabindex="0" onclick="App.toggleAllergySetting('${key}')"
     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.toggleAllergySetting('${key}')}">${esc(label)}</span>`;
-  return chip('coeliac','Coeliac Disease', s.coeliac) + chip('dairy','Dairy Intolerance', s.dairy) +
-    ALLERGEN_LIST.map(a => chip(a.key, ALLERGEN_TEXT.en.titles[a.key], s[a.key])).join('');
+  return chip('coeliac','Coeliac Disease', s.coeliac) +
+    ALLERGEN_LIST.filter(a=>a.group!=='intolerance').map(a => chip(a.key, ALLERGEN_TEXT.en.titles[a.key], s[a.key])).join('');
+}
+function intoleranceSettingsChipsHTML(){
+  const s = loadAllergySettings();
+  const chip = (key,label,on) => `<span class="chip pick${on?' on':''}" role="button" tabindex="0" onclick="App.toggleAllergySetting('${key}')"
+    onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.toggleAllergySetting('${key}')}">${esc(label)}</span>`;
+  return chip('dairy','Dairy Intolerance', s.dairy) +
+    ALLERGEN_LIST.filter(a=>a.group==='intolerance').map(a => chip(a.key, ALLERGEN_TEXT.en.titles[a.key], s[a.key])).join('');
 }
 function streamingServicesChipsHTML(){
   const selected = selectedStreamingServices();
@@ -10878,7 +10901,8 @@ App.toggleAllergySetting = key => {
   const s = loadAllergySettings();
   s[key] = !s[key];
   saveAllergySettings(s);
-  const el = $('#allergy-settings-chips'); if(el) el.innerHTML = allergySettingsChipsHTML();
+  const a = $('#allergy-settings-chips'); if(a) a.innerHTML = allergySettingsChipsHTML();
+  const i = $('#intolerance-settings-chips'); if(i) i.innerHTML = intoleranceSettingsChipsHTML();
 };
 App.goGigs = () => { location.hash = '#/gigs'; };
 App.goGigsSeen = () => { CUR_GIGS_TAB = 'log'; location.hash = '#/gigs'; };
@@ -11963,7 +11987,7 @@ function renderTab(t){
   // lets the desktop/tablet sidebar layout give Itinerary its own narrower width - see the
   // .wrap[data-tab="plan"] rule
   const appEl = $('#app'); if(appEl) appEl.dataset.tab = CUR_TAB;
-  if(CUR_TAB==='home')     el.innerHTML = tabHome(t,ro);
+  if(CUR_TAB==='home')   { el.innerHTML = tabHome(t,ro); initWeather(t); }
   if(CUR_TAB==='travel')   el.innerHTML = tabTravel(t,ro);
   if(CUR_TAB==='stay')     el.innerHTML = tabStay(t,ro);
   if(CUR_TAB==='plan')   { el.innerHTML = tabPlan(t,ro); initWeather(t); initRouteMap(t); initAiSummaries(t); }
@@ -12058,6 +12082,46 @@ function countryInfoSummaryLine(t){
 /* one card per country - capital, language, local time, emergency number, currency, dial code,
    driving side and plug/voltage. A country left out of COUNTRY_TRAVEL/COUNTRY_TZ/
    COUNTRY_EMERGENCY just drops that one row rather than showing a wrong value. */
+/* a plug type letter (A-N) means nothing at a glance - what actually helps is recognising the
+   pin shape itself against a travel adapter or the socket on the wall. Real plugs within a
+   lettered type vary a little in exact pin spacing/size, so these are stylised schematics (round
+   pins vs flat pins, how many, roughly where) grouped into a handful of visually distinct
+   families rather than 14 individually-accurate technical drawings - enough to recognise the
+   shape, not a certification diagram. An unlisted letter falls back to the plain two-round-pin
+   shape rather than showing nothing. */
+const PLUG_ICON_FAMILY = {
+  A:'flat2', B:'flat2ground', C:'round2', D:'round3tri', E:'round2notch', F:'round2clip',
+  G:'rect3tri', H:'round3tri', I:'flatV', J:'round3line', K:'round2offset', L:'round3line',
+  M:'round3tri', N:'round2offset', O:'round2'
+};
+const PLUG_FACE = '<rect x="2" y="2" width="20" height="20" rx="5" fill="none" stroke="currentColor" stroke-width="1.4"/>';
+const PLUG_PINS = {
+  flat2: '<rect x="7.8" y="8" width="2.2" height="7" rx="1" fill="currentColor"/><rect x="14" y="8" width="2.2" height="7" rx="1" fill="currentColor"/>',
+  flat2ground: '<rect x="7.8" y="6.5" width="2.2" height="6" rx="1" fill="currentColor"/><rect x="14" y="6.5" width="2.2" height="6" rx="1" fill="currentColor"/><circle cx="12" cy="16.5" r="1.6" fill="currentColor"/>',
+  round2: '<circle cx="9" cy="12" r="1.9" fill="currentColor"/><circle cx="15" cy="12" r="1.9" fill="currentColor"/>',
+  round2clip: '<circle cx="9" cy="12" r="1.9" fill="currentColor"/><circle cx="15" cy="12" r="1.9" fill="currentColor"/><rect x="2.3" y="10" width="1.6" height="4" rx="0.6" fill="currentColor"/><rect x="20.1" y="10" width="1.6" height="4" rx="0.6" fill="currentColor"/>',
+  round2notch: '<circle cx="9" cy="13" r="1.9" fill="currentColor"/><circle cx="15" cy="13" r="1.9" fill="currentColor"/><circle cx="12" cy="7.5" r="1.3" fill="none" stroke="currentColor" stroke-width="1.2"/>',
+  round3tri: '<circle cx="12" cy="7.8" r="1.8" fill="currentColor"/><circle cx="8.6" cy="15" r="1.8" fill="currentColor"/><circle cx="15.4" cy="15" r="1.8" fill="currentColor"/>',
+  rect3tri: '<rect x="11" y="6" width="2" height="4.5" rx="0.8" fill="currentColor"/><rect x="6.8" y="14.5" width="4" height="2" rx="0.7" fill="currentColor"/><rect x="13.2" y="14.5" width="4" height="2" rx="0.7" fill="currentColor"/>',
+  round3line: '<circle cx="7.8" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="16.2" cy="12" r="1.6" fill="currentColor"/>',
+  flatV: '<rect x="7" y="6.5" width="2.1" height="7" rx="1" fill="currentColor" transform="rotate(18 8 10)"/><rect x="14.9" y="6.5" width="2.1" height="7" rx="1" fill="currentColor" transform="rotate(-18 16 10)"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/>',
+  round2offset: '<circle cx="9" cy="13" r="1.9" fill="currentColor"/><circle cx="15" cy="13" r="1.9" fill="currentColor"/><circle cx="17.3" cy="7" r="1.4" fill="currentColor"/>'
+};
+function plugIconSVG(letter){
+  const fam = PLUG_ICON_FAMILY[letter] || 'round2';
+  return `<svg class="plug-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">${PLUG_FACE}${PLUG_PINS[fam]}</svg>`;
+}
+/* travel[3] looks like "Type C/F · 230V" - split into the letters (one icon each) and the
+   voltage, which stays as plain text */
+function plugRowHTML(travel){
+  if(!travel) return '';
+  const m = /^Type ([A-Z/]+) · (.+)$/.exec(travel[3]);
+  const val = m
+    ? `<span class="plug-icons">${m[1].split('/').map(plugIconSVG).join('')}</span><span class="plug-voltage">${esc(m[2])}</span>`
+    : esc(travel[3]);
+  return `
+      <div class="country-info-row"><span class="country-info-emoji" aria-hidden="true">🔌</span><span class="country-info-label">Plug & Voltage</span><span class="country-info-val plug-val">${val}</span></div>`;
+}
 function tabCountryInfo(t){
   if(!(t.countries||[]).length) return tripLangEmptyHTML('country info appears');
   const codes = countryInfoCodes(t);
@@ -12080,9 +12144,49 @@ function tabCountryInfo(t){
       ${row('💷','Currency', travel && travel[0])}
       ${row('☎️','Dial Code', travel && travel[1])}
       ${row('🚗','Driving Side', travel && (travel[2]==='left'?'Left':'Right'))}
-      ${row('🔌','Plug & Voltage', travel && travel[3])}
+      ${plugRowHTML(travel)}
     </div>`;
   }).join('');
+}
+/* a compact, tap-through summary of one itinerary entry (any of planDayGroups' many shapes -
+   a plain stop, a manual or auto-suggested travel leg, a flight/ferry/car/stay/gig, or a task)
+   for the Today card below - full detail is one tap away on the Itinerary tab itself, so this
+   only needs enough to recognise what's coming up, not the rich card each of those gets there. */
+function todayEntryHTML(item){
+  const time = item.time || (item.period && PLAN_PERIODS[item.period] && PLAN_PERIODS[item.period][0]) || '';
+  const row = (emoji, title) => `
+      <div class="today-row" role="button" tabindex="0" onclick="App.tab('plan')" onkeydown="if(event.key==='Enter'||event.key===' '){App.tab('plan')}">
+        ${time?`<span class="today-time">${esc(time)}</span>`:''}
+        <span class="today-emoji" aria-hidden="true">${emoji}</span>
+        <span class="today-title">${esc(title)}</span>
+      </div>`;
+  if(item._autoFlight){ const f=item.f; return row('✈️', (f.from?f.from+' → ':'')+(f.to||'Flight')); }
+  if(item._autoFerry){ const f=item.f; return row('⛴️', (f.from?f.from+' → ':'')+(f.to||'Ferry')); }
+  if(item._autoCar){ const c=item.c; return row('🚗', item._autoCar==='pickup' ? 'Pick Up: '+(c.pickupLoc||'Car Hire') : 'Drop Off: '+(c.dropoffLoc||c.pickupLoc||'Car Hire')); }
+  if(item._autoStay){ const ac=item.ac; return row('🛏️', (item._autoStay==='checkin'?'Check In: ':'Check Out: ')+(ac.name||'Accommodation')); }
+  if(item._autoGig){ const g=item.g; return row('🎤', g.artist || g.title || 'Gig'); }
+  if(item.kind==='travel'){ const mode=TRAVEL_MODES[item.mode]||TRAVEL_MODES.undecided; return row(mode.emoji, item.to ? 'To '+item.to : mode.label); }
+  if(item.kind==='task') return row('☑', item.title);
+  return row(item.emoji || ideaEmojiFor(item.name) || '📍', item.name || 'Stop');
+}
+/* today's own plan, today's weather, and anything not yet booked/done that's linked to
+   tomorrow - shown once, above the dashboard tiles, only while the trip is actually under way
+   (tripStatus's 'now'), since it's the one moment a trip's Overview page is worth opening
+   several times a day for. A rough "next summer" trip has no calendar to know "today" against,
+   so it never qualifies regardless of tripStatus. */
+function todayCardHTML(t){
+  if(tripStatus(t).cls!=='now' || hasRoughWhen(t)) return '';
+  const todayKey = todayStr(), tomorrowKey = isoAddDays(todayKey, 1);
+  const {groups} = planDayGroups(t);
+  const items = (groups[todayKey]||[]).slice().sort((a,b)=>itineraryTimeKey(a).localeCompare(itineraryTimeKey(b)));
+  const tomorrowTasks = (groups[tomorrowKey]||[]).filter(x=>x.kind==='task')
+    .sort((a,b)=>itineraryTimeKey(a).localeCompare(itineraryTimeKey(b)));
+  return `
+    <div class="card today-card">
+      <div class="today-head"><span>Today · ${esc(fmtDateOrdinal(todayKey, true))}</span><span class="wx-slot" data-wx-date="${esc(todayKey)}"></span></div>
+      ${items.length ? items.map(todayEntryHTML).join('') : '<div class="today-empty">Nothing planned today.</div>'}
+      ${tomorrowTasks.length ? `<div class="today-tomorrow-head">Still to sort for tomorrow</div>${tomorrowTasks.map(todayEntryHTML).join('')}` : ''}
+    </div>`;
 }
 function tabHome(t, ro){
   const n = t.notes||{contacts:[],general:''};
@@ -12098,7 +12202,14 @@ function tabHome(t, ro){
   if(nDocs) docParts.push(nDocs+(nDocs===1?' File':' Files'));
   const travParts = [];
   if((t.flights||[]).length) travParts.push((t.flights.length)+(t.flights.length===1?' Flight':' Flights'));
-  if((t.ferries||[]).length) travParts.push((t.ferries.length)+(t.ferries.length===1?' Ferry':' Ferries'));
+  // a ferry can be booked two ways - the dedicated Ferries feature (t.ferries, its own full
+  // card with times/booking ref) or a plain itinerary travel leg with mode 'ferry' (just a
+  // connector line - see tabPlan's own travelCard). Both are genuinely "a ferry" from where
+  // this tile's counting, so both count towards it; an itinerary leg flagged "Add as Task" isn't
+  // booked yet, so it's excluded the same way nLegs above excludes it.
+  const nItinFerries = (t.itinerary||[]).filter(s=>s.kind==='travel' && s.mode==='ferry' && !s.asTask).length;
+  const nFerries = (t.ferries||[]).length + nItinFerries;
+  if(nFerries) travParts.push(nFerries+(nFerries===1?' Ferry':' Ferries'));
   if((t.carHire||[]).length) travParts.push('Car Hire');
   // each row doubles as a counter: what's booked, added, pinned and owed
   const totalSpent = (t.receipts||[]).reduce((s,r)=>s+receiptTotal(r),0);
@@ -12156,7 +12267,7 @@ function tabHome(t, ro){
       <span class="dash-icon">${tileIcon(k)}</span>
       <span class="dash-text"><span class="dash-label">${esc(label)}</span><span class="dash-sum${empty?' unfilled':''}">${esc(sum)}</span></span>
     </div>`;
-  return `<div class="dash-grid">${tiles.map(tile).join('')}</div>`;
+  return `${todayCardHTML(t)}<div class="dash-grid">${tiles.map(tile).join('')}</div>`;
 }
 /* ================= TAB: log (what changed) ================= */
 /* which tab a log entry's section belongs to, so each row can jump straight there,
@@ -12745,10 +12856,12 @@ function tripLangEmptyHTML(hint){
    than risk a wrong translation of a technical word like "lupin" or "sulphites" in a language
    this app has no real confidence in. */
 const ALLERGEN_LIST = [
-  {key:'celery', emoji:'🥬'}, {key:'crustaceans', emoji:'🦐'}, {key:'eggs', emoji:'🥚'},
-  {key:'fish', emoji:'🐟'}, {key:'lupin', emoji:'🌸'}, {key:'molluscs', emoji:'🐚'},
-  {key:'mustard', emoji:'🌼'}, {key:'treenuts', emoji:'🌰'}, {key:'peanuts', emoji:'🥜'},
-  {key:'sesame', emoji:'🔸'}, {key:'soybeans', emoji:'🫘'}, {key:'sulphites', emoji:'🧪'}
+  {key:'celery', emoji:'🥬', group:'allergy'}, {key:'crustaceans', emoji:'🦐', group:'allergy'},
+  {key:'eggs', emoji:'🥚', group:'allergy'}, {key:'fish', emoji:'🐟', group:'allergy'},
+  {key:'lupin', emoji:'🌸', group:'allergy'}, {key:'molluscs', emoji:'🐚', group:'allergy'},
+  {key:'mustard', emoji:'🌼', group:'allergy'}, {key:'treenuts', emoji:'🌰', group:'allergy'},
+  {key:'peanuts', emoji:'🥜', group:'allergy'}, {key:'sesame', emoji:'🔸', group:'allergy'},
+  {key:'soybeans', emoji:'🫘', group:'allergy'}, {key:'sulphites', emoji:'🧪', group:'intolerance'}
 ];
 const ALLERGEN_TEXT = {
   en: { warning:'Cross contamination can make me seriously ill. Please check all ingredients and cooking surfaces.',
@@ -12836,13 +12949,16 @@ function tabAllergy(t){
   const atr = ALLERGEN_TEXT[CUR_TRIP_LANG] || ALLERGEN_TEXT.en;
   const bullets = arr => `<ul class="allergy-bullets">${arr.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`;
   const allergenSectionHTML = a => `
-      <div class="allergy-section severe">
+      <div class="allergy-section ${a.group==='intolerance'?'caution':'severe'}">
         <div class="allergy-section-head">
           <span class="allergy-section-emoji" aria-hidden="true">${a.emoji}</span>
           <span class="allergy-section-title">${esc(atr.titles[a.key])}</span>
         </div>
         ${bullets([atr.bullets[a.key], atr.warning])}
       </div>`;
+  // allergies (strict, red) grouped together first, intolerances (orange) after - same order
+  // Settings itself lists them in, rather than however they happen to be ticked on
+  const enabledAllergens = ALLERGEN_LIST.filter(a=>s[a.key]);
   return `
     ${langPickerHTML(t, langs)}
     <div class="card allergy-card">
@@ -12854,6 +12970,7 @@ function tabAllergy(t){
         </div>
         ${bullets(tr.coeliacBullets)}
       </div>`:''}
+      ${enabledAllergens.filter(a=>a.group!=='intolerance').map(allergenSectionHTML).join('')}
       ${s.dairy?`<div class="allergy-section caution">
         <div class="allergy-section-head">
           <span class="allergy-section-emoji" aria-hidden="true">🥛</span>
@@ -12861,7 +12978,7 @@ function tabAllergy(t){
         </div>
         ${bullets(tr.dairyBullets)}
       </div>`:''}
-      ${ALLERGEN_LIST.filter(a=>s[a.key]).map(allergenSectionHTML).join('')}
+      ${enabledAllergens.filter(a=>a.group==='intolerance').map(allergenSectionHTML).join('')}
       <div class="allergy-thanks">${esc(tr.thanks)}</div>
     </div>`;
 }
@@ -13462,7 +13579,7 @@ function paintWeather(){
 function initWeather(t){
   const keys = [...document.querySelectorAll('#tab-body [data-wx-date]')].map(el=>el.dataset.wxDate);
   WX_DAY_PLACES = wxDayPlaces(t, keys);
-  const repaint = () => { if(CUR_TAB==='plan' && CUR_TRIP_ID===t.id) paintWeather(); };
+  const repaint = () => { if((CUR_TAB==='plan'||CUR_TAB==='home') && CUR_TRIP_ID===t.id) paintWeather(); };
   const listKeys = new Set(Object.values(WX_DAY_PLACES).map(c=>c.join('|')));
   document.querySelectorAll('#tab-body [data-arr-cands]').forEach(el=>{
     if(el.dataset.arrCands) listKeys.add(el.dataset.arrCands);

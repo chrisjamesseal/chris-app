@@ -13502,14 +13502,25 @@ function wxResolve(cands, cb){
 }
 /* forecasts are keyed by coordinate, so two towns that resolve to the same spot, or a day
    list that repeats a place, only ever cost one request */
+/* how long a fetched forecast is trusted before it's worth asking again - a forecast for a day
+   several days out is only ever a rough guess, and gets meaningfully more accurate as that day
+   gets closer, so caching it for the rest of the session (as this used to, with no expiry at
+   all) meant the very first fetch - however far out it was - was still what showed on the day
+   itself unless the page happened to get a full reload in between. Four hours balances that
+   against not hammering the API every time the Itinerary/Home tab re-renders. */
+const WX_REFRESH_MS = 4*60*60*1000;
 function wxForecast(geo, done){
   const key = geo.lat.toFixed(2)+','+geo.lon.toFixed(2);
   const cur = WX_STATE[key];
   if(cur){
-    if(cur.status === 'loading') cur.waiting.push(done); else done();
-    return;
+    if(cur.status === 'loading'){ cur.waiting.push(done); return; }
+    if(cur.status === 'ok' && cur.fetchedAt && Date.now()-cur.fetchedAt < WX_REFRESH_MS){ done(); return; }
+    // stale (or a previous failure) - refetch, but leave whatever's already in `days` in place
+    // so a chip that already has something to show keeps showing it until the refresh lands,
+    // rather than blanking out while the new request is in flight
   }
-  const st = WX_STATE[key] = {status:'loading', days:{}, label:geo.label||'', waiting:[]};
+  const st = cur || (WX_STATE[key] = {status:'loading', days:{}, label:geo.label||'', waiting:[]});
+  const hadData = st.status === 'ok';
   const finish = () => { const w = st.waiting; st.waiting = []; done(); w.forEach(fn=>fn()); };
   const today = new Date();
   const end = new Date(today.getTime() + (WX_FORECAST_DAYS-1)*86400000);
@@ -13530,9 +13541,10 @@ function wxForecast(geo, done){
         };
       });
       st.status = 'ok';
+      st.fetchedAt = Date.now();
       finish();
     })
-    .catch(()=>{ st.status = 'fail'; finish(); });
+    .catch(()=>{ if(!hadData) st.status = 'fail'; finish(); });
 }
 /* the small chip beside a day heading, empty whenever there's nothing honest to say */
 function wxDayHTML(dateKey){

@@ -1616,18 +1616,16 @@ details .d-body{padding:14px 16px;}
 .split-sum .left{font-weight:700; color:var(--ink);}
 .split-sum .left.clear{color:var(--brand-dark); font-weight:700;}
 
-/* ---------- country info card (language/time/emergency/currency/etc, one per country) ---------- */
-.country-info-card{margin-bottom:14px;}
-.country-info-head{display:flex; align-items:center; gap:8px; font-family:var(--font-head);
-  font-weight:700; font-size:1.05rem; color:var(--ink); margin-bottom:8px;}
-.country-info-row{display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--ink);
-  padding:6px 0;}
-.country-info-row + .country-info-row{border-top:1px solid var(--line);}
-.country-info-emoji{flex-shrink:0; width:1.3em; text-align:center;}
-.country-info-label{color:var(--muted);}
-.country-info-val{font-weight:600; margin-left:auto; text-align:right;}
-.plug-val{display:flex; align-items:center; gap:6px;}
-.plug-icons{display:inline-flex; gap:3px;}
+/* ---------- country info tiles (language/time/emergency/currency/etc, one grid per country) ---------- */
+.country-info-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:14px;}
+.country-info-tile{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:16px 10px; text-align:center;}
+.country-info-tile-emoji{font-size:1.7rem; line-height:1; margin-bottom:8px;}
+.country-info-tile-label{font-size:.72rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:.04em; color:var(--muted); margin-bottom:4px;}
+.country-info-tile-val{font-weight:700; color:var(--ink); font-size:.95rem;}
+.plug-val{display:flex; flex-direction:column; align-items:center; gap:5px;}
+.plug-icons{display:inline-flex; gap:3px; justify-content:center;}
 .plug-icon{color:var(--ink); flex-shrink:0;}
 
 /* ---------- today card (only while the trip is actually under way) ---------- */
@@ -12113,41 +12111,62 @@ function plugIconSVG(letter){
 }
 /* travel[3] looks like "Type C/F · 230V" - split into the letters (one icon each) and the
    voltage, which stays as plain text */
-function plugRowHTML(travel){
+function plugTileHTML(travel){
   if(!travel) return '';
   const m = /^Type ([A-Z/]+) · (.+)$/.exec(travel[3]);
   const val = m
     ? `<span class="plug-icons">${m[1].split('/').map(plugIconSVG).join('')}</span><span class="plug-voltage">${esc(m[2])}</span>`
     : esc(travel[3]);
   return `
-      <div class="country-info-row"><span class="country-info-emoji" aria-hidden="true">🔌</span><span class="country-info-label">Plug & Voltage</span><span class="country-info-val plug-val">${val}</span></div>`;
+    <div class="country-info-tile">
+      <div class="country-info-tile-emoji" aria-hidden="true">🔌</div>
+      <div class="country-info-tile-label">Plug & Voltage</div>
+      <div class="country-info-tile-val plug-val">${val}</div>
+    </div>`;
 }
+/* which of the trip's countries the tab row below is currently showing - reset whenever it
+   points at a country that isn't on the trip any more */
+let CUR_COUNTRY_INFO_CODE = null;
 function tabCountryInfo(t){
   if(!(t.countries||[]).length) return tripLangEmptyHTML('country info appears');
   const codes = countryInfoCodes(t);
   if(!codes.length) return `<div class="empty">Nothing to show for a home-nation trip - you already know the language, the clock and the emergency number.</div>`;
-  const row = (emoji, label, val) => val ? `
-      <div class="country-info-row"><span class="country-info-emoji" aria-hidden="true">${emoji}</span><span class="country-info-label">${label}</span><span class="country-info-val">${esc(val)}</span></div>` : '';
-  return codes.map(code => {
-    const co = countryByCode(code);
-    const info = COUNTRY_INFO[code];
-    const tz = COUNTRY_TZ[code];
-    const emergency = COUNTRY_EMERGENCY[code];
-    const travel = COUNTRY_TRAVEL[code];
-    return `
-    <div class="card country-info-card">
-      <div class="country-info-head"><span aria-hidden="true">${co.flag}</span>${esc(co.name)}</div>
-      ${row('🏛️','Capital', info && info[0])}
-      ${row('💬','Language', info && info[1])}
-      ${row('🕐','Local Time', tz && tzNow(tz))}
-      ${row('🚨','Emergency', emergency)}
-      ${row('💷','Currency', travel && travel[0])}
-      ${row('☎️','Dial Code', travel && travel[1])}
-      ${row('🚗','Driving Side', travel && (travel[2]==='left'?'Left':'Right'))}
-      ${plugRowHTML(travel)}
+  if(!CUR_COUNTRY_INFO_CODE || !codes.includes(CUR_COUNTRY_INFO_CODE)) CUR_COUNTRY_INFO_CODE = codes[0];
+  const code = CUR_COUNTRY_INFO_CODE;
+  const co = countryByCode(code);
+  const info = COUNTRY_INFO[code];
+  const tz = COUNTRY_TZ[code];
+  const emergency = COUNTRY_EMERGENCY[code];
+  const travel = COUNTRY_TRAVEL[code];
+  const tabs = codes.length>1 ? `
+    <div class="subtabs">${codes.map(c=>{
+      const cco = countryByCode(c);
+      return `<button class="subtab${c===code?' on':''}" onclick="App.setCountryInfoCode('${c}')">${cco.flag} ${esc(cco.name)}</button>`;
+    }).join('')}</div>` : '';
+  const tile = (emoji, label, val) => val ? `
+    <div class="country-info-tile">
+      <div class="country-info-tile-emoji" aria-hidden="true">${emoji}</div>
+      <div class="country-info-tile-label">${label}</div>
+      <div class="country-info-tile-val">${esc(val)}</div>
+    </div>` : '';
+  return `
+    ${tabs}
+    <div class="country-info-grid">
+      ${tile('🏛️','Capital', info && info[0])}
+      ${tile('💬','Language', info && info[1])}
+      ${tile('🕐','Local Time', tz && tzNow(tz))}
+      ${tile('🚨','Emergency', emergency)}
+      ${tile('💷','Currency', travel && travel[0])}
+      ${tile('☎️','Dial Code', travel && travel[1])}
+      ${tile('🚗','Driving Side', travel && (travel[2]==='left'?'Left':'Right'))}
+      ${plugTileHTML(travel)}
     </div>`;
-  }).join('');
 }
+App.setCountryInfoCode = code => {
+  CUR_COUNTRY_INFO_CODE = code;
+  const t = getTrip(CUR_TRIP_ID); if(!t) return;
+  renderTab(t);
+};
 /* a compact, tap-through summary of one itinerary entry (any of planDayGroups' many shapes -
    a plain stop, a manual or auto-suggested travel leg, a flight/ferry/car/stay/gig, or a task)
    for the Today card below - full detail is one tap away on the Itinerary tab itself, so this

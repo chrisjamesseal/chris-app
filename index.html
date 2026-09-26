@@ -1133,8 +1133,8 @@ a{color:var(--brand-dark);}
 /* Want to Go or not, as one control rather than a star you have to know the meaning of.
    Full width of the card, since it's the only thing on that row in Country Finder. */
 .want-switch{display:flex; width:100%; border:1px solid var(--line-strong); border-radius:999px; overflow:hidden;}
-.want-opt{flex:1; text-align:center; padding:7px 4px; font-size:.68rem; font-weight:700;
-  color:var(--muted); cursor:pointer; user-select:none; white-space:nowrap;}
+.want-opt{flex:1; min-width:0; text-align:center; padding:7px 4px; font-size:.68rem; font-weight:700;
+  color:var(--muted); cursor:pointer; user-select:none; line-height:1.25;}
 .want-opt.on{background:var(--brand-tint); color:var(--brand-dark);}
 .want-opt:focus-visible{outline:none;}
 /* a country already on a booked trip has nothing left to toggle - Going is locked on, and the

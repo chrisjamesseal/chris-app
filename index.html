@@ -1133,8 +1133,8 @@ a{color:var(--brand-dark);}
 /* Want to Go or not, as one control rather than a star you have to know the meaning of.
    Full width of the card, since it's the only thing on that row in Country Finder. */
 .want-switch{display:flex; width:100%; border:1px solid var(--line-strong); border-radius:999px; overflow:hidden;}
-.want-opt{flex:1; text-align:center; padding:7px 4px; font-size:.68rem; font-weight:700;
-  color:var(--muted); cursor:pointer; user-select:none; white-space:nowrap;}
+.want-opt{flex:1; min-width:0; text-align:center; padding:7px 4px; font-size:.68rem; font-weight:700;
+  color:var(--muted); cursor:pointer; user-select:none; line-height:1.25;}
 .want-opt.on{background:var(--brand-tint); color:var(--brand-dark);}
 .want-opt:focus-visible{outline:none;}
 /* a country already on a booked trip has nothing left to toggle - Going is locked on, and the
@@ -1616,29 +1616,29 @@ details .d-body{padding:14px 16px;}
 .split-sum .left{font-weight:700; color:var(--ink);}
 .split-sum .left.clear{color:var(--brand-dark); font-weight:700;}
 
-/* ---------- country info card (language/time/emergency/currency/etc, one per country) ---------- */
-.country-info-card{margin-bottom:14px;}
-.country-info-head{display:flex; align-items:center; gap:8px; font-family:var(--font-head);
-  font-weight:700; font-size:1.05rem; color:var(--ink); margin-bottom:8px;}
-.country-info-row{display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--ink);
-  padding:6px 0;}
-.country-info-row + .country-info-row{border-top:1px solid var(--line);}
-.country-info-emoji{flex-shrink:0; width:1.3em; text-align:center;}
-.country-info-label{color:var(--muted);}
-.country-info-val{font-weight:600; margin-left:auto; text-align:right;}
-.plug-val{display:flex; align-items:center; gap:6px;}
-.plug-icons{display:inline-flex; gap:3px;}
+/* ---------- country info tiles (language/time/emergency/currency/etc, one grid per country) ---------- */
+.country-info-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:14px;}
+.country-info-tile{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:16px 10px; text-align:center;}
+.country-info-tile-emoji{font-size:1.7rem; line-height:1; margin-bottom:8px;}
+.country-info-tile-label{font-size:.72rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:.04em; color:var(--muted); margin-bottom:4px;}
+.country-info-tile-val{font-weight:700; color:var(--ink); font-size:.95rem;}
+.plug-icons{display:inline-flex; gap:6px; justify-content:center;}
 .plug-icon{color:var(--ink); flex-shrink:0;}
 
 /* ---------- today card (only while the trip is actually under way) ---------- */
 .today-card{margin-bottom:16px;}
-.today-head{display:flex; align-items:center; flex-wrap:wrap; gap:4px; font-family:var(--font-head);
-  font-weight:700; font-size:1.05rem; color:var(--ink); margin-bottom:10px;}
-.today-row{display:flex; align-items:center; gap:8px; padding:7px 0; cursor:pointer;}
+.today-head{display:flex; align-items:center; flex-wrap:nowrap; gap:6px; font-family:var(--font-head);
+  font-weight:700; font-size:.92rem; color:var(--ink); padding-bottom:10px;
+  margin-bottom:2px; border-bottom:1px solid var(--line);}
+.today-head > span:first-child{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.today-row{display:flex; align-items:center; gap:8px; padding:9px 0; cursor:pointer;}
 .today-row + .today-row{border-top:1px solid var(--line);}
-.today-time{color:var(--muted); font-size:.82rem; flex-shrink:0; min-width:2.6em;}
+.today-time, .today-title{font-family:var(--font-head); font-weight:400; font-size:.9rem;}
+.today-time{color:var(--muted); flex-shrink:0; min-width:2.6em;}
 .today-emoji{flex-shrink:0;}
-.today-title{color:var(--ink); font-size:.9rem;}
+.today-title{color:var(--ink);}
 .today-empty{color:var(--muted); font-size:.9rem; padding:4px 0;}
 .today-tomorrow-head{font-weight:700; font-size:.82rem; color:var(--muted); text-transform:uppercase;
   letter-spacing:.02em; margin-top:14px; padding-top:10px; border-top:1px solid var(--line);}
@@ -4801,10 +4801,20 @@ function placesTripMap(){
   const map = {};
   const today = todayStr();
   DB.trips.forEach(t=>{
-    const finished = t.endDate && t.endDate < today;
+    const wholeTripFinished = t.endDate && t.endDate < today;
     (t.countries||[]).forEach(c=>{
-      if(finished) map[c] = 'been';
-      else if(map[c] !== 'been') map[c] = 'going';
+      if(map[c] === 'been') return;   // already settled by an earlier trip - Been wins
+      if(wholeTripFinished){ map[c] = 'been'; return; }
+      // a multi-country trip that's still under way overall might already have taken you to
+      // THIS particular country - a Location tagged with it (App.locationForm) carries its own
+      // date range, so once the earliest one has actually started, you've been there already
+      // (even mid-stay, let alone once you've moved on), regardless of the trip as a whole -
+      // its other, later countries included - not being over yet. A country with no dated
+      // Location of its own falls back to the whole-trip check above, since there's nothing
+      // more specific to go on.
+      const countryLocs = (t.locations||[]).filter(l => l.country===c && l.fromDate);
+      const reachedCountry = countryLocs.some(l => l.fromDate <= today);
+      map[c] = reachedCountry ? 'been' : 'going';
     });
   });
   return map;
@@ -6339,6 +6349,29 @@ const BEEN_MANUAL_ORDER = ['JP','AU','AL','GR'];
 const BEEN_MANUAL_SET = new Set(BEEN_MANUAL_ORDER);
 function beenOrderedCountries(trips){
   const out = [], seen = new Set();
+  /* a country you've already reached on a trip that's still under way (placesTripMap's own
+     Location-based mid-trip Been check, not yet archived or even finished) is more recent than
+     literally anything already written down, so it leads the whole list - whichever of a
+     multi-country trip's countries you reached most recently sorts first among these, same
+     "newest first" idea as the DB.places walk just below. This is the same slot a country used
+     to earn as the soonest upcoming trip (see beenUpcomingCountries) before it actually started -
+     once it's Been instead of Going it drops out of that list, so it has to lead this one
+     instead or it'd silently jump backwards in the numbering the moment the trip began. */
+  const today = todayStr();
+  const ongoingReached = {};
+  DB.trips.forEach(t=>{
+    if(isArchived(t) || (t.endDate && t.endDate < today)) return;
+    (t.countries||[]).forEach(c=>{
+      const locs = (t.locations||[]).filter(l => l.country===c && l.fromDate && l.fromDate<=today);
+      if(!locs.length) return;
+      const latest = locs.map(l=>l.fromDate).sort().pop();
+      if(!ongoingReached[c] || latest > ongoingReached[c]) ongoingReached[c] = latest;
+    });
+  });
+  Object.keys(ongoingReached).sort((a,b)=>ongoingReached[b].localeCompare(ongoingReached[a])).forEach(code=>{
+    const co = COUNTRIES.find(c=>c.code===code);
+    if(co){ out.push(co); seen.add(code); }
+  });
   const placesKeys = Object.keys(DB.places||{});
   /* newest-added first: DB.places preserves insertion order oldest-key-first, so this walks
      it backwards */
@@ -7773,19 +7806,11 @@ function renderSettings(){
     <div id="settings-body">
       <h3 style="margin-bottom:10px">Home Dashboard</h3>
       <div class="card" style="margin-bottom:20px">
-        <p class="small muted" style="margin-bottom:14px">
-          Reorder or hide Home's widgets (Next Trip, Currently Playing, Most Played, etc) - a
-          personal preference kept on this device only.
-        </p>
         <div id="settings-dash-widgets">${dashWidgetsSettingsHTML()}</div>
       </div>
       <h3 style="margin-bottom:10px">Films</h3>
       <div id="settings-letterboxd" style="margin-bottom:14px"></div>
       <div class="card" style="margin-bottom:20px">
-        <p class="small muted" style="margin-bottom:14px">
-          Bring in your full Letterboxd history from its own export - Connect Letterboxd's sync
-          above only ever sees your most recent ~50 entries.
-        </p>
         <div class="btn-row">
           <button class="btn sm" onclick="App.filmsImportCsv()">Import Diary CSV</button>
           <button class="btn sm" onclick="App.fwImportCsv()">Import Watchlist CSV</button>
@@ -7793,19 +7818,11 @@ function renderSettings(){
       </div>
       <h3 style="margin-bottom:10px">Streaming Services</h3>
       <div class="card" style="margin-bottom:20px">
-        <p class="small muted" style="margin-bottom:14px">
-          Watch Next and the Watchlist show every service a film's streaming on. Select the ones
-          you actually subscribe to and they'll only show those - leave this alone to keep seeing
-          everything.
-        </p>
         <div class="chips" id="streaming-services-chips">${streamingServicesChipsHTML()}</div>
         <button class="btn sm ghost" style="margin-top:14px" onclick="App.streamingServicesSelectAll()">Select All</button>
       </div>
       <h3 style="margin-bottom:10px">Allergy Card</h3>
       <div class="card" style="margin-bottom:20px">
-        <p class="small muted" style="margin-bottom:14px">
-          Choose which of the 14 major food allergens show on every trip's Allergy Card.
-        </p>
         <span class="label">Allergies</span>
         <div class="chips" id="allergy-settings-chips">${allergySettingsChipsHTML()}</div>
         <span class="label settings-subhead">Intolerances</span>
@@ -11328,8 +11345,13 @@ function renderHome(){
   renderSidebar(null);
   $('#app').innerHTML = `
     <div class="page-head">
-      <div class="home-title"><h1>Your Trips</h1>
-        <button class="btn sm primary" onclick="App.newTrip()">+ New Trip</button></div>
+      <div class="home-title">
+        <div class="trip-title-main">
+          <button class="crumb-backbtn" onclick="App.goPlaces()" aria-label="Back to My Travels">${ICONS.back}</button>
+          <h1>Your Trips</h1>
+        </div>
+        <button class="btn sm primary" onclick="App.newTrip()">+ New Trip</button>
+      </div>
       <div id="home-grid">${homeGridHTML(DB.trips, cloudEnabled())}</div>
       <div class="home-foot">
         <button class="version-tag" onclick="App.toggleChangelog()">v${esc(APP_VERSION)} · What's new</button>
@@ -11689,7 +11711,10 @@ function renderTrip(t){
   const ro = readOnly(t);
   if(!TABS.some(x=>x[0]===CUR_TAB)) CUR_TAB='home';
   renderSidebar(t);
-  const phrase = statusPhrase(t);
+  // "Day X/Y" duplicates the Today card's own heading while the trip's under way, so it's
+  // dropped from here for exactly that case - upcoming/ended still show their own phrase,
+  // neither of which the Today card (only shown for 'now') ever covers
+  const phrase = tripStatus(t).cls==='now' ? '' : statusPhrase(t);
   const upcoming = CUR_TAB==='home' ? upcomingStartDate(t) : null;
   // routeOpenAllDaysByDefault normally only runs inside tabPlan, which renders into #tab-body
   // AFTER this function's own template string (containing the sticky bar's Open All/Collapse
@@ -12109,45 +12134,65 @@ const PLUG_PINS = {
 };
 function plugIconSVG(letter){
   const fam = PLUG_ICON_FAMILY[letter] || 'round2';
-  return `<svg class="plug-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">${PLUG_FACE}${PLUG_PINS[fam]}</svg>`;
+  return `<svg class="plug-icon" viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">${PLUG_FACE}${PLUG_PINS[fam]}</svg>`;
 }
 /* travel[3] looks like "Type C/F · 230V" - split into the letters (one icon each) and the
    voltage, which stays as plain text */
-function plugRowHTML(travel){
+function plugTileHTML(travel){
   if(!travel) return '';
   const m = /^Type ([A-Z/]+) · (.+)$/.exec(travel[3]);
-  const val = m
-    ? `<span class="plug-icons">${m[1].split('/').map(plugIconSVG).join('')}</span><span class="plug-voltage">${esc(m[2])}</span>`
-    : esc(travel[3]);
+  const emoji = m ? `<span class="plug-icons">${m[1].split('/').map(plugIconSVG).join('')}</span>` : '🔌';
+  const val = m ? esc(m[2]) : esc(travel[3]);
   return `
-      <div class="country-info-row"><span class="country-info-emoji" aria-hidden="true">🔌</span><span class="country-info-label">Plug & Voltage</span><span class="country-info-val plug-val">${val}</span></div>`;
+    <div class="country-info-tile">
+      <div class="country-info-tile-emoji" aria-hidden="true">${emoji}</div>
+      <div class="country-info-tile-label">Plug & Voltage</div>
+      <div class="country-info-tile-val">${val}</div>
+    </div>`;
 }
+/* which of the trip's countries the tab row below is currently showing - reset whenever it
+   points at a country that isn't on the trip any more */
+let CUR_COUNTRY_INFO_CODE = null;
 function tabCountryInfo(t){
   if(!(t.countries||[]).length) return tripLangEmptyHTML('country info appears');
   const codes = countryInfoCodes(t);
   if(!codes.length) return `<div class="empty">Nothing to show for a home-nation trip - you already know the language, the clock and the emergency number.</div>`;
-  const row = (emoji, label, val) => val ? `
-      <div class="country-info-row"><span class="country-info-emoji" aria-hidden="true">${emoji}</span><span class="country-info-label">${label}</span><span class="country-info-val">${esc(val)}</span></div>` : '';
-  return codes.map(code => {
-    const co = countryByCode(code);
-    const info = COUNTRY_INFO[code];
-    const tz = COUNTRY_TZ[code];
-    const emergency = COUNTRY_EMERGENCY[code];
-    const travel = COUNTRY_TRAVEL[code];
-    return `
-    <div class="card country-info-card">
-      <div class="country-info-head"><span aria-hidden="true">${co.flag}</span>${esc(co.name)}</div>
-      ${row('🏛️','Capital', info && info[0])}
-      ${row('💬','Language', info && info[1])}
-      ${row('🕐','Local Time', tz && tzNow(tz))}
-      ${row('🚨','Emergency', emergency)}
-      ${row('💷','Currency', travel && travel[0])}
-      ${row('☎️','Dial Code', travel && travel[1])}
-      ${row('🚗','Driving Side', travel && (travel[2]==='left'?'Left':'Right'))}
-      ${plugRowHTML(travel)}
+  if(!CUR_COUNTRY_INFO_CODE || !codes.includes(CUR_COUNTRY_INFO_CODE)) CUR_COUNTRY_INFO_CODE = codes[0];
+  const code = CUR_COUNTRY_INFO_CODE;
+  const co = countryByCode(code);
+  const info = COUNTRY_INFO[code];
+  const tz = COUNTRY_TZ[code];
+  const emergency = COUNTRY_EMERGENCY[code];
+  const travel = COUNTRY_TRAVEL[code];
+  const tabs = codes.length>1 ? `
+    <div class="subtabs">${codes.map(c=>{
+      const cco = countryByCode(c);
+      return `<button class="subtab${c===code?' on':''}" onclick="App.setCountryInfoCode('${c}')">${cco.flag} ${esc(cco.name)}</button>`;
+    }).join('')}</div>` : '';
+  const tile = (emoji, label, val) => val ? `
+    <div class="country-info-tile">
+      <div class="country-info-tile-emoji" aria-hidden="true">${emoji}</div>
+      <div class="country-info-tile-label">${label}</div>
+      <div class="country-info-tile-val">${esc(val)}</div>
+    </div>` : '';
+  return `
+    ${tabs}
+    <div class="country-info-grid">
+      ${tile('🏛️','Capital', info && info[0])}
+      ${tile('💬','Language', info && info[1])}
+      ${tile('🕐','Local Time', tz && tzNow(tz))}
+      ${tile('🚨','Emergency', emergency)}
+      ${tile('💷','Currency', travel && travel[0])}
+      ${tile('☎️','Dial Code', travel && travel[1])}
+      ${tile('🚗','Driving Side', travel && (travel[2]==='left'?'Left':'Right'))}
+      ${plugTileHTML(travel)}
     </div>`;
-  }).join('');
 }
+App.setCountryInfoCode = code => {
+  CUR_COUNTRY_INFO_CODE = code;
+  const t = getTrip(CUR_TRIP_ID); if(!t) return;
+  renderTab(t);
+};
 /* a compact, tap-through summary of one itinerary entry (any of planDayGroups' many shapes -
    a plain stop, a manual or auto-suggested travel leg, a flight/ferry/car/stay/gig, or a task)
    for the Today card below - full detail is one tap away on the Itinerary tab itself, so this
@@ -12174,18 +12219,34 @@ function todayEntryHTML(item){
    (tripStatus's 'now'), since it's the one moment a trip's Overview page is worth opening
    several times a day for. A rough "next summer" trip has no calendar to know "today" against,
    so it never qualifies regardless of tripStatus. */
+/* "Day d/tot" for an arbitrary date within the trip - the same maths statusPhrase does for the
+   literal today, just parameterised so the card below can point it at tomorrow past the 8pm
+   rollover without duplicating it. */
+function dayCountLabel(t, key){
+  if(!t.startDate || !t.endDate) return '';
+  const day = 86400000;
+  const s = new Date(t.startDate+'T00:00:00'), e = new Date(t.endDate+'T00:00:00'), k = new Date(key+'T00:00:00');
+  const d = Math.round((k-s)/day)+1, tot = Math.round((e-s)/day)+1;
+  return 'Day '+d+'/'+tot;
+}
 function todayCardHTML(t){
   if(tripStatus(t).cls!=='now' || hasRoughWhen(t)) return '';
-  const todayKey = todayStr(), tomorrowKey = isoAddDays(todayKey, 1);
+  const todayKey = todayStr();
+  // past 8pm, today's plan has usually already happened - the card is more useful pointed at
+  // tomorrow instead, unless tomorrow would actually be past the trip's own last day
+  const tomorrowKey = isoAddDays(todayKey, 1);
+  const rolledOver = new Date().getHours() >= 20 && (!t.endDate || tomorrowKey <= t.endDate);
+  const dayKey = rolledOver ? tomorrowKey : todayKey;
+  const nextKey = isoAddDays(dayKey, 1);
   const {groups} = planDayGroups(t);
-  const items = (groups[todayKey]||[]).slice().sort((a,b)=>itineraryTimeKey(a).localeCompare(itineraryTimeKey(b)));
-  const tomorrowTasks = (groups[tomorrowKey]||[]).filter(x=>x.kind==='task')
+  const items = (groups[dayKey]||[]).slice().sort((a,b)=>itineraryTimeKey(a).localeCompare(itineraryTimeKey(b)));
+  const nextDayTasks = (groups[nextKey]||[]).filter(x=>x.kind==='task')
     .sort((a,b)=>itineraryTimeKey(a).localeCompare(itineraryTimeKey(b)));
   return `
     <div class="card today-card">
-      <div class="today-head"><span>Today · ${esc(fmtDateOrdinal(todayKey, true))}</span><span class="wx-slot" data-wx-date="${esc(todayKey)}"></span></div>
-      ${items.length ? items.map(todayEntryHTML).join('') : '<div class="today-empty">Nothing planned today.</div>'}
-      ${tomorrowTasks.length ? `<div class="today-tomorrow-head">Still to sort for tomorrow</div>${tomorrowTasks.map(todayEntryHTML).join('')}` : ''}
+      <div class="today-head"><span>${esc(dayCountLabel(t, dayKey))}</span><span class="wx-slot" data-wx-date="${esc(dayKey)}"></span></div>
+      ${items.length ? items.map(todayEntryHTML).join('') : `<div class="today-empty">Nothing planned ${rolledOver?'tomorrow':'today'}.</div>`}
+      ${nextDayTasks.length ? `<div class="today-tomorrow-head">Still to sort for ${rolledOver?'the day after':'tomorrow'}</div>${nextDayTasks.map(todayEntryHTML).join('')}` : ''}
     </div>`;
 }
 function tabHome(t, ro){
@@ -13502,14 +13563,25 @@ function wxResolve(cands, cb){
 }
 /* forecasts are keyed by coordinate, so two towns that resolve to the same spot, or a day
    list that repeats a place, only ever cost one request */
+/* how long a fetched forecast is trusted before it's worth asking again - a forecast for a day
+   several days out is only ever a rough guess, and gets meaningfully more accurate as that day
+   gets closer, so caching it for the rest of the session (as this used to, with no expiry at
+   all) meant the very first fetch - however far out it was - was still what showed on the day
+   itself unless the page happened to get a full reload in between. Four hours balances that
+   against not hammering the API every time the Itinerary/Home tab re-renders. */
+const WX_REFRESH_MS = 4*60*60*1000;
 function wxForecast(geo, done){
   const key = geo.lat.toFixed(2)+','+geo.lon.toFixed(2);
   const cur = WX_STATE[key];
   if(cur){
-    if(cur.status === 'loading') cur.waiting.push(done); else done();
-    return;
+    if(cur.status === 'loading'){ cur.waiting.push(done); return; }
+    if(cur.status === 'ok' && cur.fetchedAt && Date.now()-cur.fetchedAt < WX_REFRESH_MS){ done(); return; }
+    // stale (or a previous failure) - refetch, but leave whatever's already in `days` in place
+    // so a chip that already has something to show keeps showing it until the refresh lands,
+    // rather than blanking out while the new request is in flight
   }
-  const st = WX_STATE[key] = {status:'loading', days:{}, label:geo.label||'', waiting:[]};
+  const st = cur || (WX_STATE[key] = {status:'loading', days:{}, label:geo.label||'', waiting:[]});
+  const hadData = st.status === 'ok';
   const finish = () => { const w = st.waiting; st.waiting = []; done(); w.forEach(fn=>fn()); };
   const today = new Date();
   const end = new Date(today.getTime() + (WX_FORECAST_DAYS-1)*86400000);
@@ -13530,9 +13602,10 @@ function wxForecast(geo, done){
         };
       });
       st.status = 'ok';
+      st.fetchedAt = Date.now();
       finish();
     })
-    .catch(()=>{ st.status = 'fail'; finish(); });
+    .catch(()=>{ if(!hadData) st.status = 'fail'; finish(); });
 }
 /* the small chip beside a day heading, empty whenever there's nothing honest to say */
 function wxDayHTML(dateKey){

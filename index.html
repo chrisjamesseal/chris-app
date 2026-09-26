@@ -4799,10 +4799,20 @@ function placesTripMap(){
   const map = {};
   const today = todayStr();
   DB.trips.forEach(t=>{
-    const finished = t.endDate && t.endDate < today;
+    const wholeTripFinished = t.endDate && t.endDate < today;
     (t.countries||[]).forEach(c=>{
-      if(finished) map[c] = 'been';
-      else if(map[c] !== 'been') map[c] = 'going';
+      if(map[c] === 'been') return;   // already settled by an earlier trip - Been wins
+      if(wholeTripFinished){ map[c] = 'been'; return; }
+      // a multi-country trip that's still under way overall might already have taken you to
+      // THIS particular country - a Location tagged with it (App.locationForm) carries its own
+      // date range, so once the earliest one has actually started, you've been there already
+      // (even mid-stay, let alone once you've moved on), regardless of the trip as a whole -
+      // its other, later countries included - not being over yet. A country with no dated
+      // Location of its own falls back to the whole-trip check above, since there's nothing
+      // more specific to go on.
+      const countryLocs = (t.locations||[]).filter(l => l.country===c && l.fromDate);
+      const reachedCountry = countryLocs.some(l => l.fromDate <= today);
+      map[c] = reachedCountry ? 'been' : 'going';
     });
   });
   return map;

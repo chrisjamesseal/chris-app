@@ -6347,6 +6347,29 @@ const BEEN_MANUAL_ORDER = ['JP','AU','AL','GR'];
 const BEEN_MANUAL_SET = new Set(BEEN_MANUAL_ORDER);
 function beenOrderedCountries(trips){
   const out = [], seen = new Set();
+  /* a country you've already reached on a trip that's still under way (placesTripMap's own
+     Location-based mid-trip Been check, not yet archived or even finished) is more recent than
+     literally anything already written down, so it leads the whole list - whichever of a
+     multi-country trip's countries you reached most recently sorts first among these, same
+     "newest first" idea as the DB.places walk just below. This is the same slot a country used
+     to earn as the soonest upcoming trip (see beenUpcomingCountries) before it actually started -
+     once it's Been instead of Going it drops out of that list, so it has to lead this one
+     instead or it'd silently jump backwards in the numbering the moment the trip began. */
+  const today = todayStr();
+  const ongoingReached = {};
+  DB.trips.forEach(t=>{
+    if(isArchived(t) || (t.endDate && t.endDate < today)) return;
+    (t.countries||[]).forEach(c=>{
+      const locs = (t.locations||[]).filter(l => l.country===c && l.fromDate && l.fromDate<=today);
+      if(!locs.length) return;
+      const latest = locs.map(l=>l.fromDate).sort().pop();
+      if(!ongoingReached[c] || latest > ongoingReached[c]) ongoingReached[c] = latest;
+    });
+  });
+  Object.keys(ongoingReached).sort((a,b)=>ongoingReached[b].localeCompare(ongoingReached[a])).forEach(code=>{
+    const co = COUNTRIES.find(c=>c.code===code);
+    if(co){ out.push(co); seen.add(code); }
+  });
   const placesKeys = Object.keys(DB.places||{});
   /* newest-added first: DB.places preserves insertion order oldest-key-first, so this walks
      it backwards */
@@ -11702,7 +11725,10 @@ function renderTrip(t){
   const ro = readOnly(t);
   if(!TABS.some(x=>x[0]===CUR_TAB)) CUR_TAB='home';
   renderSidebar(t);
-  const phrase = statusPhrase(t);
+  // "Day X/Y" duplicates the Today card's own heading while the trip's under way, so it's
+  // dropped from here for exactly that case - upcoming/ended still show their own phrase,
+  // neither of which the Today card (only shown for 'now') ever covers
+  const phrase = tripStatus(t).cls==='now' ? '' : statusPhrase(t);
   const upcoming = CUR_TAB==='home' ? upcomingStartDate(t) : null;
   // routeOpenAllDaysByDefault normally only runs inside tabPlan, which renders into #tab-body
   // AFTER this function's own template string (containing the sticky bar's Open All/Collapse
@@ -12208,18 +12234,34 @@ function todayEntryHTML(item){
    (tripStatus's 'now'), since it's the one moment a trip's Overview page is worth opening
    several times a day for. A rough "next summer" trip has no calendar to know "today" against,
    so it never qualifies regardless of tripStatus. */
+/* "Day d/tot" for an arbitrary date within the trip - the same maths statusPhrase does for the
+   literal today, just parameterised so the card below can point it at tomorrow past the 8pm
+   rollover without duplicating it. */
+function dayCountLabel(t, key){
+  if(!t.startDate || !t.endDate) return '';
+  const day = 86400000;
+  const s = new Date(t.startDate+'T00:00:00'), e = new Date(t.endDate+'T00:00:00'), k = new Date(key+'T00:00:00');
+  const d = Math.round((k-s)/day)+1, tot = Math.round((e-s)/day)+1;
+  return 'Day '+d+'/'+tot;
+}
 function todayCardHTML(t){
   if(tripStatus(t).cls!=='now' || hasRoughWhen(t)) return '';
-  const todayKey = todayStr(), tomorrowKey = isoAddDays(todayKey, 1);
+  const todayKey = todayStr();
+  // past 8pm, today's plan has usually already happened - the card is more useful pointed at
+  // tomorrow instead, unless tomorrow would actually be past the trip's own last day
+  const tomorrowKey = isoAddDays(todayKey, 1);
+  const rolledOver = new Date().getHours() >= 20 && (!t.endDate || tomorrowKey <= t.endDate);
+  const dayKey = rolledOver ? tomorrowKey : todayKey;
+  const nextKey = isoAddDays(dayKey, 1);
   const {groups} = planDayGroups(t);
-  const items = (groups[todayKey]||[]).slice().sort((a,b)=>itineraryTimeKey(a).localeCompare(itineraryTimeKey(b)));
-  const tomorrowTasks = (groups[tomorrowKey]||[]).filter(x=>x.kind==='task')
+  const items = (groups[dayKey]||[]).slice().sort((a,b)=>itineraryTimeKey(a).localeCompare(itineraryTimeKey(b)));
+  const nextDayTasks = (groups[nextKey]||[]).filter(x=>x.kind==='task')
     .sort((a,b)=>itineraryTimeKey(a).localeCompare(itineraryTimeKey(b)));
   return `
     <div class="card today-card">
-      <div class="today-head"><span>Today · ${esc(fmtDateOrdinal(todayKey, true))}</span><span class="wx-slot" data-wx-date="${esc(todayKey)}"></span></div>
-      ${items.length ? items.map(todayEntryHTML).join('') : '<div class="today-empty">Nothing planned today.</div>'}
-      ${tomorrowTasks.length ? `<div class="today-tomorrow-head">Still to sort for tomorrow</div>${tomorrowTasks.map(todayEntryHTML).join('')}` : ''}
+      <div class="today-head"><span>${esc(dayCountLabel(t, dayKey))}</span><span class="wx-slot" data-wx-date="${esc(dayKey)}"></span></div>
+      ${items.length ? items.map(todayEntryHTML).join('') : `<div class="today-empty">Nothing planned ${rolledOver?'tomorrow':'today'}.</div>`}
+      ${nextDayTasks.length ? `<div class="today-tomorrow-head">Still to sort for ${rolledOver?'the day after':'tomorrow'}</div>${nextDayTasks.map(todayEntryHTML).join('')}` : ''}
     </div>`;
 }
 function tabHome(t, ro){
